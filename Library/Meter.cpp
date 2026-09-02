@@ -42,9 +42,6 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_AntiAlias(false),
 	m_Initialized(false),
 	m_ContainerMeter(nullptr),
-	m_ContainerContentTexture(nullptr),
-	m_ContainerTexture(nullptr),
-	m_ContainerItems(),
 	m_SolidColor(Gfx::Util::c_Transparent_Color_F),
 	m_SolidColor2(Gfx::Util::c_Transparent_Color_F)
 {
@@ -52,20 +49,6 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 
 Meter::~Meter()
 {
-	if (m_ContainerContentTexture)
-	{
-		delete m_ContainerContentTexture;
-		m_ContainerContentTexture = nullptr;
-	}
-
-	if (m_ContainerTexture)
-	{
-		delete m_ContainerTexture;
-		m_ContainerTexture = nullptr;
-	}
-
-	m_ContainerMeter = nullptr;
-	m_ContainerItems.clear();
 }
 
 // Initializes the meter. Usually this method is overwritten by the inherited
@@ -77,8 +60,10 @@ void Meter::Initialize()
 
 void Meter::InvalidateDeviceResources()
 {
-	if (m_ContainerTexture) m_ContainerTexture->InvalidateDeviceResources();
-	if (m_ContainerContentTexture) m_ContainerContentTexture->InvalidateDeviceResources();
+	if (!m_Container) return;
+
+	m_Container->texture->InvalidateDeviceResources();
+	m_Container->contentTexture->InvalidateDeviceResources();
 }
 
 int Meter::GetX(bool abs)
@@ -218,51 +203,42 @@ bool Meter::HitTest(int x, int y)
 
 void Meter::AddContainerItem(Meter* item)
 {
-	m_ContainerItems.push_back(item);
-	m_Skin->ResetRelativeMeters();
-
-	if (m_ContainerItems.size() == 1)
+	if (!m_Container)
 	{
+		m_Container = std::make_unique<ContainerData>();
+
 		const auto width = (UINT)m_Skin->LogicalToPhysical(GetW());
 		const auto height = (UINT)m_Skin->LogicalToPhysical(GetH());
-
-		delete m_ContainerTexture;
-		m_ContainerTexture = nullptr;
-		m_ContainerTexture = new Gfx::RenderTexture(m_Skin->GetCanvas(), width, height);
-
-		delete m_ContainerContentTexture;
-		m_ContainerContentTexture = nullptr;
-		m_ContainerContentTexture = new Gfx::RenderTexture(m_Skin->GetCanvas(), width, height);
+		m_Container->texture = std::make_unique<Gfx::RenderTexture>(m_Skin->GetCanvas(), width, height);
+		m_Container->contentTexture = std::make_unique<Gfx::RenderTexture>(m_Skin->GetCanvas(), width, height);
 	}
+
+	m_Container->items.push_back(item);
+	m_Skin->ResetRelativeMeters();
 }
 
 void Meter::RemoveContainerItem(Meter* item)
 {
-	m_ContainerItems.erase(std::remove(m_ContainerItems.begin(), m_ContainerItems.end(), item));
-	m_Skin->ResetRelativeMeters();
+	if (!m_Container) return;
 
-	if (m_ContainerItems.size() == 0)
+	auto& items = m_Container->items;
+	items.erase(std::remove(items.begin(), items.end(), item));
+	if (items.empty())
 	{
-		if (m_ContainerContentTexture != nullptr)
-		{
-			delete m_ContainerContentTexture;
-			m_ContainerContentTexture = nullptr;
-		}
-
-		if (m_ContainerTexture != nullptr)
-		{
-			delete m_ContainerTexture;
-			m_ContainerTexture = nullptr;
-		}
+		m_Container.reset();
 	}
+
+	m_Skin->ResetRelativeMeters();
 }
 
 void Meter::ResizeContainerTextures()
 {
+	if (!m_Container) return;
+
 	const auto width = (UINT)m_Skin->LogicalToPhysical(GetW());
 	const auto height = (UINT)m_Skin->LogicalToPhysical(GetH());
-	if (m_ContainerTexture) m_ContainerTexture->Resize(m_Skin->GetCanvas(), width, height);
-	if (m_ContainerContentTexture) m_ContainerContentTexture->Resize(m_Skin->GetCanvas(), width, height);
+	m_Container->texture->Resize(m_Skin->GetCanvas(), width, height);
+	m_Container->contentTexture->Resize(m_Skin->GetCanvas(), width, height);
 }
 
 void Meter::Show()

@@ -43,13 +43,15 @@ public:
 
 	bool GetMeterVisibleRect(RECT& rect);
 
-	Gfx::RenderTexture* GetContainerContentTexture() { return m_ContainerContentTexture; }
-	Gfx::RenderTexture* GetContainerTexture() { return m_ContainerTexture; }
+	// Only valid for a container, i.e. when IsContainer() is true.
+	Gfx::RenderTexture* GetContainerContentTexture() { return m_Container->contentTexture.get(); }
+	Gfx::RenderTexture* GetContainerTexture() { return m_Container->texture.get(); }
+	const std::vector<Meter*>& GetContainerItems() { return m_Container->items; }
+
 	void AddContainerItem(Meter* item);
 	void RemoveContainerItem(Meter* item);
-	const std::vector<Meter*>& GetContainerItems() { return m_ContainerItems; }
 	bool IsContained() { return m_ContainerMeter != nullptr; }
-	bool IsContainer() { return m_ContainerItems.size() > 0; }
+	bool IsContainer() { return m_Container != nullptr; }
 	Meter* GetContainerMeter() { return m_ContainerMeter; }
 	void ResizeContainerTextures();
 	bool HitTestContainer(int& x, int& y) { return m_ContainerMeter ? m_ContainerMeter->HitTest(x, y) : true; }
@@ -171,8 +173,13 @@ protected:
 	bool m_AntiAlias;
 	bool m_Initialized;
 
+	struct ContainerData
+	{
+		std::vector<Meter*> items;
+		std::unique_ptr<Gfx::RenderTexture> contentTexture;
+		std::unique_ptr<Gfx::RenderTexture> texture;
+	};
+
 	Meter* m_ContainerMeter;
-	std::vector<Meter*> m_ContainerItems;
-	Gfx::RenderTexture* m_ContainerContentTexture;
-	Gfx::RenderTexture* m_ContainerTexture;
+	std::unique_ptr<ContainerData> m_Container;
 };
