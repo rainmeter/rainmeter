@@ -1913,7 +1913,7 @@ void DialogPackage::TabAdvanced::Create(HWND owner)
 			90, 21, 200, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 0),
 		Control::CheckBox(DialogPackage::TabAdvanced::Id_MergeSkinsCheck, IDS_MergeSkins,
-			0, 42, 85, 13,
+			0, 42, 290, 13,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::LinkLabel(DialogPackage::TabAdvanced::Id_HelpLink, IDS_HelpLink,
 			0, 210, 284, 13,
