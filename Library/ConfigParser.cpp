@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/IniFileReader.h"
 #include "../Common/MathParser.h"
 #include "../Common/ParseUtil.h"
 #include "../Common/PathUtil.h"
@@ -1641,8 +1642,8 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 		return;
 	}
 
-	// Verify whether the file exists
-	if (_waccess_s(iniFile.c_str(), 0) != 0)
+	const auto text = IniFileReader::DecodeFile(iniFile);
+	if (!text)
 	{
 		LogErrorF(m_Skin, L"Unable to read file: %s", iniFile.c_str());
 		return;
@@ -1654,236 +1655,159 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 		m_IniFiles.push_back(iniFile);
 	}
 
-	// Avoid "IniFileMapping"
-	std::wstring iniRead = System::GetTemporaryFile(iniFile);
-	bool temporary = (!iniRead.empty() && (iniRead.size() != 1 || iniRead[0] != L'?'));
+	if (GetRainmeter().GetDebug()) LogDebugF(m_Skin, L"Reading file: %s", iniFile.c_str());
 
-	if (temporary)
+	// Walked twice, because every section has to be registered before any key is read, and an
+	// @Include is a key. That is what puts an included file's sections between the section holding
+	// the @Include and the one after it, which is the order the meters and measures are created in.
+	size_t sectionCount = 0;
+
+	if (skinSection != nullptr)
 	{
-		if (GetRainmeter().GetDebug()) LogDebugF(m_Skin, L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
+		// Special case: only "Rainmeter" and the specified section of "Rainmeter.ini" are read, and
+		// both names are registered whether the file contains them or not.
+		sectionCount = 2;
+		if (depth == 0)
+		{
+			m_SectionNames.push_back(L"Rainmeter");
+			m_SectionNames.push_back(skinSection);
+		}
 	}
 	else
 	{
-		if (GetRainmeter().GetDebug()) LogDebugF(m_Skin, L"Reading file: %s", iniFile.c_str());
-		iniRead = iniFile;
+		StringSet fileSections;
+		text->Parse(
+			[&](std::wstring_view name)
+			{
+				// Only the first of duplicate sections can be read, as in the profile API.
+				const auto& [iter, inserted] = fileSections.insert(StrToUpper(name));
+				if (!inserted) return;
+
+				++sectionCount;
+				if (m_FoundSections.insert(*iter).second)
+				{
+					m_SectionNames.insert(m_SectionNamesInsertPos, std::wstring(name));
+				}
+			});
 	}
 
-	// Get all the sections (i.e. different meters)
-	std::list<std::wstring> sections;
-	std::wstring optionUpperCase, value;  // buffer
+	StringSet fileSections;
+	StringSet sectionOptions;
 
-	DWORD itemsSize = MAX_LINE_LENGTH;
-	WCHAR* items = new WCHAR[itemsSize];
-	WCHAR* pos = nullptr;
-	WCHAR* endPos = nullptr;
+	std::wstring skinSectionUpperCase;
+	if (skinSection != nullptr) StrToUpperC(skinSectionUpperCase = skinSection);
 
-	if (skinSection == nullptr)
-	{
-		// Get all the sections
-		do
+	std::wstring sectionName;
+	std::wstring optionUpperCase;  // buffer
+
+	WCHAR sectionUpperCase[512];
+	size_t sectionLength = 0;
+
+	size_t sectionsSeen = 0;
+	size_t sectionIndex = 0;
+	bool readSection = false;
+	bool resetInsertPos = true;
+	bool isVariables = false;
+	bool isMetadata = false;
+
+	text->Parse(
+		[&](std::wstring_view name)
 		{
-			items[0] = 0;
-			DWORD res = GetPrivateProfileSectionNames(items, itemsSize, iniRead.c_str());
-			if (res == 0)		// File not found
+			readSection = false;
+			sectionOptions.clear();
+
+			// Grouped exactly as the pass above grouped them, so that the numbering matches.
+			if (!fileSections.insert(StrToUpper(name)).second) return;
+
+			sectionIndex = sectionsSeen++;
+			resetInsertPos = true;
+			sectionName = name;
+
+			if (!StringUtil::ToUpperCase(name, sectionUpperCase, _countof(sectionUpperCase))) return;
+
+			sectionLength = name.length();
+
+			const bool isRainmeter = (wcscmp(sectionUpperCase, L"RAINMETER") == 0);
+			if (skinSection != nullptr)
 			{
-				delete [] items;
-				items = nullptr;
-				if (temporary) System::RemoveFile(iniRead);
+				if (!isRainmeter && wcscmp(sectionUpperCase, skinSectionUpperCase.c_str()) != 0) return;
+
+				// Ordered as the special case above lists them, not as the file happens to.
+				sectionIndex = isRainmeter ? 0 : 1;
+			}
+
+			isVariables = (wcscmp(sectionUpperCase, L"VARIABLES") == 0);
+			isMetadata = (skinSection == nullptr && !isVariables && wcscmp(sectionUpperCase, L"METADATA") == 0);
+			readSection = true;
+		},
+		[&](std::wstring_view option, std::wstring_view value)
+		{
+			if (!readSection || option.empty()) return;
+
+			StrToUpperC(optionUpperCase.assign(option));
+
+			// Only the first of duplicate options can be read.
+			if (!sectionOptions.insert(optionUpperCase).second) return;
+
+			if (wcsncmp(optionUpperCase.c_str(), L"@INCLUDE", 8) == 0)
+			{
+				if (value.empty()) return;
+
+				std::wstring include(value);
+				ReadVariables();
+				ReplaceVariables(include, true);
+				if (!PathUtil::IsAbsolute(include))
+				{
+					// Relative to the ini folder
+					include.insert(0, PathUtil::GetFolderFromFilePath(iniFile));
+				}
+
+				// The included file's sections belong right after the section the @Include is in, and
+				// only the first @Include of a section moves the position.
+				if (resetInsertPos)
+				{
+					if (sectionIndex + 1 == sectionCount)  // The @Include is in the last section
+					{
+						m_SectionNamesInsertPos = m_SectionNames.end();
+						resetInsertPos = false;
+					}
+					else
+					{
+						for (auto it = m_SectionNames.cbegin(); it != m_SectionNames.cend(); ++it)
+						{
+							if (_wcsicmp(it->c_str(), sectionName.c_str()) == 0)
+							{
+								m_SectionNamesInsertPos = ++it;
+								resetInsertPos = false;
+								break;
+							}
+						}
+					}
+				}
+
+				// Saved in case the included file also uses an @Include
+				auto prevInsertPos = m_SectionNamesInsertPos;
+
+				ReadIniFile(include, skinSection, depth + 1);
+				m_SectionNamesInsertPos = prevInsertPos;
 				return;
 			}
-			if (res < itemsSize - 2)		// Fits in the buffer
-			{
-				endPos = items + res;
-				break;
-			}
 
-			delete [] items;
-			items = nullptr;
-			itemsSize *= 2;
-			items = new WCHAR[itemsSize];
-		}
-		while (true);
+			if (isMetadata) return;
 
-		// Read the sections
-		ankerl::unordered_dense::set<std::wstring> currentFileFoundSections;
-		pos = items;
-		while (pos < endPos)
-		{
-			if (*pos)
-			{
-				value = pos;  // section name
-				StrToUpperC(optionUpperCase.assign(value));
-				if (currentFileFoundSections.insert(optionUpperCase).second)
-				{
-					if (m_FoundSections.insert(optionUpperCase).second)
-					{
-						m_SectionNames.insert(m_SectionNamesInsertPos, value);
-					}
-					sections.push_back(value);
-				}
-				pos += value.size() + 1;
-			}
-			else  // Empty string
-			{
-				++pos;
-			}
-		}
-	}
-	else
-	{
-		// Special case: Read only "Rainmeter" and specified section from "Rainmeter.ini"
-		const std::wstring strRainmeter = L"Rainmeter";
-		const std::wstring strFolder = skinSection;
+			// Construct the map key manually instead of using SetValue() in order to:
+			// - move the key into the map without copying
+			// - ensure that duplicate option values aren't inserted
+			// - avoid uppercasing the same strings multiple times
+			std::wstring mapKey;
+			mapKey.reserve(sectionLength + 1 + optionUpperCase.length());
+			mapKey.append(sectionUpperCase, sectionLength);
+			mapKey += L'~';
+			mapKey += optionUpperCase;
+			m_Values.insert_or_assign(std::move(mapKey), std::wstring(value));
 
-		sections.push_back(strRainmeter);
-		sections.push_back(strFolder);
-
-		if (depth == 0)  // Add once
-		{
-			m_SectionNames.push_back(strRainmeter);
-			m_SectionNames.push_back(strFolder);
-		}
-	}
-
-	// Read the keys and values
-	ankerl::unordered_dense::set<std::wstring> currentSectionOptions;
-	for (auto it = sections.cbegin(); it != sections.cend(); ++it)
-	{
-		currentSectionOptions.clear();
-
-		const WCHAR* sectionOriginalCase = it->c_str();
-		const auto sectionLength = it->length();
-
-		WCHAR sectionUpperCase[512];
-		if (!StringUtil::ToUpperCase(*it, sectionUpperCase, _countof(sectionUpperCase))) continue;
-
-		bool isVariables = (wcscmp(sectionUpperCase, L"VARIABLES") == 0);
-		bool isMetadata = (skinSection == nullptr && !isVariables && wcscmp(sectionUpperCase, L"METADATA") == 0);
-		bool resetInsertPos = true;
-
-		// Read all "key=value" from the section
-		do
-		{
-			items[0] = 0;
-			DWORD res = GetPrivateProfileSection(sectionOriginalCase, items, itemsSize, iniRead.c_str());
-			if (res < itemsSize - 2)		// Fits in the buffer
-			{
-				endPos = items + res;
-				break;
-			}
-
-			delete [] items;
-			items = nullptr;
-			itemsSize *= 2;
-			items = new WCHAR[itemsSize];
-		}
-		while (true);
-
-		pos = items;
-		while (pos < endPos)
-		{
-			if (*pos)
-			{
-				size_t lineLength = wcslen(pos);
-				WCHAR* valuePos = wmemchr(pos, L'=', lineLength);
-				if (valuePos != nullptr && valuePos != pos)
-				{
-					size_t optionLength = valuePos - pos;
-
-					std::wstring_view optionOriginalCase(pos, optionLength);
-					optionUpperCase.assign(pos, optionLength);
-					StrToUpperC(optionUpperCase);
-
-					++valuePos;
-					auto valueLength = lineLength - (optionLength + 1);  // value's length
-
-					// Trim surrounded quotes from value
-					if (valueLength >= 2 && (valuePos[0] == L'"' || valuePos[0] == L'\'') && valuePos[valueLength - 1] == valuePos[0])
-					{
-						valueLength -= 2;
-						++valuePos;
-					}
-
-					if (!currentSectionOptions.insert(optionUpperCase).second)
-					{
-						// Ignore duplicate options.
-					}
-					else if (wcsncmp(optionUpperCase.c_str(), L"@INCLUDE", 8) == 0)
-					{
-						if (valueLength > 0)
-						{
-							value.assign(valuePos, valueLength);
-							ReadVariables();
-							ReplaceVariables(value, true);
-							if (!PathUtil::IsAbsolute(value))
-							{
-								// Relative to the ini folder
-								value.insert(0, PathUtil::GetFolderFromFilePath(iniFile));
-							}
-
-							if (resetInsertPos)
-							{
-								std::list<std::wstring>::const_iterator jt = it;
-								if (++jt == sections.end())  // Special case: @include was used in the last section of the current file
-								{
-									// Set the insertion place to the last
-									m_SectionNamesInsertPos = m_SectionNames.end();
-									resetInsertPos = false;
-								}
-								else
-								{
-									// Find the appropriate insertion place
-									for (jt = m_SectionNames.cbegin(); jt != m_SectionNames.cend(); ++jt)
-									{
-										if (_wcsicmp((*jt).c_str(), sectionOriginalCase) == 0)
-										{
-											m_SectionNamesInsertPos = ++jt;
-											resetInsertPos = false;
-											break;
-										}
-									}
-								}
-							}
-
-							// Save the section insertion position in case the included file also uses an @Include
-							auto prevInsertPos = m_SectionNamesInsertPos;
-
-							ReadIniFile(value, skinSection, depth + 1);
-
-							// Reset the section insertion position to previous position
-							m_SectionNamesInsertPos = prevInsertPos;
-						}
-					}
-					else if (!isMetadata)
-					{
-						// Construct the map key manually instead of using SetValue() in order to:
-						// - move the key into the map without copying
-						// - ensure that duplicate option values aren't inserted
-						// - avoid uppercasing the same strings multiple times
-						std::wstring mapKey;
-						mapKey.reserve(sectionLength + 1 + optionUpperCase.length());
-						mapKey.append(sectionUpperCase, sectionLength);
-						mapKey += L'~';
-						mapKey += optionUpperCase;
-						m_Values.insert_or_assign(std::move(mapKey), std::wstring(valuePos, valueLength));
-						if (isVariables)
-						{
-							m_ListVariables.emplace_back(optionOriginalCase);
-						}
-					}
-				}
-				pos += lineLength + 1;
-			}
-			else  // Empty string
-			{
-				++pos;
-			}
-		}
-	}
-
-	delete [] items;
-	items = nullptr;
-	if (temporary) System::RemoveFile(iniRead);
+			if (isVariables) m_ListVariables.emplace_back(option);
+		});
 }
 
 std::wstring_view BuildValuesMapKey(std::wstring_view section, std::wstring_view option, WCHAR* buffer, size_t bufferCount)

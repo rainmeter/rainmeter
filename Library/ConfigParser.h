@@ -190,7 +190,7 @@ private:
 	std::list<std::wstring> m_SectionNames;	// Ordered
 	StringMap<std::wstring> m_Values;
 
-	ankerl::unordered_dense::set<std::wstring> m_FoundSections;
+	StringSet m_FoundSections;
 	std::list<std::wstring> m_ListVariables;
 	std::list<std::wstring>::const_iterator m_SectionNamesInsertPos;
 
