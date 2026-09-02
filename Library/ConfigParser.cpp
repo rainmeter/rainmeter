@@ -1292,18 +1292,17 @@ const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wst
 
 size_t ConfigParser::MatchEnumOption(std::wstring_view section, std::wstring_view key, const WCHAR* const* names, size_t count, size_t stride)
 {
-	const std::wstring& value = ReadString(section, key, L"");
-	if (value.empty()) return count;
+	const auto* value = ReadString(section, key, L"").c_str();
+	if (!*value) return count;
 
 	for (size_t i = 0; i < count; ++i)
 	{
 		// |names| points at the first option's name, which EnumOption keeps at offset zero.
 		const WCHAR* name = *(const WCHAR* const*)((const BYTE*)names + i * stride);
-		if (_wcsicmp(value.c_str(), name) == 0) return i;
+		if (_wcsicmp(value, name) == 0) return i;
 	}
 
-	LogErrorF(GetSection(section), L"%.*s=%.*s is not valid",
-		(int)key.length(), key.data(), (int)value.length(), value.data());
+	LogErrorF(GetSection(section), L"%.*s=%s is not valid", (int)key.length(), key.data(), value);
 	return count;
 }
 
