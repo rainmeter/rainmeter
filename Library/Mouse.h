@@ -97,38 +97,10 @@ public:
 	bool GetActionCommand(MOUSEACTION type, std::wstring& command) const;
 	const std::wstring& GetAction(MOUSEACTION action) const;
 
-	bool HasEnabledAction(MOUSEACTION types) const;
+	bool HasEnabledAction(MOUSEACTION types) const { return HasAction(types, true); }
 
-	bool HasButtonAction() const
-	{
-		return !(
-			GetLeftUpAction().empty() &&
-			GetLeftDownAction().empty() &&
-			GetLeftDoubleClickAction().empty() &&
-			GetMiddleUpAction().empty() &&
-			GetMiddleDownAction().empty() &&
-			GetMiddleDoubleClickAction().empty() &&
-			GetRightUpAction().empty() &&
-			GetRightDownAction().empty() &&
-			GetRightDoubleClickAction().empty() &&
-			GetX1UpAction().empty() &&
-			GetX1DownAction().empty() &&
-			GetX1DoubleClickAction().empty() &&
-			GetX2UpAction().empty() &&
-			GetX2DownAction().empty() &&
-			GetX2DoubleClickAction().empty()
-			);
-	}
-
-	bool HasScrollAction() const
-	{
-		return !(
-			GetMouseScrollUpAction().empty() &&
-			GetMouseScrollDownAction().empty() &&
-			GetMouseScrollLeftAction().empty() &&
-			GetMouseScrollRightAction().empty()
-			);
-	}
+	bool HasButtonAction() const { return HasAction(MOUSEACTION_BUTTON); }
+	bool HasScrollAction() const { return HasAction(MOUSE_MW_UP | MOUSE_MW_DOWN | MOUSE_MW_LEFT | MOUSE_MW_RIGHT); }
 
 	const std::wstring& GetLeftUpAction() const            { return GetAction(MOUSE_LMB_UP); }
 	const std::wstring& GetLeftDownAction() const          { return GetAction(MOUSE_LMB_DOWN); }
@@ -155,6 +127,8 @@ public:
 	const std::wstring& GetLeaveAction() const             { return GetAction(MOUSE_LEAVE); }
 
 private:
+	bool HasAction(uint32_t types, bool enabledOnly = false) const;
+
 	void ReplaceMouseVariables(std::wstring& result) const;
 	const MouseAction* GetMouseActionForType(MOUSEACTION type) const;
 	MOUSEACTION OptionStringToMouseActions(const std::wstring& options) const;

@@ -398,15 +398,19 @@ bool Mouse::GetActionCommand(MOUSEACTION type, std::wstring& command) const
 	return false;
 }
 
-bool Mouse::HasEnabledAction(MOUSEACTION types) const
+bool Mouse::HasAction(uint32_t types, bool enabledOnly) const
 {
 	if ((m_MouseActionTypes & types) == 0) return false;
 
 	for (const auto& mouseAction : m_MouseActions)
 	{
-		if ((types & mouseAction.type) != 0 &&
-			mouseAction.state == MOUSEACTION_ENABLED &&
-			!mouseAction.action.empty())
+		// A disabled action still counts as an action unless the caller wants only the
+		// enabled ones, since it can be enabled again later.
+		const bool stateMatches = enabledOnly ?
+			mouseAction.state == MOUSEACTION_ENABLED :
+			mouseAction.state != MOUSEACTION_CLEARED;
+
+		if ((types & mouseAction.type) != 0 && stateMatches && !mouseAction.action.empty())
 		{
 			return true;
 		}
