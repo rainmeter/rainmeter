@@ -3204,8 +3204,7 @@ bool Skin::HandleContainer(Meter* container)
 {
 	if (container->IsContained()) return true;
 
-	auto& containerItems = container->GetContainerItems();
-	if (containerItems.empty()) return false;
+	if (!container->IsContainer()) return false;
 
 	if (container->GetW() <= 0 || container->GetH() <= 0) return true;
 	container->ResizeContainerTextures();
@@ -3216,7 +3215,7 @@ bool Skin::HandleContainer(Meter* container)
 
 	const D2D1_MATRIX_3X2_F offset = D2D1::Matrix3x2F::Translation((FLOAT)-container->GetX(), (FLOAT)-container->GetY());
 
-	for (auto item : containerItems)
+	for (auto item : container->GetContainerItems())
 	{
 		m_Canvas.SetTransform(item->GetTransformationMatrix() * offset);
 		item->Draw(m_Canvas);
