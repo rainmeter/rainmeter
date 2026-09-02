@@ -40,22 +40,20 @@
 enum TIMER
 {
 	TIMER_METER = 1,
-	TIMER_MOUSE = 2,
-	TIMER_FADE = 3,
-	TIMER_TRANSITION = 4,
-	TIMER_DEACTIVATE = 5,
-	TIMER_PREVENT_MOVE = 6,
-	TIMER_CARET = 7,
-	TIMER_WRITE_OPTIONS = 8,
+	TIMER_FADE = 2,
+	TIMER_TRANSITION = 3,
+	TIMER_DEACTIVATE = 4,
+	TIMER_PREVENT_MOVE = 5,
+	TIMER_CARET = 6,
+	TIMER_WRITE_OPTIONS = 7,
 
 	// Update this when adding a new timer.
-	TIMER_MAX = 8
+	TIMER_MAX = 7
 };
 
 enum INTERVAL
 {
 	INTERVAL_METER = 1000,
-	INTERVAL_MOUSE = 500,
 	INTERVAL_FADE = 10,
 	INTERVAL_TRANSITION = 100,
 	INTERVAL_PREVENT_MOVE = 2000,
@@ -207,7 +205,6 @@ Skin::~Skin()
 void Skin::Dispose(bool refresh)
 {
 	KillTimer(m_Window, TIMER_METER);
-	KillTimer(m_Window, TIMER_MOUSE);
 	KillTimer(m_Window, TIMER_FADE);
 	KillTimer(m_Window, TIMER_TRANSITION);
 	KillTimer(m_Window, TIMER_PREVENT_MOVE);
@@ -540,13 +537,10 @@ void Skin::Refresh(bool init, bool all)
 		ChangeZPos(m_WindowZPosition, all);
 	}
 
-	// Start the timers
 	if (m_WindowUpdate >= 0)
 	{
 		SetTimer(m_Window, TIMER_METER, m_WindowUpdate, nullptr);
 	}
-
-	SetTimer(m_Window, TIMER_MOUSE, INTERVAL_MOUSE, nullptr);
 
 	GetRainmeter().SetCurrentParser(nullptr);
 
@@ -3452,53 +3446,48 @@ void Skin::Update(UpdateOptions options)
 	}
 }
 
+void Skin::UpdateMouseState()
+{
+	if (m_State != STATE_RUNNING || m_Dragging) return;
+
+	ShowWindowIfAppropriate();
+
+	if (m_WindowZPosition == ZPOSITION_ONTOPMOST)
+	{
+		ChangeZPos(ZPOSITION_ONTOPMOST);
+	}
+
+	if (!m_MouseOver) return;
+
+	POINT pos = System::GetCursorPosition();
+	if (!m_ClickThrough)
+	{
+		if (WindowFromPoint(pos) == m_Window)
+		{
+			SetMouseLeaveEvent(false);
+		}
+		else
+		{
+			OnMouseLeave(m_WindowDraggable ? WM_NCMOUSELEAVE : WM_MOUSELEAVE, 0, 0);
+		}
+	}
+	else
+	{
+		bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
+		if (!keyDown || GetWindowFromPoint(pos) != m_Window)
+		{
+			OnMouseLeave(m_WindowDraggable ? WM_NCMOUSELEAVE : WM_MOUSELEAVE, 0, 0);
+		}
+	}
+}
+
 // Handles the timers. The METERTIMER updates all the measures
-// MOUSETIMER is used to hide/show the window.
 LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (wParam)
 	{
 	case TIMER_METER:
 		Update();
-		break;
-
-	case TIMER_MOUSE:
-		if (!GetRainmeter().IsMenuActive() && !m_Dragging)
-		{
-			ShowWindowIfAppropriate();
-
-			if (m_WindowZPosition == ZPOSITION_ONTOPMOST)
-			{
-				ChangeZPos(ZPOSITION_ONTOPMOST);
-			}
-
-			if (m_MouseOver)
-			{
-				POINT pos = System::GetCursorPosition();
-
-				if (!m_ClickThrough)
-				{
-					if (WindowFromPoint(pos) == m_Window)
-					{
-						SetMouseLeaveEvent(false);
-					}
-					else
-					{
-						// Run all mouse leave actions
-						OnMouseLeave(m_WindowDraggable ? WM_NCMOUSELEAVE : WM_MOUSELEAVE, 0, 0);
-					}
-				}
-				else
-				{
-					bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
-					if (!keyDown || GetWindowFromPoint(pos) != m_Window)
-					{
-						// Run all mouse leave actions
-						OnMouseLeave(m_WindowDraggable ? WM_NCMOUSELEAVE : WM_MOUSELEAVE, 0, 0);
-					}
-				}
-			}
-		}
 		break;
 
 	case TIMER_CARET:

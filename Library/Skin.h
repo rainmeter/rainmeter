@@ -246,6 +246,8 @@ public:
 
 	bool IsClosing() { return m_State == STATE_CLOSING; }
 
+	void UpdateMouseState();
+
 	const Mouse& GetMouse() { return m_Mouse; }
 
 	void MakePathAbsolute(std::wstring& path);

@@ -25,13 +25,15 @@ enum TIMER
 {
 	TIMER_SHOWDESKTOP = 1,
 	TIMER_RESUME = 2,
-	TIMER_WINDOWOCCLUSION = 3
+	TIMER_WINDOWOCCLUSION = 3,
+	TIMER_MOUSE = 4
 };
 enum INTERVAL
 {
 	INTERVAL_SHOWDESKTOP    = 250,
 	INTERVAL_RESTOREWINDOWS = 100,
-	INTERVAL_RESUME         = 1000
+	INTERVAL_RESUME         = 1000,
+	INTERVAL_MOUSE          = 500
 };
 
 HWND System::c_Window = nullptr;
@@ -111,12 +113,14 @@ void System::Initialize(HINSTANCE instance)
 		WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
 
 	SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, nullptr);
+	SetTimer(c_Window, TIMER_MOUSE, INTERVAL_MOUSE, nullptr);
 }
 
 void System::Finalize()
 {
 	KillTimer(c_Window, TIMER_SHOWDESKTOP);
 	KillTimer(c_Window, TIMER_RESUME);
+	KillTimer(c_Window, TIMER_MOUSE);
 
 	if (c_WinEventHook)
 	{
@@ -638,6 +642,16 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 		case TIMER_WINDOWOCCLUSION:
 			WindowOcclusionTracker::HandleTimer();
+			break;
+
+		case TIMER_MOUSE:
+			if (!GetRainmeter().IsMenuActive())
+			{
+				for (const auto& skin : GetRainmeter().GetAllSkins())
+				{
+					skin.second->UpdateMouseState();
+				}
+			}
 			break;
 		}
 		break;
