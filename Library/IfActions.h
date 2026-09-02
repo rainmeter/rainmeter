@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <string>
 #include <vector>
+#include <memory>
 
 class ConfigParser;
 class Measure;
@@ -43,8 +44,7 @@ public:
 class IfActions
 {
 public:
-	IfActions();
-	~IfActions();
+	IfActions() = default;
 
 	IfActions(const IfActions& other) = delete;
 	IfActions& operator=(IfActions other) = delete;
@@ -55,21 +55,31 @@ public:
 	void SetState(double& value);
 
 private:
-	double m_AboveValue;
-	double m_BelowValue;
-	int64_t m_EqualValue;
+	void DoValueActions(Measure& measure, double value);
 
-	std::wstring m_AboveAction;
-	std::wstring m_BelowAction;
-	std::wstring m_EqualAction;
+	struct ValueActions
+	{
+		double aboveValue = 0.0;
+		double belowValue = 0.0;
+		int64_t equalValue = 0;
 
-	bool m_AboveCommitted;
-	bool m_BelowCommitted;
-	bool m_EqualCommitted;
+		std::wstring aboveAction;
+		std::wstring belowAction;
+		std::wstring equalAction;
 
-	std::vector<IfState> m_Conditions;
-	bool m_ConditionMode;
+		bool aboveCommitted = false;
+		bool belowCommitted = false;
+		bool equalCommitted = false;
+	};
 
-	std::vector<IfState> m_Matches;
-	bool m_MatchMode;
+	struct ExpressionActions
+	{
+		std::vector<IfState> conditions;
+		std::vector<IfState> matches;
+		bool conditionMode = false;
+		bool matchMode = false;
+	};
+
+	std::unique_ptr<ValueActions> m_ValueActions;
+	std::unique_ptr<ExpressionActions> m_ExpressionActions;
 };

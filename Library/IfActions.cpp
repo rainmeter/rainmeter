@@ -7,45 +7,48 @@
 #include "../Common/MathParser.h"
 #include "Pcre.h"
 
-IfActions::IfActions() :
-	m_AboveValue(0.0),
-	m_BelowValue(0.0),
-	m_EqualValue(0),
-	m_AboveAction(),
-	m_BelowAction(),
-	m_EqualAction(),
-	m_AboveCommitted(false),
-	m_BelowCommitted(false),
-	m_EqualCommitted(false),
-	m_Conditions(),
-	m_ConditionMode(false),
-	m_Matches(),
-	m_MatchMode(false)
-{
-}
-
-IfActions::~IfActions()
-{
-}
-
 void IfActions::ReadOptions(ConfigParser& parser, std::wstring_view section)
 {
-	parser.ReadString(m_AboveAction, section, L"IfAboveAction", L"", { .sectionVariables = false });
-	m_AboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0);
+	std::wstring aboveAction, belowAction, equalAction;
+	parser.ReadString(aboveAction, section, L"IfAboveAction", L"", { .sectionVariables = false });
+	parser.ReadString(belowAction, section, L"IfBelowAction", L"", { .sectionVariables = false });
+	parser.ReadString(equalAction, section, L"IfEqualAction", L"", { .sectionVariables = false });
 
-	parser.ReadString(m_BelowAction, section, L"IfBelowAction", L"", { .sectionVariables = false });
-	m_BelowValue = parser.ReadFloat(section, L"IfBelowValue", 0.0);
+	if (aboveAction.empty() && belowAction.empty() && equalAction.empty())
+	{
+		m_ValueActions.reset();
+		return;
+	}
 
-	parser.ReadString(m_EqualAction, section, L"IfEqualAction", L"", { .sectionVariables = false });
-	m_EqualValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0);
+	if (!m_ValueActions) m_ValueActions = std::make_unique<ValueActions>();
+
+	m_ValueActions->aboveAction = std::move(aboveAction);
+	m_ValueActions->aboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0);
+
+	m_ValueActions->belowAction = std::move(belowAction);
+	m_ValueActions->belowValue = parser.ReadFloat(section, L"IfBelowValue", 0.0);
+
+	m_ValueActions->equalAction = std::move(equalAction);
+	m_ValueActions->equalValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0);
 }
 
 void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view section)
 {
-	// IfCondition options
-	m_ConditionMode = parser.ReadBool(section, L"IfConditionMode", false);
-
 	std::wstring condition = parser.ReadString(section, L"IfCondition", L"");
+	std::wstring match = parser.ReadString(section, L"IfMatch", L"");
+	if (condition.empty() && match.empty())
+	{
+		m_ExpressionActions.reset();
+		return;
+	}
+
+	if (!m_ExpressionActions) m_ExpressionActions = std::make_unique<ExpressionActions>();
+
+	auto& actions = *m_ExpressionActions;
+
+	// IfCondition options
+	actions.conditionMode = parser.ReadBool(section, L"IfConditionMode", false);
+
 	if (!condition.empty())
 	{
 		std::wstring tAction = parser.ReadString(section, L"IfTrueAction", L"", { .sectionVariables = false });
@@ -55,13 +58,13 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view sec
 			size_t i = 1;
 			do
 			{
-				if (m_Conditions.size() > (i - 1))
+				if (actions.conditions.size() > (i - 1))
 				{
-					m_Conditions[i - 1].Set(condition, tAction, fAction);
+					actions.conditions[i - 1].Set(condition, tAction, fAction);
 				}
 				else
 				{
-					m_Conditions.emplace_back(condition, tAction, fAction);
+					actions.conditions.emplace_back(condition, tAction, fAction);
 				}
 
 				// Check for IfCondition2/IfTrueAction2/IfFalseAction2 ... etc.
@@ -80,18 +83,17 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view sec
 		}
 		else
 		{
-			m_Conditions.clear();
+			actions.conditions.clear();
 		}
 	}
 	else
 	{
-		m_Conditions.clear();
+		actions.conditions.clear();
 	}
 
 	// IfMatch options
-	m_MatchMode = parser.ReadBool(section, L"IfMatchMode", false);
+	actions.matchMode = parser.ReadBool(section, L"IfMatchMode", false);
 
-	std::wstring match = parser.ReadString(section, L"IfMatch", L"");
 	if (!match.empty())
 	{
 		std::wstring tAction = parser.ReadString(section, L"IfMatchAction", L"", { .sectionVariables = false });
@@ -101,13 +103,13 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view sec
 			size_t i = 1;
 			do
 			{
-				if (m_Matches.size() > (i - 1))
+				if (actions.matches.size() > (i - 1))
 				{
-					m_Matches[i - 1].Set(match, tAction, fAction);
+					actions.matches[i - 1].Set(match, tAction, fAction);
 				}
 				else
 				{
-					m_Matches.emplace_back(match, tAction, fAction);
+					actions.matches.emplace_back(match, tAction, fAction);
 				}
 
 				// Check for IfMatch2/IfMatchAction2/IfNotMatchAction2 ... etc.
@@ -125,71 +127,90 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view sec
 		}
 		else
 		{
-			m_Matches.clear();
+			actions.matches.clear();
 		}
 	}
 	else
 	{
-		m_Matches.clear();
+		actions.matches.clear();
+	}
+
+	if (actions.conditions.empty() && actions.matches.empty())
+	{
+		m_ExpressionActions.reset();
+	}
+}
+
+void IfActions::DoValueActions(Measure& measure, double value)
+{
+	auto& actions = *m_ValueActions;
+
+	// IfEqual
+	if (!actions.equalAction.empty())
+	{
+		if ((int64_t)value == actions.equalValue)
+		{
+			if (!actions.equalCommitted)
+			{
+				actions.equalCommitted = true;		// To avoid infinite loop from !Update
+				GetRainmeter().ExecuteActionCommand(actions.equalAction.c_str(), &measure);
+			}
+		}
+		else
+		{
+			actions.equalCommitted = false;
+		}
+	}
+
+	// IfAbove
+	if (!actions.aboveAction.empty())
+	{
+		if (value > actions.aboveValue)
+		{
+			if (!actions.aboveCommitted)
+			{
+				actions.aboveCommitted = true;		// To avoid infinite loop from !Update
+				GetRainmeter().ExecuteActionCommand(actions.aboveAction.c_str(), &measure);
+			}
+		}
+		else
+		{
+			actions.aboveCommitted = false;
+		}
+	}
+
+	// IfBelow
+	if (!actions.belowAction.empty())
+	{
+		if (value < actions.belowValue)
+		{
+			if (!actions.belowCommitted)
+			{
+				actions.belowCommitted = true;		// To avoid infinite loop from !Update
+				GetRainmeter().ExecuteActionCommand(actions.belowAction.c_str(), &measure);
+			}
+		}
+		else
+		{
+			actions.belowCommitted = false;
+		}
 	}
 }
 
 void IfActions::DoIfActions(Measure& measure, double value)
 {
-	// IfEqual
-	if (!m_EqualAction.empty())
+	if (m_ValueActions)
 	{
-		if ((int64_t)value == m_EqualValue)
-		{
-			if (!m_EqualCommitted)
-			{
-				m_EqualCommitted = true;		// To avoid infinite loop from !Update
-				GetRainmeter().ExecuteActionCommand(m_EqualAction.c_str(), &measure);
-			}
-		}
-		else
-		{
-			m_EqualCommitted = false;
-		}
+		DoValueActions(measure, value);
 	}
 
-	// IfAbove
-	if (!m_AboveAction.empty())
-	{
-		if (value > m_AboveValue)
-		{
-			if (!m_AboveCommitted)
-			{
-				m_AboveCommitted = true;		// To avoid infinite loop from !Update
-				GetRainmeter().ExecuteActionCommand(m_AboveAction.c_str(), &measure);
-			}
-		}
-		else
-		{
-			m_AboveCommitted = false;
-		}
-	}
+	if (!m_ExpressionActions) return;
 
-	// IfBelow
-	if (!m_BelowAction.empty())
-	{
-		if (value < m_BelowValue)
-		{
-			if (!m_BelowCommitted)
-			{
-				m_BelowCommitted = true;		// To avoid infinite loop from !Update
-				GetRainmeter().ExecuteActionCommand(m_BelowAction.c_str(), &measure);
-			}
-		}
-		else
-		{
-			m_BelowCommitted = false;
-		}
-	}
+	auto& actions = *m_ExpressionActions;
 
 	// IfCondition
 	int i = 0;
-	for (auto& item : m_Conditions)
+	for (auto& item : actions.conditions)
 	{
 		++i;
 		if (!item.value.empty() && (!item.tAction.empty() || !item.fAction.empty()))
@@ -219,7 +240,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 				{
 					item.fCommitted = false;
 
-					if (m_ConditionMode || !item.tCommitted)
+					if (actions.conditionMode || !item.tCommitted)
 					{
 						item.tCommitted = true;
 						GetRainmeter().ExecuteActionCommand(item.tAction.c_str(), &measure);
@@ -229,7 +250,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 				{
 					item.tCommitted = false;
 
-					if (m_ConditionMode || !item.fCommitted)
+					if (actions.conditionMode || !item.fCommitted)
 					{
 						item.fCommitted = true;
 						GetRainmeter().ExecuteActionCommand(item.fAction.c_str(), &measure);
@@ -241,7 +262,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 
 	// IfMatch
 	i = 0;
-	for (auto& item : m_Matches)
+	for (auto& item : actions.matches)
 	{
 		++i;
 		if (!item.value.empty() && (!item.tAction.empty() || !item.fAction.empty()))
@@ -277,7 +298,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 				{
 					item.fCommitted = false;
 
-					if (m_MatchMode || !item.tCommitted)
+					if (actions.matchMode || !item.tCommitted)
 					{
 						item.tCommitted = true;
 						GetRainmeter().ExecuteActionCommand(item.tAction.c_str(), &measure);
@@ -287,7 +308,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 				{
 					item.tCommitted = false;
 
-					if (m_MatchMode || !item.fCommitted)
+					if (actions.matchMode || !item.fCommitted)
 					{
 						item.fCommitted = true;
 						GetRainmeter().ExecuteActionCommand(item.fAction.c_str(), &measure);
@@ -301,28 +322,35 @@ void IfActions::DoIfActions(Measure& measure, double value)
 void IfActions::SetState(double& value)
 {
 	// Set IfAction committed state to false if condition is not met with value = 0
-	if (m_EqualValue != (int64_t)value)
+	if (m_ValueActions)
 	{
-		m_EqualCommitted = false;
+		auto& actions = *m_ValueActions;
+
+		if (actions.equalValue != (int64_t)value)
+		{
+			actions.equalCommitted = false;
+		}
+
+		if (actions.aboveValue <= value)
+		{
+			actions.aboveCommitted = false;
+		}
+
+		if (actions.belowValue >= value)
+		{
+			actions.belowCommitted = false;
+		}
 	}
 
-	if (m_AboveValue <= value)
-	{
-		m_AboveCommitted = false;
-	}
+	if (!m_ExpressionActions) return;
 
-	if (m_BelowValue >= value)
-	{
-		m_BelowCommitted = false;
-	}
-
-	for (auto& item : m_Conditions)
+	for (auto& item : m_ExpressionActions->conditions)
 	{
 		item.tCommitted = false;
 		item.fCommitted = false;
 	}
 
-	for (auto& item : m_Matches)
+	for (auto& item : m_ExpressionActions->matches)
 	{
 		item.tCommitted = false;
 		item.fCommitted = false;
