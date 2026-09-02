@@ -21,18 +21,26 @@ Encoding detection happens once, on the whole file, before anything else. The re
 | UTF-16LE **with** BOM | Works. Full Unicode preserved. |
 | UTF-16LE **without** BOM | Works, identically. Detection is by content, not by BOM. |
 | UTF-8 **without** BOM | Read as ANSI. Mojibake under CP1252; correct under ACP 65001. |
-| **UTF-8 with BOM** | **Entire file unreadable. Zero sections.** |
+| **UTF-8 with BOM** | The BOM corrupts the first line. How much else is lost was never tested. |
 | UTF-16BE with BOM | **Entire file unreadable. Zero sections.** |
 | UTF-16BE without BOM | Catastrophically misparsed (see NUL handling below). |
 | UTF-16LE with an odd byte count | **Entire file unreadable.** |
 
 Two things deserve emphasis.
 
-**A UTF-8 BOM makes the file completely invisible.** Not partially — a file containing nothing but
-`EF BB BF [Section] CRLF Key=Value CRLF` returns zero sections and `ERROR_FILE_NOT_FOUND` on every
-lookup. This is independent of the ANSI codepage; it fails under 65001 too. Since a great deal of
-software writes UTF-8 with a BOM by default, this is the single most user-visible defect in the
-current behavior.
+**A UTF-8 BOM corrupts the first line. The evidence does not establish more than that.** The case
+measured, a file containing nothing but `EF BB BF [Section] CRLF Key=Value CRLF`, returns zero
+sections and `ERROR_FILE_NOT_FOUND` on every lookup, under CP1252 and under 65001 alike. But its
+only section header sits on the first line, which is precisely the line the BOM lands on: the
+three bytes decode ahead of the `[`, the line stops being a header, and the key below it falls
+before any section and becomes unreachable. A one-section fixture cannot tell "the file is
+invisible" apart from "the first line is ruined", and `enc-bom-mid-file` below argues for the
+latter — a BOM is ordinary data that spoils only the line it is on, and offset 0 is not special to
+a byte-oriented parser. A file whose first line is a comment or blank, with its sections further
+down, has never been tested and would be expected to parse normally.
+
+Since a great deal of software writes UTF-8 with a BOM by default, this is still the most
+user-visible defect in the current behavior, whichever of the two it turns out to be.
 
 **UTF-16LE needs no BOM.** The detection is content based, so a UTF-16LE file without a BOM reads
 exactly like one with it.
@@ -254,11 +262,16 @@ A new file is never created as UTF-16, even when the value being written needs i
 **Characters not representable in the ANSI codepage become `?`**, one per UTF-16 code unit, with no
 error and `ret == 1`. An emoji becomes `??`. This is silent, unrecoverable data loss.
 
-**The UTF-8-BOM corruption path**: because the reader cannot see any section in such a file, the
-writer believes the section does not exist and appends a duplicate one at the end. Then it writes
-the value in ANSI. The file ends up containing both UTF-8 and CP1252 bytes, the original content
-is orphaned, and the new content is in the wrong encoding. Rainmeter destroys UTF-8-BOM .ini files
-today, on any save.
+**The UTF-8-BOM corruption path**: the writer parses the file the same way the reader does, so it
+misses a section header on the BOM's own line for the same reason — and in the file measured, that
+was the only header there is. It concludes the section does not exist, appends a duplicate at the
+end, and writes the value in ANSI. The file ends up containing both UTF-8 and CP1252 bytes, the
+original content is orphaned, and the new content is in the wrong encoding.
+
+Where the section is further down, the writer would be expected to find it and write into it in
+place, mixing ANSI bytes into a UTF-8 file without orphaning anything — less destructive, still
+wrong, and untested. Either way the writer treats the file as ANSI, which is why reading it as
+UTF-8 cannot come first: every save would then corrupt a file that had just loaded correctly.
 
 ### 5.2 Placement and formatting
 

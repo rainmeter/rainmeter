@@ -16,8 +16,9 @@ enum class Encoding
 
 Encoding DetectEncoding(const BYTE* data, size_t size)
 {
-	// A UTF-8 BOM makes the whole file invisible to the PrivateProfile API.
-	if (size >= 3 && data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF) return Encoding::Unreadable;
+	// A UTF-8 BOM is deliberately not recognized, so those three bytes go through the ANSI
+	// codepage like any others and corrupt the first line of the file, exactly as the profile API
+	// leaves it.
 	if (size >= 2 && data[0] == 0xFE && data[1] == 0xFF) return Encoding::Unreadable;
 
 	// An odd byte count leaves half a code unit dangling, and the file is rejected outright.
@@ -95,9 +96,8 @@ std::optional<DecodedText> DecodeFile(const std::wstring& path)
 	DecodedText text = DecodedText::FromMemory(data.get(), size);
 
 	// A file with bytes in it that decodes to nothing was turned down by the encoding detection:
-	// a UTF-8 BOM, UTF-16BE, or an odd byte count. Saying so is the whole point -- such a file is
-	// otherwise indistinguishable from an empty one, and a skin whose @Include silently
-	// contributes nothing is the hardest kind of breakage to find in a log.
+	// UTF-16BE, or an odd byte count. Report it rather than hand back empty text, which the caller
+	// cannot tell apart from an empty file.
 	if (size != 0 && text.IsEmpty()) return std::nullopt;
 
 	return std::optional<DecodedText>(std::move(text));
