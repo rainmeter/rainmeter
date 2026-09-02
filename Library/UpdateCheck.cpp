@@ -2,9 +2,9 @@
 
 #include "StdAfx.h"
 #include "../Common/FileUtil.h"
+#include "../Common/IniFileReader.h"
 #include "../Common/MathParser.h"
 #include "../Common/StringParser.h"
-#include "../Common/StringUtil.h"
 #include "Rainmeter.h"
 #include "Language.h"
 #include "System.h"
@@ -12,8 +12,6 @@
 #include "UpdateCheck.h"
 #include "Util.h"
 #include "../Version.h"
-
-#include "../ThirdParty/inipp/inipp.h"
 
 #include <SoftPub.h>
 #include <bcrypt.h>
@@ -79,8 +77,7 @@ void Updater::CheckLanguageObsoleteStatus()
 	const auto lcid = (unsigned)GetLanguage().GetLCID();
 	MathParser mathParser;
 
-	const std::wstring obsoleteLanguages = StringUtil::Widen(m_ObsoleteLanguages);
-	StringParser::ForEachToken(obsoleteLanguages, L',', [&](std::wstring_view idString)
+	StringParser::ForEachToken(m_ObsoleteLanguages, L',', [&](std::wstring_view idString)
 	{
 		if (obsolete) return;
 
@@ -107,22 +104,35 @@ void Updater::StatusFetchResultCallback(const Net::FetchTask* fetchTask, void* r
 	if (updater->m_FetchStatusTask != fetchTask) return;
 	updater->m_FetchStatusTask = nullptr;
 
-	std::stringstream stream(std::string((char*)data, dataSize));
-	inipp::Ini<char> ini;
-	ini.parse(stream);
+	std::optional<std::wstring> version, downloadUrl, downloadHash, obsoleteLanguages;
+	bool inRelease = false;
+	IniFileReader::DecodedText::FromMemory(data, dataSize).Parse(
+		[&](std::wstring_view name)
+		{
+			inRelease = name == L"Release";
+		},
+		[&](std::wstring_view key, std::wstring_view value)
+		{
+			if (!inRelease) return;
 
-	std::string version, downloadUrl, downloadHash;
-	const auto& section = ini.sections["Release"];
-	if (!inipp::get_value(section, "Version", version) ||
-			!inipp::get_value(section, "URL", downloadUrl) ||
-			!inipp::get_value(section, "Hash", downloadHash) ||
-			!inipp::get_value(section, "ObsoleteLanguages", updater->m_ObsoleteLanguages))
+			// First match wins for a duplicate key, as it does everywhere else.
+			auto set = [&](std::optional<std::wstring>& target) { if (!target) target = value; };
+
+			if (key == L"Version") set(version);
+			else if (key == L"URL") set(downloadUrl);
+			else if (key == L"Hash") set(downloadHash);
+			else if (key == L"ObsoleteLanguages") set(obsoleteLanguages);
+		});
+
+	if (!version || !downloadUrl || !downloadHash || !obsoleteLanguages)
 	{
 		LogErrorF(L"Invalid update .ini");
 		return;
 	}
 
-	const std::wstring url = StringUtil::Widen(downloadUrl);
+	updater->m_ObsoleteLanguages = std::move(*obsoleteLanguages);
+
+	const std::wstring& url = *downloadUrl;
 	if (wcsncmp(url.c_str(), s_DownloadServer1, wcslen(s_DownloadServer1)) != 0 &&
 			wcsncmp(url.c_str(), s_DownloadServer2, wcslen(s_DownloadServer2)) != 0)
 	{
@@ -130,7 +140,7 @@ void Updater::StatusFetchResultCallback(const Net::FetchTask* fetchTask, void* r
 		return;
 	}
 
-	updater->m_AvailableVersion.Set(StringUtil::Widen(version));
+	updater->m_AvailableVersion.Set(*version);
 	if (!updater->m_AvailableVersion.IsValid())
 	{
 		LogErrorF(L"Invalid update .ini");
@@ -157,7 +167,7 @@ void Updater::StatusFetchResultCallback(const Net::FetchTask* fetchTask, void* r
 	const std::wstring path = GetRainmeter().GetSettingsPath() + L"Updates\\";
 	const std::wstring fullPath = path + fileName;
 
-	const std::wstring fileHash = StringUtil::Widen(downloadHash);
+	const std::wstring& fileHash = *downloadHash;
 
 	if (PathFileExists(fullPath.c_str()))
 	{
