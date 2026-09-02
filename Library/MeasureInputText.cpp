@@ -306,11 +306,10 @@ class MeasureInputText::InputBox
 public:
 	explicit InputBox(const std::shared_ptr<SharedData>& data) : m_Data(data) {}
 
-	// Opens the box over |skinWindow| and pumps messages until it is answered. |skinActive| is
-	// whether that skin already held the foreground when the box was asked for. Returns the text on
+	// Opens the box over |skinWindow| and pumps messages until it is answered. Returns the text on
 	// submit, and nothing when it was dismissed - by Escape, by losing focus, or by the measure
 	// closing it from the main thread.
-	std::optional<std::wstring> Show(const InputTextOptions& options, HWND skinWindow, float scale, bool skinActive);
+	std::optional<std::wstring> Show(const InputTextOptions& options, HWND skinWindow, float scale);
 
 private:
 	static LRESULT CALLBACK WndProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -322,9 +321,9 @@ private:
 	// |false| for a character the InputNumber filter refuses.
 	bool AcceptsChar(WCHAR ch) const;
 
-	// |true| where a deactivation of the box is the skin it belongs to being activated by the click
-	// that asked for the box, rather than the user clicking away from it.
-	bool IsSkinActivationFromOpeningClick(HWND activated) const;
+	// |true| where a deactivation of the box is Rainmeter answering the click that asked for the
+	// box, rather than the user clicking away from it.
+	bool IsActivationFromOpeningClick(HWND activated) const;
 
 	void Close(bool submitted);
 
@@ -332,7 +331,6 @@ private:
 	const InputTextOptions* m_Options = nullptr;
 	HWND m_Window = nullptr;
 	HWND m_Edit = nullptr;
-	HWND m_Owner = nullptr;
 	HFONT m_Font = nullptr;
 	HBRUSH m_BackBrush = nullptr;
 	bool m_Submitted = false;
@@ -341,9 +339,8 @@ private:
 	// down deactivates it, and being deactivated is itself one of the ways out of the box.
 	bool m_Closing = false;
 
-	// Until when a deactivation may still be the skin behind the box coming forward, and whether
-	// that has already been answered. Zero where the skin was up before the box was, and so has
-	// no activation left to arrive.
+	// Until when a deactivation may still be Rainmeter coming forward behind the box, and whether
+	// that has already been answered.
 	ULONGLONG m_SettleUntil = 0;
 	bool m_Reclaimed = false;
 
@@ -352,7 +349,7 @@ private:
 	std::wstring m_Text;
 };
 
-std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOptions& options, HWND skinWindow, float scale, bool skinActive)
+std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOptions& options, HWND skinWindow, float scale)
 {
 	// Positions are relative to the skin, which is where the skin wrote them: the box is drawn
 	// over the skin rather than in it, but a skin author places it against what they can see.
@@ -376,7 +373,6 @@ std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOpti
 	}
 
 	m_Options = &options;
-	m_Owner = skinWindow;
 
 	// The scale is applied here rather than where the options were read, so that a box opening now
 	// opens at the scale the skin is at now.
@@ -424,12 +420,12 @@ std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOpti
 		const bool disableSkin = !options.focusDismiss && IsWindowEnabled(skinWindow);
 		if (disableSkin) EnableWindow(skinWindow, FALSE);
 
-		// The click that opens a box also activates the skin the box is drawn over. Where that skin
-		// already held the foreground, nothing of the sort is on its way and every deactivation
-		// from here is the user leaving. Where it did not, its activation is still coming, and the
-		// box has to sit through it: long enough for a busy skin to get around to activating
-		// itself, short enough that a click the user meant as a dismissal is past it.
-		if (!skinActive) m_SettleUntil = GetTickCount64() + 500;
+		// The click that opens a box leaves activation of its own behind it - of the skin the box
+		// is drawn over, and of whatever else that skin puts up on the way, a tooltip skin the
+		// pointer passed over being the usual one. All of it lands after the box has taken the
+		// foreground, and the box has to sit through it: long enough for a busy skin to get
+		// around to it, short enough that a click the user meant as a dismissal is past it.
+		m_SettleUntil = GetTickCount64() + 500;
 
 		ShowWindow(m_Window, SW_SHOW);
 		SetForegroundWindow(m_Window);
@@ -592,11 +588,11 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 		// draws no buttons of its own has.
 		if (LOWORD(wParam) == WA_INACTIVE && box->m_Options->focusDismiss)
 		{
-			// Except where it is the skin coming up behind the box instead, which would otherwise
+			// Except where it is Rainmeter coming up behind the box instead, which would otherwise
 			// dismiss the box before it was ever seen. That is answered by taking the foreground
 			// back, and only ever once, so that a skin which reacts to losing it by activating
 			// something of its own cannot be traded with.
-			if (!box->m_Closing && !box->m_Reclaimed && box->IsSkinActivationFromOpeningClick((HWND)lParam))
+			if (!box->m_Closing && !box->m_Reclaimed && box->IsActivationFromOpeningClick((HWND)lParam))
 			{
 				box->m_Reclaimed = true;
 				SetForegroundWindow(wnd);
@@ -620,7 +616,6 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 
 		box->m_Window = nullptr;
 		box->m_Edit = nullptr;
-		box->m_Owner = nullptr;
 		PostQuitMessage(0);
 		return 0;
 	}
@@ -694,7 +689,7 @@ bool MeasureInputText::InputBox::AcceptsChar(WCHAR ch) const
 	return true;
 }
 
-bool MeasureInputText::InputBox::IsSkinActivationFromOpeningClick(HWND activated) const
+bool MeasureInputText::InputBox::IsActivationFromOpeningClick(HWND activated) const
 {
 	// Timed rather than answered by the settle message the box posts itself: that message is on
 	// the queue of the box and orders against nothing the skin does, so a skin slow enough to
@@ -706,7 +701,13 @@ bool MeasureInputText::InputBox::IsSkinActivationFromOpeningClick(HWND activated
 	// WM_ACTIVATE is not obliged to name the window taking over, and by the time it arrives the
 	// foreground is that window anyway.
 	if (activated == nullptr) activated = GetForegroundWindow();
-	return activated == m_Owner;
+
+	// Any window of ours and not the skin alone: what the click stirs up is as often another skin
+	// as it is the one the box belongs to. A window of some other program taking over this early
+	// is the user having gone there, whatever the box was in the middle of.
+	DWORD processId = 0;
+	GetWindowThreadProcessId(activated, &processId);
+	return processId == GetCurrentProcessId();
 }
 
 // One prompt, and the worker thread it is opened on. The box runs a message loop of its own, and
@@ -722,10 +723,6 @@ public:
 		task->m_Options = options;
 		task->m_SkinWindow = skinWindow;
 		task->m_Scale = scale;
-
-		// Read here rather than on the worker thread, where the skin may have come up in the
-		// meantime and the box would take a late activation of it for the user clicking away.
-		task->m_SkinActive = GetForegroundWindow() == skinWindow;
 
 		if (!task->Start())
 		{
@@ -744,7 +741,7 @@ private:
 		if (m_AbortRequested || !m_Data->active) return;
 
 		InputBox box(m_Data);
-		m_Input = box.Show(m_Options, m_SkinWindow, m_Scale, m_SkinActive);
+		m_Input = box.Show(m_Options, m_SkinWindow, m_Scale);
 	}
 
 	void FinishWorkOnMainThread() override
@@ -763,7 +760,6 @@ private:
 	InputTextOptions m_Options;
 	HWND m_SkinWindow = nullptr;
 	float m_Scale = 1.0f;
-	bool m_SkinActive = false;
 	std::optional<std::wstring> m_Input;
 };
 
