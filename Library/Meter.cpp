@@ -17,6 +17,7 @@
 #include "Measure.h"
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 
 Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
@@ -403,15 +404,32 @@ void Meter::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	m_AntiAlias = parser.ReadBool(section, L"AntiAlias", false);
 
-	std::vector<FLOAT> matrix = parser.ReadFloats(section, L"TransformationMatrix");
-	if (matrix.size() == 6)
+	const std::wstring& transformation = parser.ReadString(section, L"TransformationMatrix", L"");
+	if (!transformation.empty())
 	{
-		m_Transformation = D2D1::Matrix3x2F(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
-	}
-	else if (!matrix.empty())
-	{
-		m_Transformation = D2D1::Matrix3x2F::Identity();
-		LogErrorF(this, L"Meter: Incorrect number of values in TransformationMatrix=%s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
+		StringParser values(transformation);
+		FLOAT matrix[6] = { 0 };
+		bool valid = true;
+		for (auto& value : matrix)
+		{
+			if (values.IsConsumed())
+			{
+				valid = false;
+				break;
+			}
+
+			value = (FLOAT)parser.ParseDouble(values.ConsumeUntilOrRest(L';', StringParser::SkipWhitespace), 0.0);
+		}
+
+		if (valid && values.IsConsumed())
+		{
+			m_Transformation = D2D1::Matrix3x2F(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+		}
+		else
+		{
+			m_Transformation = D2D1::Matrix3x2F::Identity();
+			LogErrorF(this, L"Meter: Incorrect number of values in TransformationMatrix=%s", transformation.c_str());
+		}
 	}
 
 	ReadContainerOptions(parser, section);

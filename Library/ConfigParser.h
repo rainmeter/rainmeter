@@ -121,7 +121,6 @@ public:
 	D2D1_COLOR_F ReadColor(std::wstring_view section, std::wstring_view key, const D2D1_COLOR_F& defValue);
 	D2D1_RECT_F ReadRect(std::wstring_view section, std::wstring_view key, const D2D1_RECT_F& defValue);
 	RECT ReadRECT(std::wstring_view section, std::wstring_view key, const RECT& defValue);
-	std::vector<FLOAT> ReadFloats(std::wstring_view section, std::wstring_view key);
 
 	bool ParseFormula(std::wstring_view formula, double* resultValue);
 	std::wstring ParseFormulaWithModifiers(const std::wstring& formula);

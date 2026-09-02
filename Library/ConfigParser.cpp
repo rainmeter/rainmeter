@@ -1349,32 +1349,6 @@ Meter* ConfigParser::GetMeter(std::wstring_view name)
 	return (section && section->GetBaseTypeID() == TypeID<Meter>()) ? (Meter*)section : nullptr;
 }
 
-std::vector<FLOAT> ConfigParser::ReadFloats(std::wstring_view section, std::wstring_view key)
-{
-	std::vector<FLOAT> result;
-	const std::wstring& str = ReadString(section, key, L"");
-	if (!str.empty())
-	{
-		// Tokenize and parse the floats
-		const WCHAR delimiter = L';';
-		size_t lastPos = 0, pos = 0;
-		do
-		{
-			lastPos = str.find_first_not_of(delimiter, pos);
-			if (lastPos == std::wstring::npos) break;
-
-			pos = str.find_first_of(delimiter, lastPos + 1);
-
-			result.push_back((FLOAT)ParseDouble(str.substr(lastPos, pos - lastPos).c_str(), 0.0));  // (pos != std::wstring::npos) ? pos - lastPos : pos
-			if (pos == std::wstring::npos) break;
-
-			++pos;
-		}
-		while (true);
-	}
-	return result;
-}
-
 int ConfigParser::ReadInt(std::wstring_view section, std::wstring_view key, int defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");

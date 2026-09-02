@@ -143,14 +143,6 @@ public:
 		Assert::AreEqual(readRect.top, expRect.top);
 		Assert::AreEqual(readRect.right, expRect.right);
 		Assert::AreEqual(readRect.bottom, expRect.bottom);
-
-		parser.SetValue(L"A", L"Floats", L"1.1;2.1;;3.1");
-		std::vector<FLOAT> expFloats;
-		expFloats.push_back(1.1f);
-		expFloats.push_back(2.1f);
-		expFloats.push_back(3.1f);
-		Assert::IsTrue(parser.ReadFloats(L"A", L"Floats") == expFloats);
-		Assert::IsTrue(parser.ReadFloats(L"A", L"FloatsNA").empty());
 	}
 
 	TEST_METHOD(TestVariables)
