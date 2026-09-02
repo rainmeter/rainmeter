@@ -25,6 +25,7 @@ DialogPackage::DialogPackage() : Dialog(),
 	m_MergeSkins(false),
 	m_ProfileLoaded(false),
 	m_OptionsCreated(false),
+	m_TabItemSize(0),
 	m_PackagerThread(),
 	m_ZipFile(),
 	m_AllowNonAsciiFilenames(false)
@@ -225,7 +226,8 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			HWND tab = GetDlgItem(m_Window, DialogPackage::Id_Tab);
 			EnableWindow(tab, TRUE);
-			ShowWindow(tab, SW_SHOWNORMAL);
+			if (m_TabItemSize) TabCtrl_SetItemSize(tab, LOWORD(m_TabItemSize), HIWORD(m_TabItemSize));
+
 			ShowWindow(m_TabInfo.GetWindow(), SW_HIDE);
 			SelectTab(0);
 		}
@@ -246,9 +248,11 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			item = GetDlgItem(m_Window, DialogPackage::Id_LoadPreviousButton);
 			ShowWindow(item, SW_SHOWNORMAL);
 
+			// The pages draw their background from the tab control, so instead of hiding it, the
+			// tabs are squeezed out of sight and given their size back on the way in again.
 			HWND tab = GetDlgItem(m_Window, DialogPackage::Id_Tab);
 			EnableWindow(tab, FALSE);
-			ShowWindow(tab, SW_HIDE);
+			m_TabItemSize = (DWORD)TabCtrl_SetItemSize(tab, 0, 1);
 			EnableWindow(m_TabOptions.GetWindow(), FALSE);
 			EnableWindow(m_TabAdvanced.GetWindow(), FALSE);
 			ShowWindow(m_TabInfo.GetWindow(), SW_SHOWNORMAL);
