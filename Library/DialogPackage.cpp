@@ -852,6 +852,15 @@ void DialogPackage::ShowHelp()
 	ShellExecute(m_Window, L"open", url, nullptr, nullptr, SW_SHOWNORMAL);
 }
 
+static void SetPathText(HWND edit, const std::wstring& path)
+{
+	SetWindowText(edit, path.c_str());
+
+	const int end = (int)path.length();
+	Edit_SetSel(edit, end, end);
+	Edit_ScrollCaret(edit);
+}
+
 class DialogPackage::SelectFolderDialog : public Dialog
 {
 public:
@@ -996,7 +1005,7 @@ private:
 				const auto path = ShellDialog::SelectFolder({ .parent = m_Window });
 				if (path)
 				{
-					SetWindowText(GetControl(SelectFolderDialog::Id_CustomEdit), path->c_str());
+					SetPathText(GetControl(SelectFolderDialog::Id_CustomEdit), *path);
 				}
 			}
 			break;
@@ -1182,7 +1191,7 @@ private:
 						break;
 					}
 
-					PathSetDlgItemPath(m_Window, x32 ? SelectPluginDialog::Id_32BitEdit : SelectPluginDialog::Id_64BitEdit, path->c_str());
+					SetPathText(GetControl(x32 ? SelectPluginDialog::Id_32BitEdit : SelectPluginDialog::Id_64BitEdit), *path);
 					(x32 ? m_Plugins.first : m_Plugins.second) = *path;
 
 					std::wstring& other = x32 ? m_Plugins.second : m_Plugins.first;
@@ -1191,7 +1200,7 @@ private:
 						other = FindOtherArchitecture(*path, x32);
 						if (!other.empty())
 						{
-							PathSetDlgItemPath(m_Window, x32 ? SelectPluginDialog::Id_64BitEdit : SelectPluginDialog::Id_32BitEdit, other.c_str());
+							SetPathText(GetControl(x32 ? SelectPluginDialog::Id_64BitEdit : SelectPluginDialog::Id_32BitEdit), other);
 						}
 					}
 
