@@ -20,3 +20,5 @@ struct StringHash
 
 template <typename ValueType>
 using StringMap = ankerl::unordered_dense::map<std::wstring, ValueType, StringHash, std::equal_to<>>;
+
+using StringSet = ankerl::unordered_dense::set<std::wstring, StringHash, std::equal_to<>>;
