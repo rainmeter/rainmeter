@@ -29,6 +29,9 @@
 // - A line with no '=' is dropped and a value always has its quotes stripped, which is what
 //   GetPrivateProfileString does. GetPrivateProfileSection disagrees on both, and nothing needs
 //   the value that way.
+// - A file with no BOM is UTF-16 only if it has NUL bytes where UTF-16 would put them, never on
+//   the byte-frequency heuristic in IsTextUnicode, which accepts some plain ASCII as well. What
+//   the profile API's own detection accepts was never measured, so this may or may not differ.
 namespace IniFileReader {
 
 class DecodedText
@@ -110,6 +113,8 @@ private:
 	size_t m_Length;
 };
 
+// Returns nothing if the file cannot be opened, or if it has content that no encoding this
+// understands can decode, so that the caller can report it instead of reading an empty file.
 std::optional<DecodedText> DecodeFile(const std::wstring& path);
 
 }  // namespace IniFileReader

@@ -20,13 +20,20 @@ Encoding DetectEncoding(const BYTE* data, size_t size)
 	if (size >= 3 && data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF) return Encoding::Unreadable;
 	if (size >= 2 && data[0] == 0xFE && data[1] == 0xFF) return Encoding::Unreadable;
 
-	const bool hasBom = (size >= 2 && data[0] == 0xFF && data[1] == 0xFE);
-
-	// UTF-16LE is detected by content, so a file without a BOM reads exactly like one with it.
-	int flags = IS_TEXT_UNICODE_UNICODE_MASK;
-	if (hasBom || (size >= 2 && IsTextUnicode(data, (int)std::min<size_t>(size, INT_MAX), &flags)))
+	// An odd byte count leaves half a code unit dangling, and the file is rejected outright.
+	if (size >= 2 && data[0] == 0xFF && data[1] == 0xFE)
 	{
-		// An odd byte count leaves half a code unit dangling, and the file is rejected outright.
+		return (size % 2 == 0) ? Encoding::UTF16 : Encoding::Unreadable;
+	}
+
+	// UTF-16LE is detected by content too, so a file without a BOM reads exactly like one with it.
+	// Both tests below need a 0x00 byte to pass, and ANSI text has none, so neither can claim an
+	// ANSI file. IS_TEXT_UNICODE_STATISTICS is left out because it decides from byte frequency
+	// alone and does say yes to some plain ASCII. A file wrongly taken for UTF-16 decodes to
+	// garbage, which means no sections, no keys, and nothing in the log to say why.
+	int flags = IS_TEXT_UNICODE_ASCII16 | IS_TEXT_UNICODE_CONTROLS;
+	if (size >= 2 && IsTextUnicode(data, (int)std::min<size_t>(size, INT_MAX), &flags))
+	{
 		return (size % 2 == 0) ? Encoding::UTF16 : Encoding::Unreadable;
 	}
 
@@ -85,7 +92,15 @@ std::optional<DecodedText> DecodeFile(const std::wstring& path)
 	const std::unique_ptr<BYTE[]> data = FileUtil::ReadFullFile(path, &size);
 	if (!data) return std::nullopt;
 
-	return DecodedText::FromMemory(data.get(), size);
+	DecodedText text = DecodedText::FromMemory(data.get(), size);
+
+	// A file with bytes in it that decodes to nothing was turned down by the encoding detection:
+	// a UTF-8 BOM, UTF-16BE, or an odd byte count. Saying so is the whole point -- such a file is
+	// otherwise indistinguishable from an empty one, and a skin whose @Include silently
+	// contributes nothing is the hardest kind of breakage to find in a log.
+	if (size != 0 && text.IsEmpty()) return std::nullopt;
+
+	return std::optional<DecodedText>(std::move(text));
 }
 
 // Whitespace is every character at or below 0x20 and nothing else, so U+00A0 and U+3000 survive.
