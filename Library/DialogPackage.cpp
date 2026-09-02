@@ -1002,7 +1002,10 @@ private:
 
 		case SelectFolderDialog::Id_CustomBrowseButton:
 			{
-				const auto path = ShellDialog::SelectFolder({ .parent = m_Window });
+				WCHAR buffer[MAX_PATH] = { 0 };
+				Edit_GetText(GetControl(SelectFolderDialog::Id_CustomEdit), buffer, _countof(buffer));
+
+				const auto path = ShellDialog::SelectFolder({ .parent = m_Window, .initialPath = buffer });
 				if (path)
 				{
 					SetPathText(GetControl(SelectFolderDialog::Id_CustomEdit), *path);
@@ -1170,16 +1173,19 @@ private:
 		case SelectPluginDialog::Id_32BitBrowseButton:
 		case SelectPluginDialog::Id_64BitBrowseButton:
 			{
+				const bool x32 = LOWORD(wParam) == SelectPluginDialog::Id_32BitBrowseButton;
+				const std::wstring& current = x32 ? m_Plugins.first : m_Plugins.second;
+
 				const COMDLG_FILTERSPEC filters[] = { { GetString(IDS_PluginsDll), L"*.dll" } };
 				const auto path = ShellDialog::SelectFile({
 					.parent = m_Window,
 					.title = GetString(IDS_SelectPluginFile),
 					.filters = filters,
-					.defaultExtension = L"dll"
+					.defaultExtension = L"dll",
+					.initialPath = current.c_str()
 				});
 				if (!path) break;
 
-				const bool x32 = LOWORD(wParam) == SelectPluginDialog::Id_32BitBrowseButton;
 				WORD machine = 0;
 				if (FileUtil::GetBinaryFileBitness(path->c_str(), machine) &&
 					((x32 && machine == IMAGE_FILE_MACHINE_I386) || (!x32 && machine == IMAGE_FILE_MACHINE_AMD64)))
