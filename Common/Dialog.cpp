@@ -529,7 +529,7 @@ UINT Dialog::ShowMenuButtonPopupMenu(HMENU menu, HWND button, HWND window, UINT 
 
 Dialog::Tab::Tab() : BaseDialog(),
 	m_Initialized(false),
-	m_DesignMargin(),
+	m_DesignOffset(),
 	m_ParentDesignSize()
 {
 }
@@ -543,10 +543,7 @@ void Dialog::Tab::CreateTabWindow(short x, short y, short w, short h, HWND paren
 	Show(L"", x, y, w, h, style, exStyle, parent, true);
 	if (!m_Window) return;
 
-	m_DesignMargin.left = x;
-	m_DesignMargin.top = y;
-	m_DesignMargin.right = m_ParentDesignSize.cx - (x + w);
-	m_DesignMargin.bottom = m_ParentDesignSize.cy - (y + h);
+	m_DesignOffset = { x, y };
 
 	const RECT r = GetLayoutRect(m_Dpi);
 	SetWindowPos(m_Window, nullptr, r.left, r.top, r.right - r.left, r.bottom - r.top, SWP_NOACTIVATE | SWP_NOZORDER);
@@ -556,15 +553,19 @@ void Dialog::Tab::CreateTabWindow(short x, short y, short w, short h, HWND paren
 
 RECT Dialog::Tab::GetLayoutRect(UINT dpi)
 {
-	// The tab keeps its design margins to the parent client area so that it grows with the parent.
-	const RECT margin = DpiUtil::MapDialogUnits(m_DesignMargin, dpi);
+	const SIZE offset = DpiUtil::MapDialogUnits(m_DesignOffset, dpi);
+	const SIZE designSize = DpiUtil::MapDialogUnits(m_DesignSize, dpi);
+	const SIZE parentDesignSize = DpiUtil::MapDialogUnits(m_ParentDesignSize, dpi);
 
+	// The tab is its design size plus however much the parent has grown, so that it grows with the
+	// parent while staying exactly as large as the controls were laid out for. Subtracting a mapped
+	// margin instead would round away a pixel and clip the controls at the right and bottom edges.
 	RECT rect;
 	GetClientRect(GetParent(m_Window), &rect);
-	rect.left = margin.left;
-	rect.top = margin.top;
-	rect.right -= margin.right;
-	rect.bottom -= margin.bottom;
+	rect.right = offset.cx + designSize.cx + (rect.right - parentDesignSize.cx);
+	rect.bottom = offset.cy + designSize.cy + (rect.bottom - parentDesignSize.cy);
+	rect.left = offset.cx;
+	rect.top = offset.cy;
 	return rect;
 }
 

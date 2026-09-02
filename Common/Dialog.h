@@ -68,7 +68,7 @@ protected:
 		void CreateTabWindow(short x, short y, short w, short h, HWND parent);
 
 		bool m_Initialized;
-		RECT m_DesignMargin;  // Margin to the parent client area in dialog units.
+		SIZE m_DesignOffset;  // Offset from the top left of the parent client area in dialog units.
 		SIZE m_ParentDesignSize;
 	};
 
