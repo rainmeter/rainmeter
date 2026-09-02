@@ -77,11 +77,11 @@ static std::pair<std::wstring, std::wstring> GetPluginPaths(const std::wstring& 
 		StringParser plugin(token);
 		if (plugin.Consume(L"x32", StringParser::SkipWhitespace))
 		{
-			paths.first = plugin.ConsumeRest();
+			paths.first = plugin.ConsumeRest(StringParser::SkipWhitespace);
 		}
 		else if (plugin.Consume(L"x64", StringParser::SkipWhitespace))
 		{
-			paths.second = plugin.ConsumeRest();
+			paths.second = plugin.ConsumeRest(StringParser::SkipWhitespace);
 		}
 	});
 
