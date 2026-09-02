@@ -79,8 +79,6 @@ Measure::Measure(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_MinValue(0.0),
 	m_MaxValue(1.0),
 	m_RegExpSubstitute(false),
-	m_AveragePos(),
-	m_AverageSize(),
 	m_Disabled(false),
 	m_Paused(false),
 	m_Initialized(false),
@@ -133,7 +131,16 @@ void Measure::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	parser.ReadString(m_OnChangeAction, section, L"OnChangeAction", L"", { .sectionVariables = false });
 
-	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0);
+	const UINT averageSize = parser.ReadUInt(section, L"AverageSize", 0);
+	if (averageSize == 0)
+	{
+		m_Average.reset();
+	}
+	else
+	{
+		if (!m_Average) m_Average = std::make_unique<AverageData>();
+		m_Average->size = averageSize;
+	}
 
 	m_RegExpSubstitute = parser.ReadBool(section, L"RegExpSubstitute", false);
 	std::wstring subs = parser.ReadString(section, L"Substitute", L"");
@@ -438,28 +445,29 @@ bool Measure::Update(bool rereadOptions)
 		// Call derived method to update value
 		UpdateValue();
 
-		if (m_AverageSize > 0)
+		if (m_Average)
 		{
-			size_t averageValuesSize = m_AverageValues.size();
+			auto& average = *m_Average;
+			size_t valuesSize = average.values.size();
 
-			if (m_AverageSize != averageValuesSize)
+			if (average.size != valuesSize)
 			{
-				m_AverageValues.resize(m_AverageSize, m_Value);
-				averageValuesSize = m_AverageValues.size();
-				if (m_AveragePos >= averageValuesSize) m_AveragePos = 0;
+				average.values.resize(average.size, m_Value);
+				valuesSize = average.values.size();
+				if (average.pos >= valuesSize) average.pos = 0;
 			}
-			m_AverageValues[m_AveragePos] = m_Value;
+			average.values[average.pos] = m_Value;
 
-			++m_AveragePos;
-			m_AveragePos %= averageValuesSize;
+			++average.pos;
+			average.pos %= valuesSize;
 
 			// Calculate the average value
 			double value = 0;
-			for (size_t i = 0; i < averageValuesSize; ++i)
+			for (size_t i = 0; i < valuesSize; ++i)
 			{
-				value += m_AverageValues[i];
+				value += average.values[i];
 			}
-			m_Value = value / (double)averageValuesSize;
+			m_Value = value / (double)valuesSize;
 		}
 
 		// If we're logging the maximum value of the measure, check if
