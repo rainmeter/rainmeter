@@ -32,6 +32,7 @@ const WCHAR* c_ClassName = L"RainmeterInputText";
 const WCHAR* c_UserInputToken = L"$UserInput$";
 
 constexpr UINT WM_INPUTTEXT_SETTLE = WM_APP + 0;
+constexpr UINT WM_INPUTTEXT_MENUDONE = WM_APP + 1;
 
 // Whitespace as a skin file can write it. Nothing here parses prose, so the Unicode spaces are not
 // worth the call it would take to recognise them.
@@ -344,6 +345,10 @@ private:
 	ULONGLONG m_SettleUntil = 0;
 	bool m_Reclaimed = false;
 
+	// Set while the copy and paste menu of the edit control is up, since the menu takes the
+	// activation of the box with it and giving that up is one of the ways out of the box.
+	bool m_MenuOpen = false;
+
 	// What Close() lifted out of the edit control, since the control is gone by the time Show()
 	// has anything to return.
 	std::wstring m_Text;
@@ -583,10 +588,23 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 		if (GetFocus() != box->m_Edit) SetFocus(box->m_Edit);
 		return 0;
 
+	case WM_INPUTTEXT_MENUDONE:
+		// The menu is gone. Whatever holds the foreground now is where the user went while it was
+		// up, and if that is not the box then they went somewhere else and the box is done.
+		if (box->m_Options->focusDismiss && GetForegroundWindow() != wnd)
+		{
+			box->Close(false);
+		}
+		else
+		{
+			SetFocus(box->m_Edit);
+		}
+		return 0;
+
 	case WM_ACTIVATE:
 		// Clicking away from the box is the usual way out of it, and the only one a skin that
 		// draws no buttons of its own has.
-		if (LOWORD(wParam) == WA_INACTIVE && box->m_Options->focusDismiss)
+		if (LOWORD(wParam) == WA_INACTIVE && box->m_Options->focusDismiss && !box->m_MenuOpen)
 		{
 			// Except where it is Rainmeter coming up behind the box instead, which would otherwise
 			// dismiss the box before it was ever seen. That is answered by taking the foreground
@@ -650,6 +668,18 @@ LRESULT CALLBACK MeasureInputText::InputBox::EditProc(HWND wnd, UINT msg, WPARAM
 		// edit control beep at one it has nowhere to put.
 		if (wParam == VK_RETURN || wParam == VK_ESCAPE) return 0;
 		if (!box->AcceptsChar((WCHAR)wParam)) return 0;
+		break;
+
+	case WM_ENTERMENULOOP:
+		box->m_MenuOpen = true;
+		break;
+
+	case WM_EXITMENULOOP:
+		box->m_MenuOpen = false;
+
+		// Asked from outside the menu loop, which is still on the stack here: closing the box now
+		// would tear the edit control out from under the very call that is showing the menu.
+		PostMessage(box->m_Window, WM_INPUTTEXT_MENUDONE, 0, 0);
 		break;
 
 	case WM_NCDESTROY:
