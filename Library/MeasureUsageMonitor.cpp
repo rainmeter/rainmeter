@@ -884,7 +884,6 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 			{
 				m_MaxValue = 1.0;
 				m_LogMaxValue = true;
-				m_MedianValues.clear();
 			}
 		}
 		else

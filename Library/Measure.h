@@ -104,9 +104,6 @@ protected:
 	std::vector<std::wstring> m_Substitute;
 	bool m_RegExpSubstitute;
 
-	std::vector<double> m_MedianValues;	// The values for the median filtering
-	UINT m_MedianPos;					// Position in the median array, where the new value is placed
-
 	std::vector<double> m_AverageValues;
 	UINT m_AveragePos;
 	UINT m_AverageSize;

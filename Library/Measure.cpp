@@ -72,8 +72,6 @@ static const double g_TblScale[2][4] = {
 	}
 };
 
-const int MEDIAN_SIZE = 3;
-
 Measure::Measure(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_Value(0.0),
 	m_Invert(false),
@@ -81,7 +79,6 @@ Measure::Measure(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_MinValue(0.0),
 	m_MaxValue(1.0),
 	m_RegExpSubstitute(false),
-	m_MedianPos(),
 	m_AveragePos(),
 	m_AverageSize(),
 	m_Disabled(false),
@@ -469,21 +466,8 @@ bool Measure::Update(bool rereadOptions)
 		// the new value is greater than the old one, and update if necessary.
 		if (m_LogMaxValue)
 		{
-			if (m_MedianValues.empty())
-			{
-				m_MedianValues.resize(MEDIAN_SIZE, 0);
-			}
-
-			m_MedianValues[m_MedianPos] = m_Value;
-			++m_MedianPos;
-			m_MedianPos %= MEDIAN_SIZE;
-
-			std::vector<double> medianArray = m_MedianValues;
-			std::sort(&medianArray.data()[0], &medianArray.data()[MEDIAN_SIZE]);  // Workaround for "Debug" build mode
-
-			double medianValue = medianArray[MEDIAN_SIZE / 2];
-			m_MaxValue = std::max(m_MaxValue, medianValue);
-			m_MinValue = std::min(m_MinValue, medianValue);
+			m_MaxValue = std::max(m_MaxValue, m_Value);
+			m_MinValue = std::min(m_MinValue, m_Value);
 		}
 
 		m_ValueAssigned = true;
