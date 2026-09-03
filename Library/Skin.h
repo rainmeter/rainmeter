@@ -153,7 +153,19 @@ public:
 	void Deselect();
 
 	void ChangeZPos(ZPOSITION zPos, bool all = false);
-	void ChangeSingleZPos(ZPOSITION zPos, bool all = false);
+
+	struct ZPosOptions
+	{
+		// True when every skin is being moved, not just this one.
+		bool all = false;
+
+		// Give the skin keyboard focus as well as raising it. Only for the user picking this skin
+		// directly: a skin that comes up on its own must not take focus from what the user is
+		// doing.
+		bool activate = false;
+	};
+
+	void ChangeSingleZPos(ZPOSITION zPos, ZPosOptions options = {});
 	void FadeWindow(int from, int to);
 	void HideFade();
 	void ShowFade();
@@ -361,6 +373,10 @@ private:
 	POINT ClampPositionToScreenBounds(SkinPositionSpace posSpace, HMONITOR specificMonitor = nullptr);
 
 	POINT GetMouseMessageSkinPosition(UINT uMsg, LPARAM lParam) const;
+
+	// Raises the window within its z-order band. |activate| also gives it keyboard focus.
+	void RaiseWindow(bool activate);
+
 	void UpdateWindowBounds(UINT flags);
 	bool UpdateWindowMonitor(std::optional<POINT> center = std::nullopt);
 	void NudgeWindowCenterFromMonitorBoundary();

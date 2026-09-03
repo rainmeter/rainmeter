@@ -530,7 +530,7 @@ void Skin::Refresh(bool init, bool all)
 
 	if (init)
 	{
-		ChangeSingleZPos(m_WindowZPosition, all);
+		ChangeSingleZPos(m_WindowZPosition, { .all = all });
 	}
 	else if (all || oldZPos != m_WindowZPosition)
 	{
@@ -1064,9 +1064,9 @@ void Skin::ChangeZPos(ZPOSITION zPos, bool all)
 	SetWindowPos(m_Window, winPos, 0, 0, 0, 0, ZPOS_FLAGS);
 }
 
-void Skin::ChangeSingleZPos(ZPOSITION zPos, bool all)
+void Skin::ChangeSingleZPos(ZPOSITION zPos, ZPosOptions options)
 {
-	if (zPos == ZPOSITION_NORMAL && GetRainmeter().IsNormalStayDesktop() && (!all || System::GetShowDesktop()))
+	if (zPos == ZPOSITION_NORMAL && GetRainmeter().IsNormalStayDesktop() && (!options.all || System::GetShowDesktop()))
 	{
 		m_WindowZPosition = zPos;
 
@@ -1074,25 +1074,36 @@ void Skin::ChangeSingleZPos(ZPOSITION zPos, bool all)
 		SetWindowPos(m_Window, System::GetBackmostTopWindow(), 0, 0, 0, 0, ZPOS_FLAGS);
 
 		// Bring window on top of other application windows
-		BringWindowToTop(m_Window);
+		RaiseWindow(options.activate);
 	}
 	else
 	{
-		ChangeZPos(zPos, all);
+		ChangeZPos(zPos, options.all);
 
 		// ChangeZPos() only makes sure the window is in the right z-order band. Since
 		// HWND_NOTOPMOST/HWND_TOPMOST do not move a window that is already in that band,
 		// raise the window explicitly. Bottom-most windows are left alone as they are meant
 		// to stay below everything else.
-		//
-		// Raised without being activated, which BringWindowToTop() would also do: a skin that
-		// comes up on its own - one following the pointer, say - would take the keyboard from
-		// whatever the user was typing into, an input box among it.
 		if (zPos == ZPOSITION_NORMAL || zPos == ZPOSITION_ONTOP || zPos == ZPOSITION_ONTOPMOST)
 		{
-			SetWindowPos(m_Window, HWND_TOP, 0, 0, 0, 0, ZPOS_FLAGS);
+			RaiseWindow(options.activate);
 		}
 	}
+}
+
+void Skin::RaiseWindow(bool activate)
+{
+	// BringWindowToTop() also gives the window keyboard focus, which is what the user wants when
+	// they pick a skin themselves.
+	if (activate)
+	{
+		BringWindowToTop(m_Window);
+		return;
+	}
+
+	// Every other raise happens on its own: a skin being loaded, or one popping up to act as a
+	// tooltip. Those must not take focus away from what the user is typing into.
+	SetWindowPos(m_Window, HWND_TOP, 0, 0, 0, 0, ZPOS_FLAGS);
 }
 
 // Runs the bang command with the given arguments.
@@ -4024,7 +4035,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_SKIN_FOCUS:
-		ChangeSingleZPos(m_WindowZPosition);
+		ChangeSingleZPos(m_WindowZPosition, { .activate = true });
 		break;
 
 	case IDM_SKIN_OPENSKINSFOLDER:
