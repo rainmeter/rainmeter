@@ -1211,13 +1211,10 @@ bool Rainmeter::ActivateSkin(const std::wstring& folderPath)
 	if (index != -1)
 	{
 		const SkinRegistry::Folder& skinFolder = m_SkinRegistry.GetFolder(index);
-		if (!(skinFolder.active == 1 && skinFolder.files.size() == 1))
-		{
-			// Activate the next index.
-			ActivateSkin(
-				index, (skinFolder.active < (int16_t)skinFolder.files.size()) ? skinFolder.active : 0);
-		}
 
+		// Activate the next variant. If the folder has only one variant and it is already
+		// active, this ends up re-activating it, which brings the skin to the front.
+		ActivateSkin(index, (skinFolder.active < (int16_t)skinFolder.files.size()) ? skinFolder.active : 0);
 		return true;
 	}
 
