@@ -17,6 +17,7 @@
 #include "../Common/FileUtil.h"
 #include "../Common/DirectoryWatcher.h"
 #include "../Common/MathParser.h"
+#include "../Common/Map.h"
 #include "../Common/NetworkUtil.h"
 #include "../Common/StringUtil.h"
 
@@ -2572,7 +2573,7 @@ void DialogDebug::TabPlugins::Initialize()
 	vitem.iItem = 0;
 	vitem.iSubItem = 0;
 
-	int index = 0;
+	StringSet listedPlugins;
 
 	auto findPlugins = [&](const std::wstring& pluginPath) -> void
 	{
@@ -2610,7 +2611,14 @@ void DialogDebug::TabPlugins::Initialize()
 				continue;
 			}
 
-			vitem.iItem = index;
+			// A plugin in the user path is never loaded when one with the same name exists in the
+			// program path or is built into Rainmeter, so listing it again would suggest that it
+			// is in use.
+			std::wstring name(fd.cFileName, PathFindExtension(fd.cFileName));
+			StringUtil::ToLowerCase(name);
+			if (listedPlugins.contains(name)) continue;
+
+			vitem.iItem = ListView_GetItemCount(item);
 			vitem.pszText = fd.cFileName;
 
 			// Try to get version and author from file resources first
@@ -2638,8 +2646,8 @@ void DialogDebug::TabPlugins::Initialize()
 						if (VerQueryValue(data, (LPTSTR)(LPCTSTR)key, (void**)&value, &len) &&
 							wcscmp(value, L"Rainmeter") == 0)
 						{
-							ListView_InsertItem(item, &vitem);
-							++index;
+							vitem.iItem = ListView_InsertItem(item, &vitem);
+							listedPlugins.insert(name);
 							found = true;
 
 							_snwprintf_s(key, _TRUNCATE, L"\\StringFileInfo\\%04x%04x\\FileVersion", lcp[0].wLanguage, lcp[0].wCodePage);
@@ -2667,8 +2675,8 @@ void DialogDebug::TabPlugins::Initialize()
 			HMODULE dll = System::RmLoadLibrary(path, &err);
 			if (dll)
 			{
-				ListView_InsertItem(item, &vitem);
-				++index;
+				vitem.iItem = ListView_InsertItem(item, &vitem);
+				listedPlugins.insert(name);
 
 				GETPLUGINVERSION GetVersionFunc = (GETPLUGINVERSION)GetProcAddress(dll, "GetPluginVersion");
 				if (GetVersionFunc)
@@ -2706,10 +2714,13 @@ void DialogDebug::TabPlugins::Initialize()
 	// Add old plugins
 	for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
 	{
-		vitem.iItem = index;
+		vitem.iItem = ListView_GetItemCount(item);
 		vitem.pszText = (LPWSTR)oldDefaultPlugin;
 		ListView_InsertItem(item, &vitem);
-		++index;
+
+		std::wstring name = oldDefaultPlugin;
+		StringUtil::ToLowerCase(name);
+		listedPlugins.insert(std::move(name));
 	}
 
 	if (GetRainmeter().HasUserPluginPath())
