@@ -1799,12 +1799,6 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		}
 	}
 
-	// TODO: Remove this at some point. SkinScale= was only available in pre-release builds.
-	IniFile::Writer ini(iniFile);
-	ini.DeleteKey(L"Rainmeter", L"SkinScale");
-	ini.DeleteKey(L"Rainmeter", L"DpiOverride");
-	ini.Save();
-
 	const std::wstring& area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
 	if (!area.empty())
 	{
