@@ -951,39 +951,17 @@ void DoWriteKeyValueBang(const BangInfo& bangInfo, std::vector<std::wstring>& ar
 		return;
 	}
 
-	// Avoid "IniFileMapping"
-	System::UpdateIniFileMappingList();
-	std::wstring strIniWrite = System::GetTemporaryFile(strIniFile);
-	if (strIniWrite.size() == 1 && strIniWrite[0] == L'?')  // error occurred
+	if (GetRainmeter().GetDebug())
 	{
-		return;
+		LogDebugF(skin, L"!WriteKeyValue: Writing to: %s", iniFile);
 	}
 
-	bool temporary = !strIniWrite.empty();
-
-	if (temporary)
-	{
-		if (GetRainmeter().GetDebug())
-		{
-			LogDebugF(skin, L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile, strIniWrite.c_str());
-		}
-	}
-	else
-	{
-		if (GetRainmeter().GetDebug())
-		{
-			LogDebugF(skin, L"!WriteKeyValue: Writing to: %s", iniFile);
-		}
-		strIniWrite = strIniFile;
-	}
-
-	const WCHAR* iniWrite = strIniWrite.c_str();
 	const WCHAR* section = args[0].c_str();
 	const WCHAR* key = args[1].c_str();
 	const std::wstring& strValue = args[2];
 
 	bool formula = false;
-	BOOL write = FALSE;
+	bool write = false;
 
 	if (skin)
 	{
@@ -995,41 +973,18 @@ void DoWriteKeyValueBang(const BangInfo& bangInfo, std::vector<std::wstring>& ar
 			int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
 			Measure::RemoveTrailingZero(buffer, len);
 
-			write = WritePrivateProfileString(section, key, buffer, iniWrite);
+			write = IniFile::WriteKey(strIniFile, section, key, buffer);
 		}
 	}
 
 	if (!formula)
 	{
-		write = WritePrivateProfileString(section, key, strValue.c_str(), iniWrite);
+		write = IniFile::WriteKey(strIniFile, section, key, strValue);
 	}
 
-	if (temporary)
+	if (!write)
 	{
-		if (write != FALSE)
-		{
-			WritePrivateProfileString(nullptr, nullptr, nullptr, iniWrite);  // FLUSH
-
-			// Copy the file back.
-			if (!System::CopyFiles(strIniWrite, strIniFile))
-			{
-				LogErrorF(skin, L"!WriteKeyValue: Failed to copy temporary file to original filepath: %s (Temp: %s)", iniFile, iniWrite);
-			}
-		}
-		else  // failed
-		{
-			LogErrorF(skin, L"!WriteKeyValue: Failed to write to: %s (Temp: %s)", iniFile, iniWrite);
-		}
-
-		// Remove the temporary file.
-		System::RemoveFile(strIniWrite);
-	}
-	else
-	{
-		if (write == FALSE)  // failed
-		{
-			LogErrorF(skin, L"!WriteKeyValue: Failed to write to: %s", iniFile);
-		}
+		LogErrorF(skin, L"!WriteKeyValue: Failed to write to: %s", iniFile);
 	}
 }
 
