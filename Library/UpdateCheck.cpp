@@ -251,8 +251,10 @@ void Updater::InstallerFetchResultCallback(const Net::FetchTask* fetchTask, void
 	}
 
 	LPCWSTR dataFile = GetRainmeter().GetDataFile().c_str();
-	WritePrivateProfileString(L"Rainmeter", L"InstallerName", fileName.c_str(), dataFile);
-	WritePrivateProfileString(L"Rainmeter", L"InstallerSha256", fileHash.c_str(), dataFile);
+	IniFile::Writer ini(dataFile);
+	ini.WriteKey(L"Rainmeter", L"InstallerName", fileName);
+	ini.WriteKey(L"Rainmeter", L"InstallerSha256", fileHash);
+	ini.Save();
 
 	// Show tray notification only once per new version
 	WCHAR buffer[32] = { 0 };
@@ -263,7 +265,7 @@ void Updater::InstallerFetchResultCallback(const Net::FetchTask* fetchTask, void
 	if (updater->m_AvailableVersion > lastVersion)
 	{
 		const auto* availableVersionString = updater->m_AvailableVersion.Get().c_str();
-		WritePrivateProfileString(L"Rainmeter", L"LastCheck", availableVersionString, dataFile);
+		IniFile::WriteKey(dataFile, L"Rainmeter", L"LastCheck", availableVersionString);
 		GetRainmeter().GetTrayIcon()->ShowInstallUpdateNotification(availableVersionString);
 	}
 
@@ -344,8 +346,10 @@ bool Updater::VerifyInstaller(const std::wstring& path, const std::wstring& file
 	if (isVerified && writeToDataFile)
 	{
 		LPCWSTR dataFile = GetRainmeter().GetDataFile().c_str();
-		WritePrivateProfileString(L"Rainmeter", L"InstallerName", fileName.c_str(), dataFile);
-		WritePrivateProfileString(L"Rainmeter", L"InstallerSha256", sha256.c_str(), dataFile);
+		IniFile::Writer ini(dataFile);
+		ini.WriteKey(L"Rainmeter", L"InstallerName", fileName);
+		ini.WriteKey(L"Rainmeter", L"InstallerSha256", sha256);
+		ini.Save();
 	}
 
 	return isVerified;

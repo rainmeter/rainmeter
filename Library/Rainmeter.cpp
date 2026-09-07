@@ -5,6 +5,7 @@
 #include "../Common/Gfx/Canvas.h"
 #include "../Common/CrashDump.h"
 #include "../Common/FileUtil.h"
+#include "../Common/IniFile.h"
 #include "../Common/PathUtil.h"
 #include "../Common/Platform.h"
 #include "../Common/ScopedFunction.h"
@@ -354,6 +355,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	if (GetPrivateProfileString(L"Rainmeter", L"InstallerName", L"", buffer, MAX_LINE_LENGTH, m_DataFile.c_str()) != 0)
 	{
 		bool runInstaller = false;
+		bool deleteInstallerSha256 = false;
 		const std::wstring installerName = buffer;
 		const std::wstring updatePath = m_SettingsPath + L"Updates\\";
 		const std::wstring fullPath = updatePath + installerName;
@@ -363,12 +365,15 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 			{
 				const std::wstring sha256 = buffer;
 				runInstaller = Updater::VerifyInstaller(updatePath, installerName, sha256, false);
-				WritePrivateProfileString(L"Rainmeter", L"InstallerSha256", nullptr, m_DataFile.c_str());
+				deleteInstallerSha256 = true;
 			}
 		}
 
-		WritePrivateProfileString(L"Rainmeter", L"InstallerName", nullptr, m_DataFile.c_str());
-		WritePrivateProfileString(L"Rainmeter", L"DeleteInstaller", installerName.c_str(), m_DataFile.c_str());
+		IniFile::Writer ini(m_DataFile);
+		if (deleteInstallerSha256) ini.DeleteKey(L"Rainmeter", L"InstallerSha256");
+		ini.DeleteKey(L"Rainmeter", L"InstallerName");
+		ini.WriteKey(L"Rainmeter", L"DeleteInstaller", installerName);
+		ini.Save();
 
 		if (runInstaller)
 		{
@@ -393,9 +398,11 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 
 	// Clean-up any installer keys
-	WritePrivateProfileString(L"Rainmeter", L"InstallerName", nullptr, m_DataFile.c_str());    // Shouldn't exist at this point
-	WritePrivateProfileString(L"Rainmeter", L"InstallerSha256", nullptr, m_DataFile.c_str());  // Might exist if installer (or "Updates" folder) was deleted before installation
-	WritePrivateProfileString(L"Rainmeter", L"DeleteInstaller", nullptr, m_DataFile.c_str());
+	IniFile::Writer ini(m_DataFile);
+	ini.DeleteKey(L"Rainmeter", L"InstallerName");    // Shouldn't exist at this point
+	ini.DeleteKey(L"Rainmeter", L"InstallerSha256");  // Might exist if installer (or "Updates" folder) was deleted before installation
+	ini.DeleteKey(L"Rainmeter", L"DeleteInstaller");
+	ini.Save();
 
 	// Reset log file
 	System::RemoveFile(logger.GetLogFilePath());
@@ -433,7 +440,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		CreateDirectory(m_SkinPath.c_str(), nullptr);
 		m_SkinPath += L"Skins\\";
 
-		WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), iniFile);
+		IniFile::WriteKey(iniFile, L"Rainmeter", L"SkinPath", m_SkinPath);
 	}
 	else
 	{
@@ -1167,7 +1174,7 @@ bool Rainmeter::DoesSkinHaveSettings(const std::wstring& folderPath)
 				section += L"]\r\nActive=0\r\n";  // The "Active" setting is set later
 
 				// If the following WriteFile fails, there will be no space between sections, however,
-				// WritePrivateProfileSection will automatically create the section at the end of the file
+				// IniFile will create the section at the end of the file if this write fails.
 				DWORD bytesWritten = 0;
 				WriteFile(hFile, (LPCVOID)section.c_str(), (DWORD)(section.size() * 2), &bytesWritten, nullptr);
 			}
@@ -1343,7 +1350,7 @@ void Rainmeter::ToggleSkinWithID(UINT id)
 
 void Rainmeter::SetSkinPath(const std::wstring& skinPath)
 {
-	WritePrivateProfileString(L"Rainmeter", L"SkinPath", skinPath.c_str(), m_IniFile.c_str());
+	IniFile::WriteKey(m_IniFile, L"Rainmeter", L"SkinPath", skinPath);
 }
 
 void Rainmeter::SetSkinEditor(const std::wstring& path)
@@ -1351,14 +1358,14 @@ void Rainmeter::SetSkinEditor(const std::wstring& path)
 	if (!path.empty())
 	{
 		m_SkinEditor = path;
-		WritePrivateProfileString(L"Rainmeter", L"ConfigEditor", path.c_str(), m_IniFile.c_str());
+		IniFile::WriteKey(m_IniFile, L"Rainmeter", L"ConfigEditor", path);
 	}
 }
 
 void Rainmeter::SetHardwareAccelerated(bool hardwareAccelerated)
 {
 	m_HardwareAccelerated = hardwareAccelerated;
-	WritePrivateProfileString(L"Rainmeter", L"HardwareAcceleration", m_HardwareAccelerated ? L"1" : L"0", m_IniFile.c_str());
+	IniFile::WriteKey(m_IniFile, L"Rainmeter", L"HardwareAcceleration", m_HardwareAccelerated ? L"1" : L"0");
 }
 
 void Rainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
@@ -1368,7 +1375,7 @@ void Rainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
 
 	DoesSkinHaveSettings(folderPath);
 
-	WritePrivateProfileString(folderPath.c_str(), L"Active", buffer, m_IniFile.c_str());
+	IniFile::WriteKey(m_IniFile, folderPath, L"Active", buffer);
 }
 
 void Rainmeter::CreateSkin(const std::wstring& folderPath, const std::wstring& file, bool hasSettings)
@@ -1793,8 +1800,10 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	}
 
 	// TODO: Remove this at some point. SkinScale= was only available in pre-release builds.
-	WritePrivateProfileString(L"Rainmeter", L"SkinScale", nullptr, iniFile.c_str());
-	WritePrivateProfileString(L"Rainmeter", L"DpiOverride", nullptr, iniFile.c_str());
+	IniFile::Writer ini(iniFile);
+	ini.DeleteKey(L"Rainmeter", L"SkinScale");
+	ini.DeleteKey(L"Rainmeter", L"DpiOverride");
+	ini.Save();
 
 	const std::wstring& area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
 	if (!area.empty())
@@ -2017,7 +2026,7 @@ void Rainmeter::PreserveSetting(const std::wstring& from, LPCTSTR key, bool repl
 	if ((replace || GetPrivateProfileString(L"Rainmeter", key, L"", buffer, 4, m_IniFile.c_str()) == 0) &&
 		GetPrivateProfileString(L"Rainmeter", key, L"", buffer, MAX_LINE_LENGTH, from.c_str()) > 0)
 	{
-		WritePrivateProfileString(L"Rainmeter", key, buffer, m_IniFile.c_str());
+		IniFile::WriteKey(m_IniFile, L"Rainmeter", key, buffer);
 	}
 
 	delete [] buffer;
@@ -2041,17 +2050,17 @@ void Rainmeter::UpdateFavorites(const std::wstring& folder, const std::wstring& 
 {
 	m_Favorites = m_SkinRegistry.UpdateFavorite(folder, file, favorite);
 
-	// Delete entire [Favorites] section
-	WritePrivateProfileSection(L"Favorites", nullptr, m_DataFile.c_str());
+	IniFile::Writer ini(m_DataFile);
+	ini.DeleteSection(L"Favorites");
 
-	// Write new section
 	WCHAR buffer[128] = { 0 };
 	int i = 0;
 	for (const auto& fav : m_Favorites)
 	{
 		_snwprintf_s(buffer, _TRUNCATE, L"Favorite%i", ++i);
-		WritePrivateProfileString(L"Favorites", buffer, fav.c_str(), m_DataFile.c_str());
+		ini.WriteKey(L"Favorites", buffer, fav);
 	}
+	ini.Save();
 }
 
 const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
@@ -2173,13 +2182,18 @@ void Rainmeter::ReadStats()
 
 		if (GetPrivateProfileSection(L"Statistics", tmpSz, SHRT_MAX, iniFile) > 0)
 		{
-			WritePrivateProfileString(L"Statistics", nullptr, nullptr, iniFile);
+			IniFile::DeleteSection(iniFile, L"Statistics");
 		}
 		else
 		{
 			tmpSz[0] = tmpSz[1] = L'\0';
 		}
-		WritePrivateProfileSection(L"Statistics", tmpSz, statsFile);
+		std::vector<std::wstring> entries;
+		for (const WCHAR* entry = tmpSz; *entry != L'\0'; entry += wcslen(entry) + 1)
+		{
+			entries.emplace_back(entry);
+		}
+		IniFile::WriteSection(statsFile, L"Statistics", entries);
 
 		delete [] tmpSz;
 		tmpSz = nullptr;
@@ -2202,8 +2216,6 @@ void Rainmeter::WriteStats(bool bForce)
 		// Only Net measure has stats at the moment
 		const WCHAR* statsFile = m_StatsFile.c_str();
 		MeasureNet::WriteStats(statsFile, m_StatsDate);
-
-		WritePrivateProfileString(nullptr, nullptr, nullptr, statsFile);
 	}
 }
 
@@ -2274,7 +2286,7 @@ void Rainmeter::SaveDialogWindowPlacement(LPCWSTR key, const WINDOWPLACEMENT& pl
 	const bool maximized = placement.showCmd == SW_SHOWMAXIMIZED || (placement.flags & WPF_RESTORETOMAXIMIZED) != 0;
 	WCHAR buffer[64];
 	_snwprintf_s(buffer, _TRUNCATE, L"%d,%d,%d,%d,%d", x, y, w, h, maximized ? 1 : 0);
-	WritePrivateProfileString(L"Rainmeter", key, buffer, m_DataFile.c_str());
+	IniFile::WriteKey(m_DataFile, L"Rainmeter", key, buffer);
 }
 
 int Rainmeter::ShowMessage(HWND parent, const WCHAR* text, UINT type)
@@ -2300,7 +2312,7 @@ void Rainmeter::ShowLogFile()
 void Rainmeter::SetDebug(bool debug)
 {
 	m_Debug = debug;
-	WritePrivateProfileString(L"Rainmeter", L"Debug", debug ? L"1" : L"0", m_IniFile.c_str());
+	IniFile::WriteKey(m_IniFile, L"Rainmeter", L"Debug", debug ? L"1" : L"0");
 }
 
 void Rainmeter::SetDisableDragging(bool dragging)
@@ -2308,7 +2320,7 @@ void Rainmeter::SetDisableDragging(bool dragging)
 	m_DisableDragging = dragging;
 	DialogManage::UpdateSkinDraggableCheckBox();
 	DialogManage::UpdateGlobalDraggableCheckBox();
-	WritePrivateProfileString(L"Rainmeter", L"DisableDragging", dragging ? L"1" : L"0", m_IniFile.c_str());
+	IniFile::WriteKey(m_IniFile, L"Rainmeter", L"DisableDragging", dragging ? L"1" : L"0");
 }
 
 void Rainmeter::SetDefaultZoom(int zoom)
@@ -2320,7 +2332,7 @@ void Rainmeter::SetDefaultZoom(int zoom)
 
 	WCHAR buffer[16];
 	_itow_s(zoom, buffer, 10);
-	WritePrivateProfileString(L"Rainmeter", L"DefaultZoom", buffer, m_IniFile.c_str());
+	IniFile::WriteKey(m_IniFile, L"Rainmeter", L"DefaultZoom", buffer);
 
 	for (auto& [_, skin] : m_Skins)
 	{
@@ -2333,7 +2345,7 @@ void Rainmeter::SetForceDefaultZoom(bool force)
 	if (m_ForceDefaultZoom == force) return;
 
 	m_ForceDefaultZoom = force;
-	WritePrivateProfileString(L"Rainmeter", L"ForceDefaultZoom", force ? L"1" : L"0", m_IniFile.c_str());
+	IniFile::WriteKey(m_IniFile, L"Rainmeter", L"ForceDefaultZoom", force ? L"1" : L"0");
 
 	for (auto& [_, skin] : m_Skins)
 	{
@@ -2344,7 +2356,7 @@ void Rainmeter::SetForceDefaultZoom(bool force)
 void Rainmeter::SetDisableVersionCheck(bool check)
 {
 	m_DisableVersionCheck = check;
-	WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", check ? L"1" : L"0" , m_IniFile.c_str());
+	IniFile::WriteKey(m_IniFile, L"Rainmeter", L"DisableVersionCheck", check ? L"1" : L"0");
 
 	if (m_Window)
 	{
@@ -2362,7 +2374,7 @@ void Rainmeter::SetDisableVersionCheck(bool check)
 void Rainmeter::SetDisableAutoUpdate(bool check)
 {
 	m_DisableAutoUpdate = check;
-	WritePrivateProfileString(L"Rainmeter", L"DisableAutoUpdate", check ? L"1" : L"0", m_IniFile.c_str());
+	IniFile::WriteKey(m_IniFile, L"Rainmeter", L"DisableAutoUpdate", check ? L"1" : L"0");
 }
 
 void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)

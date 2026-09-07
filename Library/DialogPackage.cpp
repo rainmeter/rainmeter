@@ -7,6 +7,7 @@
 #include "resource.h"
 #include "Util.h"
 #include "../Common/FileUtil.h"
+#include "../Common/IniFile.h"
 #include "../Common/MenuModifier.h"
 #include "../Common/ShellDialog.h"
 #include "../Common/StringParser.h"
@@ -50,11 +51,11 @@ static std::wstring ReadProfileString(const WCHAR* section, const WCHAR* key, co
 	return buffer;
 }
 
-static void WriteProfileString(const WCHAR* section, const WCHAR* key, const std::wstring& value, const std::wstring& file)
+static void WriteProfileString(const WCHAR* section, const WCHAR* key, const std::wstring& value, IniFile::Writer& ini)
 {
 	if (value.empty()) return;
 
-	WritePrivateProfileString(section, key, value.c_str(), file.c_str());
+	ini.WriteKey(section, key, value);
 }
 
 static bool FolderExists(const std::wstring& path)
@@ -346,7 +347,7 @@ std::vector<DialogPackage::Profile> DialogPackage::GetProfiles()
 		// forgotten instead of being offered as something that cannot be loaded.
 		if (!FolderExists(profile.skinFolder))
 		{
-			WritePrivateProfileString(section.c_str(), nullptr, nullptr, file.c_str());
+			IniFile::DeleteSection(file, section);
 			return;
 		}
 
@@ -405,7 +406,7 @@ void DialogPackage::ShowLoadPreviousMenu(HWND button)
 
 void DialogPackage::DeleteProfile(const std::wstring& section)
 {
-	WritePrivateProfileString(section.c_str(), nullptr, nullptr, GetProfileFile().c_str());
+	IniFile::DeleteSection(GetProfileFile(), section);
 	SetLoadPreviousButtonState();
 }
 
@@ -505,20 +506,21 @@ void DialogPackage::SaveProfile()
 	const WCHAR* section = m_SkinFolder.first.c_str();
 
 	// Rewrite the whole section so that removed layouts and plugins do not linger.
-	WritePrivateProfileString(section, nullptr, nullptr, file.c_str());
+	IniFile::Writer ini(file);
+	ini.DeleteSection(section);
 
-	WriteProfileString(section, L"Timestamp", GetLocalTimeString(), file);
-	WriteProfileString(section, L"Name", m_Name, file);
-	WriteProfileString(section, L"Author", m_Author, file);
-	WriteProfileString(section, L"Version", m_Version, file);
-	WriteProfileString(section, L"SkinFolder", m_SkinFolder.second, file);
+	WriteProfileString(section, L"Timestamp", GetLocalTimeString(), ini);
+	WriteProfileString(section, L"Name", m_Name, ini);
+	WriteProfileString(section, L"Author", m_Author, ini);
+	WriteProfileString(section, L"Version", m_Version, ini);
+	WriteProfileString(section, L"SkinFolder", m_SkinFolder.second, ini);
 
 	int index = 1;
 	WCHAR key[32] = { 0 };
 	for (const auto& layout : m_LayoutFolders)
 	{
 		_snwprintf_s(key, _TRUNCATE, L"Layout%i", index++);
-		WriteProfileString(section, key, layout.second, file);
+		WriteProfileString(section, key, layout.second, ini);
 	}
 
 	index = 1;
@@ -530,35 +532,37 @@ void DialogPackage::SaveProfile()
 		value += plugin.second.second;
 
 		_snwprintf_s(key, _TRUNCATE, L"Plugin%i", index++);
-		WriteProfileString(section, key, value, file);
+		WriteProfileString(section, key, value, ini);
 	}
 
 	std::wstring outputFolder = m_TargetFile;
 	outputFolder.resize(PathFindFileName(outputFolder.c_str()) - outputFolder.c_str());
-	WriteProfileString(section, L"OutputFolder", outputFolder, file);
+	WriteProfileString(section, L"OutputFolder", outputFolder, ini);
 
 	if (!m_Load.empty())
 	{
-		WriteProfileString(section, L"LoadType", m_LoadLayout ? L"Layout" : L"Skin", file);
-		WriteProfileString(section, L"Load", m_Load, file);
+		WriteProfileString(section, L"LoadType", m_LoadLayout ? L"Layout" : L"Skin", ini);
+		WriteProfileString(section, L"Load", m_Load, ini);
 	}
 
 	// The minimum version follows the installed Rainmeter unless it has been set to something else.
 	if (m_MinimumRainmeter != GetCurrentRainmeterVersion())
 	{
-		WriteProfileString(section, L"MinimumRainmeter", m_MinimumRainmeter, file);
+		WriteProfileString(section, L"MinimumRainmeter", m_MinimumRainmeter, ini);
 	}
 
-	WriteProfileString(section, L"HeaderImage", m_HeaderFile, file);
+	WriteProfileString(section, L"HeaderImage", m_HeaderFile, ini);
 
 	if (m_MergeSkins)
 	{
-		WriteProfileString(section, L"MergeSkins", L"1", file);
+		WriteProfileString(section, L"MergeSkins", L"1", ini);
 	}
 	else
 	{
-		WriteProfileString(section, L"VariableFiles", m_VariableFiles, file);
+		WriteProfileString(section, L"VariableFiles", m_VariableFiles, ini);
 	}
+
+	ini.Save();
 }
 
 void DialogPackage::UpdateTabs()
@@ -575,30 +579,32 @@ bool DialogPackage::CreatePackage()
 	GetTempPath(MAX_PATH, tempFile);
 	GetTempFileName(tempFile, L"ini", 0, tempFile);
 
-	WritePrivateProfileString(L"rmskin", L"Name", m_Name.c_str(), tempFile);
-	WritePrivateProfileString(L"rmskin", L"Author", m_Author.c_str(), tempFile);
-	WritePrivateProfileString(L"rmskin", L"Version", m_Version.c_str(), tempFile);
+	IniFile::Writer ini(tempFile);
+	ini.WriteKey(L"rmskin", L"Name", m_Name);
+	ini.WriteKey(L"rmskin", L"Author", m_Author);
+	ini.WriteKey(L"rmskin", L"Version", m_Version);
 
 	if (!c_Dialog->m_Load.empty())
 	{
-		WritePrivateProfileString(L"rmskin", L"LoadType", c_Dialog->m_LoadLayout ? L"Layout" : L"Skin", tempFile);
-		WritePrivateProfileString(L"rmskin", L"Load", c_Dialog->m_Load.c_str(), tempFile);
+		ini.WriteKey(L"rmskin", L"LoadType", c_Dialog->m_LoadLayout ? L"Layout" : L"Skin");
+		ini.WriteKey(L"rmskin", L"Load", c_Dialog->m_Load);
 	}
 
 	if (c_Dialog->m_MergeSkins)
 	{
-		WritePrivateProfileString(L"rmskin", L"MergeSkins", L"1", tempFile);
+		ini.WriteKey(L"rmskin", L"MergeSkins", L"1");
 	}
 	else
 	{
 		// "Merge skins" not compatible with "Variable files"
 		if (!c_Dialog->m_VariableFiles.empty())
 		{
-			WritePrivateProfileString(L"rmskin", L"VariableFiles", m_VariableFiles.c_str(), tempFile);
+			ini.WriteKey(L"rmskin", L"VariableFiles", m_VariableFiles);
 		}
 	}
 
-	WritePrivateProfileString(L"rmskin", L"MinimumRainmeter", m_MinimumRainmeter.c_str(), tempFile);
+	ini.WriteKey(L"rmskin", L"MinimumRainmeter", m_MinimumRainmeter);
+	ini.Save();
 
 	// Only Skin Installer in Rainmeter 3.0.1 support UTF-8 filenames.
 	m_AllowNonAsciiFilenames = DialogInstall::CompareVersions(m_MinimumRainmeter, L"3.0.1") != -1;

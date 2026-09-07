@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/IniFile.h"
 #include "Logger.h"
 #include "DialogDebug.h"
 #include "Util.h"
@@ -78,7 +79,7 @@ void Logger::DeleteLogFile()
 void Logger::SetLogToFile(bool logToFile)
 {
 	m_LogToFile = logToFile;
-	WritePrivateProfileString(L"Rainmeter", L"Logging", logToFile ? L"1" : L"0", GetRainmeter().GetIniFile().c_str());
+	IniFile::WriteKey(GetRainmeter().GetIniFile(), L"Rainmeter", L"Logging", logToFile ? L"1" : L"0");
 }
 
 void Logger::LogInternal(Level level, std::chrono::system_clock::time_point timestamp, const WCHAR* source, const WCHAR* msg)

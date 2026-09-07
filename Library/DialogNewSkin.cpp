@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/IniFile.h"
 #include "../Common/MenuTemplate.h"
 #include "../Common/PathUtil.h"
 #include "Rainmeter.h"
@@ -296,11 +297,14 @@ void DialogNewSkin::ValidateSelectedTemplate()
 		selected.clear();
 	}
 
-	WritePrivateProfileString(
-		L"Dialog_NewSkin",
-		L"SelectedTemplate",
-		selected.empty() ? NULL : selected.c_str(),
-		GetRainmeter().GetDataFile().c_str());
+	if (selected.empty())
+	{
+		IniFile::DeleteKey(GetRainmeter().GetDataFile(), L"Dialog_NewSkin", L"SelectedTemplate");
+	}
+	else
+	{
+		IniFile::WriteKey(GetRainmeter().GetDataFile(), L"Dialog_NewSkin", L"SelectedTemplate", selected);
+	}
 }
 
 // -----------------------------------------------------------------------------------------------

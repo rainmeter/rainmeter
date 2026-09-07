@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/IniFile.h"
 #include "GameMode.h"
 #include "ConfigParser.h"
 #include "DialogAbout.h"
@@ -373,16 +374,14 @@ void GameMode::WriteSettings()
 	if (stop.empty()) stop = hashStr;
 	if (list.empty()) list = hashStr;
 
-	// Delete entire section
-	WritePrivateProfileString(L"GameMode_v1", nullptr, nullptr, dataFile.c_str());
-
-	auto setStr = [&dataFile](std::wstring& key, std::wstring& value) -> bool
-	{
-		return (WritePrivateProfileString(L"GameMode_v1", key.c_str(), value.c_str(), dataFile.c_str()) == 0);
-	};
-
-	if (setStr(keyStar, star) || setStr(keyStop, stop) || setStr(keyFull, full) ||
-		setStr(keyMode, mode) || setStr(keyList, list))
+	IniFile::Writer ini(dataFile);
+	ini.DeleteSection(L"GameMode_v1");
+	ini.WriteKey(L"GameMode_v1", keyStar, star);
+	ini.WriteKey(L"GameMode_v1", keyStop, stop);
+	ini.WriteKey(L"GameMode_v1", keyFull, full);
+	ini.WriteKey(L"GameMode_v1", keyMode, mode);
+	ini.WriteKey(L"GameMode_v1", keyList, list);
+	if (!ini.Save())
 	{
 		LogError(L"Game mode: Could not write settings");
 	}

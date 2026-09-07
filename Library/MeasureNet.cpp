@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/IniFile.h"
 #include "MeasureNet.h"
 #include "Rainmeter.h"
 #include "System.h"
@@ -375,19 +376,15 @@ void MeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
 
 	uint32_t count = (uint32_t)c_StatValues.size() / 2;
 
-	// Reserve sufficient buffer for statistics
-	std::wstring data;
-	data.reserve(48 * (2 + count));
+	std::vector<std::wstring> entries;
+	entries.reserve(2 + count * 2);
 
 	// Add date
-	data = L"Since=";
-	data += statsDate;
-	data += L'\0';
+	entries.emplace_back(L"Since=" + statsDate);
 
 	auto appendStatsValue = [&]()
 	{
-		data.append(buffer, len);
-		data += L'\0';
+		entries.emplace_back(buffer, len);
 	};
 
 	// Add stats count
@@ -411,7 +408,7 @@ void MeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
 	}
 
 	// Write statistics
-	WritePrivateProfileSection(L"Statistics", data.c_str(), iniFile);
+	IniFile::WriteSection(iniFile, L"Statistics", entries);
 }
 
 void MeasureNet::FinalizeStatic()
