@@ -724,8 +724,9 @@ SkipIniMove:
 		${EndIf}
 
 		Rename "$INSTDIR\Addons" "$INSTDIR\Defaults\Addons"
-		${Locate} "$INSTDIR\Plugins" "/L=F /M=*.dll /G=0" "HandlePlugins"
 	${EndIf}
+
+	${Locate} "$INSTDIR\Plugins" "/L=F /M=*.dll /G=0" "HandlePlugins"
 
 !ifdef INCLUDEFILES
 	File "..\..\Application\Rainmeter.exe.config"
@@ -900,7 +901,8 @@ Function HandlePlugins
 	${OrIf} $R7 == "Win7AudioPlugin.dll"
 	${OrIf} $R7 == "WindowMessagePlugin.dll"
 		Delete "$R9"
-	${ElseIf} $R7 != "VirtualDesktops.dll"
+	${ElseIf} $InstallPortable <> 1
+	${AndIf} $R7 != "VirtualDesktops.dll"
 		CreateDirectory "$INSTDIR\Defaults\Plugins"
 		Delete "$INSTDIR\Defaults\Plugins\$R7"
 		Rename "$R9" "$INSTDIR\Defaults\Plugins\$R7"
