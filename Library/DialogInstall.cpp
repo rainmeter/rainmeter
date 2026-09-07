@@ -948,25 +948,6 @@ UINT __stdcall DialogInstall::InstallThread(void* pParam)
 
 void DialogInstall::KeepVariables()
 {
-	auto getPairs = [](WCHAR* section, StringMap<std::wstring>& var) -> void
-	{
-		std::wstring str, key, value;
-		for (LPCWSTR ptr = section; *ptr; ptr += str.length() + 1)
-		{
-			str = ptr;
-			size_t pos = str.find(L'=');
-			if (pos == std::wstring::npos) continue;	// Only accept lines containing an '='
-
-			key.assign(str.begin(), str.begin() + pos);
-			value.assign(str.begin() + pos + 1, str.end());
-
-			var[key] = value;
-			key.clear();
-			value.clear();
-		}
-	};
-
-	WCHAR* section = new WCHAR[SHRT_MAX];
 	for (const auto& file : m_VariablesFiles)
 	{
 		std::wstring fromPath = g_Data.skinsPath + L"@Backup\\";
@@ -978,11 +959,19 @@ void DialogInstall::KeepVariables()
 
 		if (_waccess_s(fromPath.c_str(), 0) != 0 || _waccess_s(toPath.c_str(), 0) != 0) continue;	// Both files need to exist
 
-		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, fromPath.c_str()) < 1) continue;	// No variables in existing file
-		getPairs(section, fromVariables);
+		const auto fromSection = IniFile::ReadSectionInOrder(fromPath, L"Variables");
+		if (fromSection.empty()) continue;	// No variables in existing file
+		for (const auto& entry : fromSection)
+		{
+			fromVariables[entry.first] = entry.second;
+		}
 
-		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, toPath.c_str()) < 1) continue;	// No variables in the file from rmskin
-		getPairs(section, toVariables);
+		const auto toSection = IniFile::ReadSectionInOrder(toPath, L"Variables");
+		if (toSection.empty()) continue;	// No variables in the file from rmskin
+		for (const auto& entry : toSection)
+		{
+			toVariables[entry.first] = entry.second;
+		}
 
 		IniFile::Writer ini(toPath);
 		for (const auto& var : fromVariables)
@@ -993,8 +982,6 @@ void DialogInstall::KeepVariables()
 		}
 		ini.Save();
 	}
-	delete [] section;
-	section = nullptr;
 }
 
 void DialogInstall::ArchivePlugin(const std::wstring& folder, const std::wstring& name)
