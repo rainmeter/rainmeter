@@ -241,7 +241,7 @@ private:
 	void CreateComponentFolders(bool defaultIniLocation);
 	void EnsureSkinInstallerAssociation();
 	void TestSettingsFile(bool bDefaultIniLocation);
-	void CheckSettingsFileEncoding(const std::wstring& iniFile, std::wstring* log);
+	void CheckSettingsFileEncoding(const std::wstring& iniFile);
 
 	void ShowTrayIconIfNecessary();
 
