@@ -97,7 +97,7 @@ struct Line
 	size_t end;
 };
 
-struct Section
+struct SectionRange
 {
 	size_t header;
 	size_t end;
@@ -160,7 +160,7 @@ std::wstring_view GetLine(const std::wstring& text, const Line& line)
 	return std::wstring_view(text).substr(line.begin, line.contentEnd - line.begin);
 }
 
-std::optional<Section> FindSection(const std::wstring& text, const std::vector<Line>& lines, std::wstring_view requested)
+std::optional<SectionRange> FindSection(const std::wstring& text, const std::vector<Line>& lines, std::wstring_view requested)
 {
 	requested = TrimRequest(requested);
 
@@ -181,13 +181,13 @@ std::optional<Section> FindSection(const std::wstring& text, const std::vector<L
 		size_t separator = end;
 		while (separator > i + 1 && IniFile::Trim(GetLine(text, lines[separator - 1])).empty()) --separator;
 
-		return Section{ i, end, separator };
+		return SectionRange{ i, end, separator };
 	}
 
 	return std::nullopt;
 }
 
-std::optional<size_t> FindKey(const std::wstring& text, const std::vector<Line>& lines, const Section& section, std::wstring_view requested)
+std::optional<size_t> FindKey(const std::wstring& text, const std::vector<Line>& lines, const SectionRange& section, std::wstring_view requested)
 {
 	requested = TrimRequest(requested);
 
@@ -371,7 +371,7 @@ bool Validate(std::wstring_view value)
 bool ApplyWriteKey(Document& document, std::wstring_view section, std::wstring_view key, std::wstring_view value)
 {
 	const std::vector<Line> lines = ParseLines(document.text);
-	const std::optional<Section> foundSection = FindSection(document.text, lines, section);
+	const std::optional<SectionRange> foundSection = FindSection(document.text, lines, section);
 	if (!foundSection)
 	{
 		std::wstring entry(key);
@@ -408,7 +408,7 @@ bool ApplyWriteKey(Document& document, std::wstring_view section, std::wstring_v
 bool ApplyDeleteKey(Document& document, std::wstring_view section, std::wstring_view key)
 {
 	const std::vector<Line> lines = ParseLines(document.text);
-	const std::optional<Section> foundSection = FindSection(document.text, lines, section);
+	const std::optional<SectionRange> foundSection = FindSection(document.text, lines, section);
 	if (!foundSection) return false;
 
 	const std::optional<size_t> foundKey = FindKey(document.text, lines, *foundSection, key);
@@ -422,7 +422,7 @@ bool ApplyDeleteKey(Document& document, std::wstring_view section, std::wstring_
 bool ApplyDeleteSection(Document& document, std::wstring_view section)
 {
 	const std::vector<Line> lines = ParseLines(document.text);
-	const std::optional<Section> foundSection = FindSection(document.text, lines, section);
+	const std::optional<SectionRange> foundSection = FindSection(document.text, lines, section);
 	if (!foundSection) return false;
 
 	const size_t begin = lines[foundSection->header].begin;
@@ -438,7 +438,7 @@ bool ApplyWriteSection(Document& document, std::wstring_view section, const std:
 	for (const std::wstring& entry : entries) entryViews.emplace_back(entry);
 
 	const std::vector<Line> lines = ParseLines(document.text);
-	const std::optional<Section> foundSection = FindSection(document.text, lines, section);
+	const std::optional<SectionRange> foundSection = FindSection(document.text, lines, section);
 	if (!foundSection)
 	{
 		AppendSection(document.text, section, entryViews);
@@ -485,6 +485,85 @@ std::optional<DecodedText> ReadFileText(const std::wstring& path)
 	if (size != 0 && text.IsEmpty()) return std::nullopt;
 
 	return std::optional<DecodedText>(std::move(text));
+}
+
+std::optional<std::wstring_view> Section::GetKey(std::wstring_view key) const
+{
+	WCHAR buffer[256];
+	if (!StringUtil::ToUpperCase(key, buffer, _countof(buffer))) return std::nullopt;
+
+	const auto iter = m_Values.find(buffer);
+	if (iter == m_Values.end()) return std::nullopt;
+
+	return std::wstring_view(iter->second);
+}
+
+std::wstring Section::GetKey(std::wstring_view key, std::wstring_view defaultValue) const
+{
+	const auto value = GetKey(key);
+	return std::wstring(value ? *value : defaultValue);
+}
+
+Section ReadSection(const std::wstring& path, std::wstring_view section)
+{
+	Section result;
+	const std::optional<DecodedText> text = ReadFileText(path);
+	if (!text) return result;
+
+	section = TrimRequest(section);
+	bool foundSection = false;
+	bool inSection = false;
+	text->Parse(
+		[&](std::wstring_view name)
+		{
+			inSection = !foundSection && EqualsNoCase(name, section);
+			if (inSection) foundSection = true;
+		},
+		[&](std::wstring_view key, std::wstring_view value)
+		{
+			if (!inSection) return;
+
+			WCHAR buffer[256];
+			if (StringUtil::ToUpperCase(key, buffer, _countof(buffer)))
+			{
+				result.m_Values.emplace(buffer, std::wstring(value));
+			}
+		});
+
+	return result;
+}
+
+std::optional<std::wstring> ReadKey(const std::wstring& path, std::wstring_view section, std::wstring_view key)
+{
+	const std::optional<DecodedText> text = ReadFileText(path);
+	if (!text) return std::nullopt;
+
+	section = TrimRequest(section);
+	key = TrimRequest(key);
+	bool foundSection = false;
+	bool inSection = false;
+	std::optional<std::wstring> value;
+	text->Parse(
+		[&](std::wstring_view name)
+		{
+			inSection = !foundSection && EqualsNoCase(name, section);
+			if (inSection) foundSection = true;
+		},
+		[&](std::wstring_view found, std::wstring_view foundValue)
+		{
+			if (inSection && !value && EqualsNoCase(found, key))
+			{
+				value.emplace(foundValue);
+			}
+		});
+
+	return value;
+}
+
+std::wstring ReadKey(const std::wstring& path, std::wstring_view section, std::wstring_view key, std::wstring_view defaultValue)
+{
+	const auto value = ReadKey(path, section, key);
+	return value ? *value : std::wstring(defaultValue);
 }
 
 // Whitespace is every character at or below 0x20 and nothing else, so U+00A0 and U+3000 survive.

@@ -71,6 +71,31 @@ std::string ToBytes(const std::wstring& text)
 TEST_CLASS(Common_IniFile_Test)
 {
 public:
+	TEST_METHOD(TestReadSectionAndKey)
+	{
+		TemporaryFile file;
+		file.Write(
+			"[Alpha]\r\nOne=first\r\noNe=second\r\nEmpty=\"\"\r\n"
+			"[Alpha]\r\nOne=later\r\n");
+
+		const auto values = ReadSection(file.GetPath(), L" alpha ");
+		Assert::AreEqual((size_t)2, values.GetEntries().size());
+		Assert::IsTrue(values.GetEntries().find(L"ONE") != values.GetEntries().end());
+		Assert::IsTrue(values.GetEntries().find(L"one") == values.GetEntries().end());
+		Assert::AreEqual(L"first", values.GetKey(L"ONE", L"").c_str());
+		Assert::AreEqual(L"", values.GetKey(L"empty", L"missing").c_str());
+		Assert::AreEqual(L"default", values.GetKey(L"missing", L"default").c_str());
+
+		const auto value = ReadKey(file.GetPath(), L"ALPHA", L"one");
+		Assert::IsTrue(value.has_value());
+		Assert::AreEqual(L"first", value->c_str());
+		Assert::IsTrue(ReadKey(file.GetPath(), L"Alpha", L"Empty").has_value());
+		Assert::IsFalse(ReadKey(file.GetPath(), L"Alpha", L"Missing").has_value());
+		Assert::AreEqual(L"first", ReadKey(file.GetPath(), L"Alpha", L"One", L"default").c_str());
+		Assert::AreEqual(L"", ReadKey(file.GetPath(), L"Alpha", L"Empty", L"default").c_str());
+		Assert::AreEqual(L"default", ReadKey(file.GetPath(), L"Alpha", L"Missing", L"default").c_str());
+	}
+
 	TEST_METHOD(TestCreateFile)
 	{
 		TemporaryFile file;

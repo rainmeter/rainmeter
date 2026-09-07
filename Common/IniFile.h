@@ -11,8 +11,10 @@
 #include <utility>
 #include <vector>
 
-// A read-only .ini reader that reproduces the observable behavior of GetPrivateProfileString and
-// its relatives, including the ugly parts, because skins depend on them.
+#include "Map.h"
+
+// DecodedText reproduces the observable reading behavior of GetPrivateProfileString and its
+// relatives, including the ugly parts, because skins depend on them.
 //
 // Docs/ProfileApiBehavior.md is the specification and the evidence behind every rule here.
 //
@@ -34,6 +36,20 @@
 //   the byte-frequency heuristic in IsTextUnicode, which accepts some plain ASCII as well. What
 //   the profile API's own detection accepts was never measured, so this may or may not differ.
 namespace IniFile {
+
+class Section
+{
+public:
+	std::optional<std::wstring_view> GetKey(std::wstring_view key) const;
+	std::wstring GetKey(std::wstring_view key, std::wstring_view defaultValue) const;
+	bool IsEmpty() const { return m_Values.empty(); }
+	const StringMap<std::wstring>& GetEntries() const { return m_Values; }
+
+private:
+	StringMap<std::wstring> m_Values;
+
+	friend Section ReadSection(const std::wstring& path, std::wstring_view section);
+};
 
 enum class Encoding
 {
@@ -131,6 +147,17 @@ private:
 // Returns nothing if the file cannot be opened, or if it has content that no encoding this
 // understands can decode, so that the caller can report it instead of reading an empty file.
 std::optional<DecodedText> ReadFileText(const std::wstring& path);
+
+// Reads the first matching section, stores its keys in uppercase and keeps the first duplicate key.
+Section ReadSection(const std::wstring& path, std::wstring_view section);
+
+// Reads the first matching key from the first matching section. Returns nothing if the file cannot
+// be read or the section or key is missing.
+std::optional<std::wstring> ReadKey(const std::wstring& path, std::wstring_view section, std::wstring_view key);
+
+// Returns defaultValue if the file cannot be read or the section or key is missing. An empty value
+// in the file is returned as an empty string.
+std::wstring ReadKey(const std::wstring& path, std::wstring_view section, std::wstring_view key, std::wstring_view defaultValue);
 
 // Edits .ini files with the lexical, placement and encoding behavior measured in
 // Docs/ProfileApiBehavior.md.
