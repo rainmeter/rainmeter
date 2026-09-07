@@ -54,7 +54,7 @@ public:
 	bool NeedsCaretRedraw() const
 	{
 		// A hidden meter draws no caret at all, so its recorded phase would never catch up.
-		return m_Focused && !m_Hidden && IsCaretVisible() != m_CaretDrawnVisible;
+		return !m_ReadOnly && m_Focused && !m_Hidden && IsCaretVisible() != m_CaretDrawnVisible;
 	}
 
 	// Moves the caret to the character nearest |x|,|y|. |extend| keeps the selection anchor, as a
@@ -206,6 +206,7 @@ private:
 	bool IsCaretVisible() const;
 
 	bool m_AcceptsInput;
+	bool m_ReadOnly;
 	bool m_Focused;
 	bool m_TrackInitialText;
 
