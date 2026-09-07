@@ -116,8 +116,6 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 	m_CurrentPath = PathUtil::GetFolderFromFilePath(filename);
 	m_SectionNamesInsertPos = m_SectionNames.end();
 
-	System::UpdateIniFileMappingList();
-
 	if (!filename.empty()) ReadIniFile(filename, skinSection);
 
 	ReadVariables();
