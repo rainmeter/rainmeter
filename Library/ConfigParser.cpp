@@ -1,7 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
-#include "../Common/IniFileReader.h"
+#include "../Common/IniFile.h"
 #include "../Common/MathParser.h"
 #include "../Common/ParseUtil.h"
 #include "../Common/PathUtil.h"
@@ -1615,7 +1615,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 		return;
 	}
 
-	const auto text = IniFileReader::DecodeFile(iniFile);
+	const auto text = IniFile::ReadFileText(iniFile);
 	if (!text)
 	{
 		LogErrorF(m_Skin, L"Unable to read file: %s", iniFile.c_str());

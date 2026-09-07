@@ -35,7 +35,7 @@
     <ClCompile Include="StdAfx.cpp" />
     <ClCompile Include="StringParser.cpp" />
     <ClCompile Include="FileUtil.cpp" />
-    <ClCompile Include="IniFileReader.cpp" />
+    <ClCompile Include="IniFile.cpp" />
     <ClCompile Include="Gfx\Canvas.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
@@ -105,7 +105,7 @@
     </ClInclude>
     <ClInclude Include="CrashDump.h" />
     <ClInclude Include="FileUtil.h" />
-    <ClInclude Include="IniFileReader.h" />
+    <ClInclude Include="IniFile.h" />
     <ClInclude Include="ScopedFunction.h" />
     <ClInclude Include="Gfx\Canvas.h">
       <Filter>Gfx</Filter>
