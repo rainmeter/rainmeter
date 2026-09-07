@@ -257,9 +257,8 @@ void Updater::InstallerFetchResultCallback(const Net::FetchTask* fetchTask, void
 	ini.Save();
 
 	// Show tray notification only once per new version
-	WCHAR buffer[32] = { 0 };
-	GetPrivateProfileString(L"Rainmeter", L"LastCheck", L"0", buffer, _countof(buffer), dataFile);
-	VersionHelper::Version lastVersion(buffer);
+	const std::wstring lastCheck = IniFile::ReadKey(dataFile, L"Rainmeter", L"LastCheck", L"0");
+	VersionHelper::Version lastVersion(lastCheck.c_str());
 	if (!lastVersion.IsValid()) lastVersion.Set(L"0");
 
 	if (updater->m_AvailableVersion > lastVersion)

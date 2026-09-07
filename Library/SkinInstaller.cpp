@@ -6,6 +6,7 @@
 #include "Language.h"
 #include "resource.h"
 #include "SkinInstaller.h"
+#include "../Common/IniFile.h"
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
@@ -49,9 +50,9 @@ EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine)
 	if (_waccess_s(buffer, 0) == 0)
 	{
 		g_Data.iniFile = buffer;
-		if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, _countof(buffer), buffer) > 0)
+		g_Data.skinsPath = IniFile::ReadKey(buffer, L"Rainmeter", L"SkinPath", L"");
+		if (!g_Data.skinsPath.empty())
 		{
-			g_Data.skinsPath = buffer;
 			if (g_Data.skinsPath.back() != L'\\' && g_Data.skinsPath.back() != L'/')
 			{
 				g_Data.skinsPath += L'\\';
@@ -72,9 +73,9 @@ EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine)
 		g_Data.iniFile = buffer;
 		if (SUCCEEDED(hr) && _waccess_s(buffer, 0) == 0)
 		{
-			if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, _countof(buffer), buffer) > 0)
+			g_Data.skinsPath = IniFile::ReadKey(buffer, L"Rainmeter", L"SkinPath", L"");
+			if (!g_Data.skinsPath.empty())
 			{
-				g_Data.skinsPath = buffer;
 				if (g_Data.skinsPath.back() != L'\\' && g_Data.skinsPath.back() != L'/')
 				{
 					g_Data.skinsPath += L'\\';

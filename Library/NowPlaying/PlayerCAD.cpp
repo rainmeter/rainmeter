@@ -89,14 +89,10 @@ void PlayerCAD::Initialize()
 	LPCTSTR file = GetRainmeter().GetDataFile().c_str();
 
 	// Read saved settings
-	GetPrivateProfileString(L"NowPlaying.dll", L"ClassName", nullptr, buffer, _countof(buffer), file);
-	std::wstring className = buffer;
-
-	GetPrivateProfileString(L"NowPlaying.dll", L"WindowName", nullptr, buffer, _countof(buffer), file);
-	std::wstring windowName = buffer;
-
-	GetPrivateProfileString(L"NowPlaying.dll", L"PlayerPath", nullptr, buffer, _countof(buffer), file);
-	m_PlayerPath = buffer;
+	const auto settings = IniFile::ReadSection(file, L"NowPlaying.dll");
+	const std::wstring className = settings.GetKey(L"ClassName", L"");
+	const std::wstring windowName = settings.GetKey(L"WindowName", L"");
+	m_PlayerPath = settings.GetKey(L"PlayerPath", L"");
 
 	LPCTSTR classSz = className.empty() ? nullptr : className.c_str();
 	LPCTSTR windowSz = windowName.empty() ? nullptr : windowName.c_str();

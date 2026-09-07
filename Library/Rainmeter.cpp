@@ -352,18 +352,18 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	CheckSettingsFileEncoding(m_DataFile);
 
 	// Install new version
-	if (GetPrivateProfileString(L"Rainmeter", L"InstallerName", L"", buffer, MAX_LINE_LENGTH, m_DataFile.c_str()) != 0)
+	const auto installerName = IniFile::ReadKey(m_DataFile, L"Rainmeter", L"InstallerName", L"");
+	if (!installerName.empty())
 	{
 		bool runInstaller = false;
 		bool deleteInstallerSha256 = false;
-		const std::wstring installerName = buffer;
 		const std::wstring updatePath = m_SettingsPath + L"Updates\\";
 		const std::wstring fullPath = updatePath + installerName;
 		if (PathFileExists(fullPath.c_str()))
 		{
-			if (GetPrivateProfileString(L"Rainmeter", L"InstallerSha256", L"", buffer, MAX_LINE_LENGTH, m_DataFile.c_str()) != 0)
+			const auto sha256 = IniFile::ReadKey(m_DataFile, L"Rainmeter", L"InstallerSha256", L"");
+			if (!sha256.empty())
 			{
-				const std::wstring sha256 = buffer;
 				runInstaller = Updater::VerifyInstaller(updatePath, installerName, sha256, false);
 				deleteInstallerSha256 = true;
 			}
@@ -386,10 +386,11 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 
 	// Delete installer if necessary
-	if (GetPrivateProfileString(L"Rainmeter", L"DeleteInstaller", L"", buffer, MAX_LINE_LENGTH, m_DataFile.c_str()) != 0)
+	const auto deleteInstaller = IniFile::ReadKey(m_DataFile, L"Rainmeter", L"DeleteInstaller", L"");
+	if (!deleteInstaller.empty())
 	{
 		const std::wstring updatePath = m_SettingsPath + L"Updates\\";
-		const std::wstring fullPath = updatePath + buffer;
+		const std::wstring fullPath = updatePath + deleteInstaller;
 		if (PathFileExists(fullPath.c_str()))
 		{
 			System::RemoveFile(fullPath);
@@ -424,11 +425,9 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 
 	// Get skin folder path
-	size_t len = GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, MAX_LINE_LENGTH, iniFile);
-	if (len > 0 && _waccess_s(buffer, 0) == 0)	// Temporary fix
+	m_SkinPath = IniFile::ReadKey(iniFile, L"Rainmeter", L"SkinPath", L"");
+	if (!m_SkinPath.empty() && _waccess_s(m_SkinPath.c_str(), 0) == 0)	// Temporary fix
 	{
-		// Try Rainmeter.ini first
-		m_SkinPath.assign(buffer, len);
 		PathUtil::ExpandEnvironmentVariables(m_SkinPath);
 		PathUtil::AppendBackslashIfMissing(m_SkinPath);
 	}
@@ -1673,20 +1672,21 @@ void Rainmeter::ReadFavorites()
 
 	if (!m_DataFile.empty())
 	{
-		WCHAR favorite[MAX_LINE_LENGTH];
+		const auto favorites = IniFile::ReadSection(m_DataFile, L"Favorites");
 		WCHAR buffer[128];
 		int i = 0;
 
-		do
+		while (true)
 		{
 			_snwprintf_s(buffer, _TRUNCATE, L"Favorite%i", ++i);
-			DWORD res = GetPrivateProfileString(L"Favorites", buffer, L"", favorite, MAX_LINE_LENGTH, m_DataFile.c_str());
+			const auto favorite = favorites.GetKey(buffer, L"");
+			if (favorite.empty()) break;
 
-			if (res > 4)
+			if (favorite.length() > 4)
 			{
 				m_Favorites.emplace_back(favorite);
 			}
-		} while (*favorite);
+		}
 	}
 }
 
@@ -2021,16 +2021,12 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 
 void Rainmeter::PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace)
 {
-	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
-
-	if ((replace || GetPrivateProfileString(L"Rainmeter", key, L"", buffer, 4, m_IniFile.c_str()) == 0) &&
-		GetPrivateProfileString(L"Rainmeter", key, L"", buffer, MAX_LINE_LENGTH, from.c_str()) > 0)
+	const auto current = IniFile::ReadKey(m_IniFile, L"Rainmeter", key);
+	const auto value = IniFile::ReadKey(from, L"Rainmeter", key);
+	if ((replace || !current || current->empty()) && value && !value->empty())
 	{
-		IniFile::WriteKey(m_IniFile, L"Rainmeter", key, buffer);
+		IniFile::WriteKey(m_IniFile, L"Rainmeter", key, *value);
 	}
-
-	delete [] buffer;
-	buffer = nullptr;
 }
 
 bool Rainmeter::IsSkinAFavorite(const std::wstring& folder, const std::wstring& filename)
@@ -2236,18 +2232,15 @@ bool Rainmeter::ReadDialogWindowPlacement(LPCWSTR key, WINDOWPLACEMENT& placemen
 {
 	if (m_DataFile.empty()) return false;
 
-	WCHAR buffer[64];
-	if (GetPrivateProfileString(L"Rainmeter", key, L"", buffer, _countof(buffer), m_DataFile.c_str()) == 0)
-	{
-		return false;
-	}
+	const auto value = IniFile::ReadKey(m_DataFile, L"Rainmeter", key, L"");
+	if (value.empty()) return false;
 
 	int x = 0;
 	int y = 0;
 	int w = 0;
 	int h = 0;
 	int maximized = 0;
-	if (swscanf(buffer, L"%d,%d,%d,%d,%d", &x, &y, &w, &h, &maximized) != 5)
+	if (swscanf(value.c_str(), L"%d,%d,%d,%d,%d", &x, &y, &w, &h, &maximized) != 5)
 	{
 		return false;
 	}
