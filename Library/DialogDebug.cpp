@@ -2708,8 +2708,12 @@ void DialogDebug::TabPlugins::Initialize()
 		FindClose(hSearch);
 	};
 
-	vitem.iGroupId = 1;
-	findPlugins(GetRainmeter().GetPluginPath());
+	const bool hasUserPluginPath = GetRainmeter().HasUserPluginPath();
+	if (hasUserPluginPath)
+	{
+		vitem.iGroupId = 1;
+		findPlugins(GetRainmeter().GetPluginPath());
+	}
 
 	// Add old plugins
 	for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
@@ -2723,11 +2727,8 @@ void DialogDebug::TabPlugins::Initialize()
 		listedPlugins.insert(std::move(name));
 	}
 
-	if (GetRainmeter().HasUserPluginPath())
-	{
-		vitem.iGroupId = 0;
-		findPlugins(GetRainmeter().GetUserPluginPath());
-	}
+	vitem.iGroupId = 0;
+	findPlugins(hasUserPluginPath ? GetRainmeter().GetUserPluginPath() : GetRainmeter().GetPluginPath());
 
 	// Force first column to fit contents
 	ListView_SetColumnWidth(item, 0, LVSCW_AUTOSIZE);
