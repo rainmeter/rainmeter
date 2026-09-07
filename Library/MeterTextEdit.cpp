@@ -156,6 +156,7 @@ void DoResetBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 
 MeterTextEdit::MeterTextEdit(Skin* skin, const WCHAR* name) : MeterStringBase(skin, name),
 	m_AcceptsInput(true),
+	m_ReadOnly(false),
 	m_Focused(false),
 	m_TrackInitialText(true),
 	m_Submitted(false),
@@ -250,6 +251,7 @@ void MeterTextEdit::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	m_MaxLength = parser.ReadInt(section, L"MaxLength", 0);
 	m_Multiline = parser.ReadBool(section, L"Multiline", false);
+	m_ReadOnly = parser.ReadBool(section, L"ReadOnly", false);
 
 	if (m_TrackInitialText)
 	{
@@ -510,7 +512,7 @@ bool MeterTextEdit::Draw(Gfx::Canvas& canvas)
 
 	// Drawn over the placeholder, and using the meter's own format rather than the placeholder's,
 	// so a smaller placeholder does not shrink the caret.
-	if (drawn && m_Focused)
+	if (drawn && m_Focused && !m_ReadOnly)
 	{
 		DrawCaret(canvas);
 	}
@@ -1287,7 +1289,7 @@ void MeterTextEdit::DeleteSelectionOr(bool forward)
 
 bool MeterTextEdit::HandleChar(WCHAR ch)
 {
-	if (!m_AcceptsInput) return false;
+	if (!m_AcceptsInput || m_ReadOnly) return false;
 
 	// Control characters arrive here too (Ctrl+A as 0x01, Escape as 0x1B, and so on). They are
 	// either handled as key presses or not at all, so none of them belong in the text.
@@ -1329,25 +1331,25 @@ bool MeterTextEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
 		return CopySelection(false);
 
 	case 'X':
-		if (!ctrl) return false;
+		if (!ctrl || m_ReadOnly) return false;
 		return CopySelection(true);
 
 	case 'V':
-		if (!ctrl) return false;
+		if (!ctrl || m_ReadOnly) return false;
 		return Paste();
 
 	case 'Z':
-		if (!ctrl) return false;
+		if (!ctrl || m_ReadOnly) return false;
 		return shift ? Redo() : Undo();
 
 	case 'Y':
-		if (!ctrl) return false;
+		if (!ctrl || m_ReadOnly) return false;
 		return Redo();
 
 	case VK_INSERT:
 		// The older bindings for the same three operations.
 		if (ctrl) return CopySelection(false);
-		if (shift) return Paste();
+		if (shift && !m_ReadOnly) return Paste();
 		return false;
 
 	case VK_LEFT:
@@ -1433,6 +1435,7 @@ bool MeterTextEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
 		if (!shift && m_SubmitOnEnter) return false;
 
 		if (!m_Multiline) return false;
+		if (m_ReadOnly) return false;
 
 		// No filter is meant for text with lines in it, and a newline the filter went on to refuse
 		// would delete the selection in place of the line it was meant to add.
@@ -1446,6 +1449,8 @@ bool MeterTextEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
 		return true;
 
 	case VK_BACK:
+		if (m_ReadOnly) return false;
+
 		if (ctrl)
 		{
 			DeleteWord(false);
@@ -1456,6 +1461,8 @@ bool MeterTextEdit::HandleKeyDown(WPARAM key, bool ctrl, bool shift)
 		return true;
 
 	case VK_DELETE:
+		if (m_ReadOnly) return false;
+
 		// Shift+Delete is cut, which has to be checked before the deletion bindings.
 		if (shift) return CopySelection(true);
 
@@ -1512,4 +1519,3 @@ void MeterTextEdit::DrawSelection(Gfx::Canvas& canvas)
 		canvas.FillRectangle(rect, m_SelectionColor);
 	}
 }
-
