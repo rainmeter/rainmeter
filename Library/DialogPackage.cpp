@@ -44,13 +44,6 @@ static std::wstring GetProfileFile()
 	return g_Data.settingsPath + L"SkinPackager.ini";
 }
 
-static std::wstring ReadProfileString(const WCHAR* section, const WCHAR* key, const std::wstring& file)
-{
-	WCHAR buffer[MAX_LINE_LENGTH] = { 0 };
-	GetPrivateProfileString(section, key, L"", buffer, _countof(buffer), file.c_str());
-	return buffer;
-}
-
 static void WriteProfileString(const WCHAR* section, const WCHAR* key, const std::wstring& value, IniFile::Writer& ini)
 {
 	if (value.empty()) return;
@@ -338,10 +331,11 @@ std::vector<DialogPackage::Profile> DialogPackage::GetProfiles()
 	StringParser::ForEachToken(std::wstring_view(buffer, length), L'\0', [&](std::wstring_view token)
 	{
 		const std::wstring section(token);
+		const auto values = IniFile::ReadSection(file, section);
 		Profile profile{
 			section,
-			ReadProfileString(section.c_str(), L"SkinFolder", file),
-			ReadProfileString(section.c_str(), L"Timestamp", file) };
+			values.GetKey(L"SkinFolder", L""),
+			values.GetKey(L"Timestamp", L"") };
 
 		// The options are of no use once the skin folder has been moved or deleted, so they are
 		// forgotten instead of being offered as something that cannot be loaded.
@@ -429,27 +423,28 @@ void DialogPackage::LoadProfile(const std::wstring& skinFolder)
 
 	const std::wstring file = GetProfileFile();
 	const WCHAR* section = m_SkinFolder.first.c_str();
+	const auto profile = IniFile::ReadSection(file, section);
 
 	// Every package has a name, so its absence means that this skin has not been packaged before.
 	// Whatever has already been entered is then left as is.
-	std::wstring name = ReadProfileString(section, L"Name", file);
+	std::wstring name = profile.GetKey(L"Name", L"");
 	if (!name.empty())
 	{
 		m_ProfileLoaded = true;
 
 		m_Name = std::move(name);
-		m_Author = ReadProfileString(section, L"Author", file);
-		m_Version = ReadProfileString(section, L"Version", file);
-		m_MinimumRainmeter = ReadProfileString(section, L"MinimumRainmeter", file);
-		m_VariableFiles = ReadProfileString(section, L"VariableFiles", file);
+		m_Author = profile.GetKey(L"Author", L"");
+		m_Version = profile.GetKey(L"Version", L"");
+		m_MinimumRainmeter = profile.GetKey(L"MinimumRainmeter", L"");
+		m_VariableFiles = profile.GetKey(L"VariableFiles", L"");
 		m_MergeSkins = GetPrivateProfileInt(section, L"MergeSkins", 0, file.c_str()) != 0;
-		m_LoadLayout = _wcsicmp(ReadProfileString(section, L"LoadType", file).c_str(), L"Layout") == 0;
-		m_Load = ReadProfileString(section, L"Load", file);
+		m_LoadLayout = _wcsicmp(profile.GetKey(L"LoadType", L"").c_str(), L"Layout") == 0;
+		m_Load = profile.GetKey(L"Load", L"");
 
-		m_OutputFolder = ReadProfileString(section, L"OutputFolder", file);
+		m_OutputFolder = profile.GetKey(L"OutputFolder", L"");
 		if (!FolderExists(m_OutputFolder)) m_OutputFolder.clear();
 
-		m_HeaderFile = ReadProfileString(section, L"HeaderImage", file);
+		m_HeaderFile = profile.GetKey(L"HeaderImage", L"");
 		if (!FileExists(m_HeaderFile)) m_HeaderFile.clear();
 
 		WCHAR key[32] = { 0 };
@@ -458,7 +453,7 @@ void DialogPackage::LoadProfile(const std::wstring& skinFolder)
 		for (int i = 1; ; ++i)
 		{
 			_snwprintf_s(key, _TRUNCATE, L"Layout%i", i);
-			std::wstring folder = ReadProfileString(section, key, file);
+			std::wstring folder = profile.GetKey(key, L"");
 			if (folder.empty()) break;
 			if (!FolderExists(folder)) continue;
 
@@ -471,7 +466,7 @@ void DialogPackage::LoadProfile(const std::wstring& skinFolder)
 		for (int i = 1; ; ++i)
 		{
 			_snwprintf_s(key, _TRUNCATE, L"Plugin%i", i);
-			const std::wstring value = ReadProfileString(section, key, file);
+			const std::wstring value = profile.GetKey(key, L"");
 			if (value.empty()) break;
 
 			// A package needs both architectures, so one without them is of no use here.

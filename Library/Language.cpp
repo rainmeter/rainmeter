@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "Language.h"
+#include "../Common/IniFile.h"
 
 Language& Language::GetInstance()
 {
@@ -148,20 +149,25 @@ bool Language::Load(const std::wstring& directory, const std::wstring& language)
 
 bool Language::LoadFromSettings(const std::wstring& directory, const std::wstring& iniFile)
 {
-	WCHAR language[MAX_PATH];
-	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", language, _countof(language), iniFile.c_str()) == 0)
+	std::wstring language = IniFile::ReadKey(iniFile, L"Rainmeter", L"Language", L"");
+	if (language.empty())
 	{
 		// Fallback to installer language.
-		DWORD languageSize = sizeof(language);
+		WCHAR buffer[MAX_PATH] = { 0 };
+		DWORD languageSize = sizeof(buffer);
 		DWORD type = 0;
-		if (RegGetValue(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", L"Language", RRF_RT_REG_SZ | RRF_SUBKEY_WOW6432KEY, &type, language, &languageSize) != ERROR_SUCCESS ||
-			type != REG_SZ)
+		if (RegGetValue(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", L"Language", RRF_RT_REG_SZ | RRF_SUBKEY_WOW6432KEY, &type, buffer, &languageSize) == ERROR_SUCCESS &&
+			type == REG_SZ)
 		{
-			language[0] = L'\0';
+			language = buffer;
+		}
+		else
+		{
+			language.clear();
 		}
 	}
 
-	return (*language && Load(directory, language)) || Load(directory, L"1033");
+	return (!language.empty() && Load(directory, language.c_str())) || Load(directory, L"1033");
 }
 
 void Language::Unload()
