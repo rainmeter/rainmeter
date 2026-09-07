@@ -46,8 +46,6 @@ bool System::c_MouseTimerActive = false;
 
 std::wstring System::c_WorkingDirectory;
 
-std::vector<std::wstring> System::c_IniFileMappings;
-
 void System::Initialize(HINSTANCE instance)
 {
 	// Update the CRT timezone variables.
@@ -1050,123 +1048,6 @@ bool System::RemoveFolder(std::wstring folder)
 		return false;
 	}
 	return true;
-}
-
-void System::UpdateIniFileMappingList()
-{
-	static ULONGLONG s_LastWriteTime = 0;
-
-	HKEY hKey = nullptr;
-	LONG ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\IniFileMapping", 0, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS, &hKey);
-	if (ret == ERROR_SUCCESS)
-	{
-		DWORD numSubKeys = 0;
-		ULONGLONG ftLastWriteTime = 0;
-		bool changed = false;
-
-		ret = RegQueryInfoKey(hKey, nullptr, nullptr, nullptr, &numSubKeys, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, (LPFILETIME)&ftLastWriteTime);
-		if (ret == ERROR_SUCCESS)
-		{
-			//LogDebugF(L"IniFileMapping: numSubKeys=%u, ftLastWriteTime=%llu", numSubKeys, ftLastWriteTime);
-
-			if (ftLastWriteTime != s_LastWriteTime ||
-				numSubKeys != c_IniFileMappings.size())
-			{
-				s_LastWriteTime = ftLastWriteTime;
-				if (numSubKeys > c_IniFileMappings.capacity())
-				{
-					c_IniFileMappings.reserve(numSubKeys);
-				}
-				changed = true;
-			}
-		}
-		else
-		{
-			s_LastWriteTime = 0;
-			changed = true;
-		}
-
-		if (changed)
-		{
-			if (!c_IniFileMappings.empty())
-			{
-				c_IniFileMappings.clear();
-			}
-
-			WCHAR* buffer = new WCHAR[MAX_PATH];
-			DWORD index = 0, cch = MAX_PATH;
-
-			while ((ret = RegEnumKeyEx(hKey, index++, buffer, &cch, nullptr, nullptr, nullptr, nullptr)) != ERROR_NO_MORE_ITEMS)
-			{
-				if (ret == ERROR_SUCCESS)
-				{
-					c_IniFileMappings.push_back(buffer);
-				}
-				cch = MAX_PATH;
-			}
-
-			delete [] buffer;
-			buffer = nullptr;
-		}
-
-		RegCloseKey(hKey);
-		hKey = nullptr;
-	}
-}
-
-// Prepares a temporary file if iniFile is included in the "IniFileMapping" entries.
-// If iniFile is not included, returns a empty string. If error occurred, returns "?".
-// Note that a temporary file must be deleted by caller.
-std::wstring System::GetTemporaryFile(const std::wstring& iniFile)
-{
-	std::wstring temporary;
-
-	if (!c_IniFileMappings.empty())
-	{
-		std::wstring::size_type pos = iniFile.find_last_of(L"\\/");
-		const WCHAR* filename = iniFile.c_str() + ((pos != std::wstring::npos) ? pos + 1 : 0);
-
-		std::vector<std::wstring>::const_iterator iter = c_IniFileMappings.begin();
-		for ( ; iter != c_IniFileMappings.end(); ++iter)
-		{
-			if (_wcsicmp((*iter).c_str(), filename) == 0)
-			{
-				WCHAR* buffer = new WCHAR[MAX_PATH];
-
-				if (GetTempPath(MAX_PATH, buffer) != 0 &&
-					GetTempFileName(buffer, L"cfg", 0, buffer) != 0)
-				{
-					temporary = buffer;
-
-					std::wstring tmp = GetTemporaryFile(temporary);
-					if (!tmp.empty() || !CopyFiles(iniFile, temporary))  // temporary is reserved or failed
-					{
-						RemoveFile(temporary);
-
-						if (tmp.empty())
-						{
-							temporary = L"?";
-						}
-						else
-						{
-							temporary.swap(tmp);
-						}
-					}
-				}
-				else  // failed
-				{
-					LogErrorF(L"Unable to create temporary file to: %s", temporary.c_str());
-					temporary = L"?";
-				}
-
-				delete [] buffer;
-				buffer = nullptr;
-				break;
-			}
-		}
-	}
-
-	return temporary;
 }
 
 bool System::IsProcessRunningCached(const std::wstring& lowercaseName)

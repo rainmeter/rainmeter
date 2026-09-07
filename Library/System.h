@@ -48,9 +48,6 @@ public:
 	static bool RemoveFile(const std::wstring& file);
 	static bool RemoveFolder(std::wstring folder);
 
-	static void UpdateIniFileMappingList();
-	static std::wstring GetTemporaryFile(const std::wstring& iniFile);
-
 	static bool IsProcessRunningCached(const std::wstring& lowercaseName);
 
 private:
@@ -73,6 +70,4 @@ private:
 	static bool c_MouseTimerActive;
 
 	static std::wstring c_WorkingDirectory;
-
-	static std::vector<std::wstring> c_IniFileMappings;
 };
