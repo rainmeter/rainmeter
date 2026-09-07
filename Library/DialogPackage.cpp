@@ -322,15 +322,9 @@ void DialogPackage::SetLoadPreviousButtonState()
 std::vector<DialogPackage::Profile> DialogPackage::GetProfiles()
 {
 	const std::wstring file = GetProfileFile();
-
-	WCHAR buffer[MAX_LINE_LENGTH] = { 0 };
-	const DWORD length = GetPrivateProfileSectionNames(buffer, _countof(buffer), file.c_str());
-
-	// The section names come back null separated.
 	std::vector<Profile> profiles;
-	StringParser::ForEachToken(std::wstring_view(buffer, length), L'\0', [&](std::wstring_view token)
+	for (const auto& section : IniFile::ReadSectionNames(file))
 	{
-		const std::wstring section(token);
 		const auto values = IniFile::ReadSection(file, section);
 		Profile profile{
 			section,
@@ -342,11 +336,11 @@ std::vector<DialogPackage::Profile> DialogPackage::GetProfiles()
 		if (!FolderExists(profile.skinFolder))
 		{
 			IniFile::DeleteSection(file, section);
-			return;
+			continue;
 		}
 
 		profiles.emplace_back(std::move(profile));
-	}, StringParser::None);
+	}
 
 	std::sort(profiles.begin(), profiles.end(), [](const Profile& lhs, const Profile& rhs)
 	{

@@ -1119,11 +1119,7 @@ void Rainmeter::OpenSkinFolder(const std::wstring& name)
 
 bool Rainmeter::DoesSkinHaveSettings(const std::wstring& folderPath)
 {
-	WCHAR* buffer = new WCHAR[SHRT_MAX];
-	const bool hasSettings = (GetPrivateProfileSection(folderPath.c_str(), buffer, SHRT_MAX, m_IniFile.c_str()) > 0);
-	delete [] buffer;
-	buffer = nullptr;
-
+	const bool hasSettings = !IniFile::ReadSectionInOrder(m_IniFile, folderPath).empty();
 	if (!hasSettings)
 	{
 		// Since there are no settings for this skin in Rainmeter.ini, attempt to insert
@@ -2168,25 +2164,19 @@ void Rainmeter::ReadStats()
 	if (_waccess_s(statsFile, 0) != 0)
 	{
 		const WCHAR* iniFile = m_IniFile.c_str();
-		WCHAR* tmpSz = new WCHAR[SHRT_MAX]; 	// Max size returned by GetPrivateProfileSection()
-
-		if (GetPrivateProfileSection(L"Statistics", tmpSz, SHRT_MAX, iniFile) > 0)
+		const auto section = IniFile::ReadSectionInOrder(iniFile, L"Statistics");
+		if (!section.empty())
 		{
 			IniFile::DeleteSection(iniFile, L"Statistics");
 		}
-		else
-		{
-			tmpSz[0] = tmpSz[1] = L'\0';
-		}
+
 		std::vector<std::wstring> entries;
-		for (const WCHAR* entry = tmpSz; *entry != L'\0'; entry += wcslen(entry) + 1)
+		entries.reserve(section.size());
+		for (const auto& entry : section)
 		{
-			entries.emplace_back(entry);
+			entries.emplace_back(entry.first + L'=' + entry.second);
 		}
 		IniFile::WriteSection(statsFile, L"Statistics", entries);
-
-		delete [] tmpSz;
-		tmpSz = nullptr;
 	}
 
 	// Only Net measure has stats at the moment

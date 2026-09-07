@@ -289,30 +289,28 @@ void GameMode::ReadSettings()
 {
 	const std::wstring& dataFile = GetRainmeter().GetDataFile();
 
-	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
-	if (GetPrivateProfileString(L"GameMode_v1", nullptr, nullptr, buffer, MAX_LINE_LENGTH, dataFile.c_str()) > 0)
+	const auto settings = IniFile::ReadSectionInOrder(dataFile, L"GameMode_v1");
+	if (!settings.empty())
 	{
-		auto getStr = [buffer, &dataFile](std::wstring& key, std::wstring& str) -> bool
+		auto getStr = [&settings](const std::wstring& key, std::wstring& value) -> bool
 		{
-			bool ret = (GetPrivateProfileString(L"GameMode_v1", key.c_str(), nullptr, buffer, MAX_LINE_LENGTH, dataFile.c_str()) == 0);
-			if (!ret) str = buffer;
-			return ret;
+			for (const auto& entry : settings)
+			{
+				if (_wcsicmp(entry.first.c_str(), key.c_str()) != 0) continue;
+
+				value = entry.second;
+				return value.empty();
+			}
+
+			return true;
 		};
 
-		std::vector<std::wstring> keys;
-		const WCHAR* pos = buffer;
-		while (*pos)
-		{
-			keys.emplace_back(pos);
-			pos += keys.back().size() + 1;
-		}
-
 		std::wstring hashStr;
-		for (const auto& key : keys)
+		for (const auto& entry : settings)
 		{
-			if (hashStr.compare(key.substr(4)) == 0) continue;  // Only process different hashes
+			if (hashStr.compare(entry.first.substr(4)) == 0) continue;  // Only process different hashes
 
-			hashStr = key.substr(4);
+			hashStr = entry.first.substr(4);
 			std::wstring star, keyStar = L"star";
 			std::wstring stop, keyStop = L"stop";
 			std::wstring full, keyFull = L"full";
@@ -348,8 +346,6 @@ void GameMode::ReadSettings()
 			LogErrorF(L"Game mode: Invalid settings (%s)", hashStr.c_str());
 		}
 	}
-	delete [] buffer;
-	buffer = nullptr;
 }
 
 void GameMode::WriteSettings()
