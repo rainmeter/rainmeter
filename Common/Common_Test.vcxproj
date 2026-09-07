@@ -11,9 +11,17 @@
   <PropertyGroup>
     <OutDir>$(IntDir)</OutDir>
   </PropertyGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalDependencies>Imagehlp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="MathParser_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="IniFile_Test.cpp">
       <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="ParseUtil_Test.cpp">

@@ -9,6 +9,7 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 // A read-only .ini reader that reproduces the observable behavior of GetPrivateProfileString and
 // its relatives, including the ugly parts, because skins depend on them.
@@ -32,7 +33,18 @@
 // - A file with no BOM is UTF-16 only if it has NUL bytes where UTF-16 would put them, never on
 //   the byte-frequency heuristic in IsTextUnicode, which accepts some plain ASCII as well. What
 //   the profile API's own detection accepts was never measured, so this may or may not differ.
-namespace IniFileReader {
+namespace IniFile {
+
+enum class Encoding
+{
+	ANSI,
+	UTF16
+};
+
+// Reading and writing use these so both paths recognize the same malformed headers and keys.
+std::wstring_view Trim(std::wstring_view str);
+bool ParseSection(std::wstring_view line, std::wstring_view& name);
+bool ParseKeyValue(std::wstring_view line, std::wstring_view& key, std::wstring_view& value);
 
 class DecodedText
 {
@@ -43,6 +55,9 @@ public:
 	DecodedText& operator=(DecodedText&&) = default;
 
 	bool IsEmpty() const { return m_Length == 0; }
+	std::wstring_view GetText() const { return m_Length == 0 ? std::wstring_view() : std::wstring_view(m_Text.get(), m_Length); }
+	Encoding GetEncoding() const { return m_Encoding; }
+	bool HasBom() const { return m_HasBom; }
 
 	// Calls |onSection| for each "[Section]" line and |onKeyValue| for each "key=value" line of
 	// the section that opened last, in file order. Walking the text again costs another scan of
@@ -56,7 +71,7 @@ public:
 	{
 		constexpr bool wantsKeyValues = !std::is_null_pointer_v<std::decay_t<KeyValueFunc>>;
 
-		const std::wstring_view text(m_Text.get(), m_Length);
+		const std::wstring_view text = GetText();
 
 		bool inSection = false;
 		size_t pos = 0;
@@ -75,16 +90,11 @@ public:
 			// A ';' comment line is dropped completely, and '#' is not a comment character at all.
 			if (line.empty() || line[0] == L';') continue;
 
-			if (line[0] == L'[')
+			std::wstring_view section;
+			if (ParseSection(line, section))
 			{
-				// The name runs to the first ']' or to the end of the line, and everything after
-				// the ']' is discarded, which is why a trailing comment works on a header line.
-				std::wstring_view name = line.substr(1);
-				const size_t close = name.find(L']');
-				if (close != std::wstring_view::npos) name = name.substr(0, close);
-
 				inSection = true;
-				onSection(Trim(name));
+				onSection(section);
 				continue;
 			}
 
@@ -94,27 +104,63 @@ public:
 				// Note that an explicit "[]" header does open a usable section with an empty name.
 				if (!inSection) continue;
 
-				const size_t equals = line.find(L'=');
-				if (equals == std::wstring_view::npos) continue;
-
-				// The split is at the first '=', so "Multi=a=b=c" has the value "a=b=c".
-				onKeyValue(Trim(line.substr(0, equals)), StripQuotes(Trim(line.substr(equals + 1))));
+				std::wstring_view key;
+				std::wstring_view value;
+				if (ParseKeyValue(line, key, value)) onKeyValue(key, StripQuotes(value));
 			}
 		}
 	}
 
 private:
-	DecodedText(std::unique_ptr<WCHAR[]> text, size_t length) : m_Text(std::move(text)), m_Length(length) {}
+	DecodedText(std::unique_ptr<WCHAR[]> text, size_t length, Encoding encoding, bool hasBom) :
+		m_Text(std::move(text)),
+		m_Length(length),
+		m_Encoding(encoding),
+		m_HasBom(hasBom)
+	{
+	}
 
-	static std::wstring_view Trim(std::wstring_view str);
 	static std::wstring_view StripQuotes(std::wstring_view value);
 
 	std::unique_ptr<WCHAR[]> m_Text;
 	size_t m_Length;
+	Encoding m_Encoding;
+	bool m_HasBom;
 };
 
 // Returns nothing if the file cannot be opened, or if it has content that no encoding this
 // understands can decode, so that the caller can report it instead of reading an empty file.
-std::optional<DecodedText> DecodeFile(const std::wstring& path);
+std::optional<DecodedText> ReadFileText(const std::wstring& path);
 
-}  // namespace IniFileReader
+// Edits .ini files with the lexical, placement and encoding behavior measured in
+// Docs/ProfileApiBehavior.md.
+//
+// Changes stay in memory until Save is called. Destroying a Writer does not save it, because a
+// destructor could not report a write failure to the caller.
+class Writer
+{
+public:
+	explicit Writer(const std::wstring& path);
+	~Writer();
+
+	Writer(const Writer&) = delete;
+	Writer& operator=(const Writer&) = delete;
+
+	bool IsValid() const;
+	void WriteKey(std::wstring_view section, std::wstring_view key, std::wstring_view value);
+	void DeleteKey(std::wstring_view section, std::wstring_view key);
+	void DeleteSection(std::wstring_view section);
+	void WriteSection(std::wstring_view section, const std::vector<std::wstring>& lines);
+	bool Save();
+
+private:
+	struct Impl;
+	std::unique_ptr<Impl> m_Impl;
+};
+
+bool WriteKey(const std::wstring& path, std::wstring_view section, std::wstring_view key, std::wstring_view value);
+bool DeleteKey(const std::wstring& path, std::wstring_view section, std::wstring_view key);
+bool DeleteSection(const std::wstring& path, std::wstring_view section);
+bool WriteSection(const std::wstring& path, std::wstring_view section, const std::vector<std::wstring>& lines);
+
+}  // namespace IniFile

@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 #include "../Common/FileUtil.h"
-#include "../Common/IniFileReader.h"
+#include "../Common/IniFile.h"
 #include "../Common/MathParser.h"
 #include "../Common/StringParser.h"
 #include "Rainmeter.h"
@@ -106,7 +106,7 @@ void Updater::StatusFetchResultCallback(const Net::FetchTask* fetchTask, void* r
 
 	std::optional<std::wstring> version, downloadUrl, downloadHash, obsoleteLanguages;
 	bool inRelease = false;
-	IniFileReader::DecodedText::FromMemory(data, dataSize).Parse(
+	IniFile::DecodedText::FromMemory(data, dataSize).Parse(
 		[&](std::wstring_view name)
 		{
 			inRelease = name == L"Release";
