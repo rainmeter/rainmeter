@@ -6,6 +6,7 @@
 #include "Rainmeter.h"
 #include "System.h"
 #include "../Common/CharacterEntityReference.h"
+#include "../Common/IniFile.h"
 #include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
@@ -180,19 +181,21 @@ void SetupGlobalProxySetting()
 {
 	if (!g_ProxyCachePool)
 	{
-		WCHAR server[MAX_PATH] = { 0 };
-		WCHAR agent[MAX_PATH] = { 0 };
 		LPCWSTR file = GetRainmeter().GetDataFile().c_str();
+		const auto settings = IniFile::ReadSection(file, L"WebParser");
+		const auto oldSettings = IniFile::ReadSection(file, L"WebParser.dll");
 
-		if (GetPrivateProfileString(L"WebParser", L"ProxyServer", nullptr, server, MAX_PATH, file) == 0)
+		std::wstring server = settings.GetKey(L"ProxyServer", L"");
+		if (server.empty())
 		{
-			GetPrivateProfileString(L"WebParser.dll", L"ProxyServer", nullptr, server, MAX_PATH, file);  // For backwards compatibility
+			server = oldSettings.GetKey(L"ProxyServer", L"");  // For backwards compatibility
 		}
-		if (GetPrivateProfileString(L"WebParser", L"UserAgent", nullptr, agent, MAX_PATH, file) == 0)
+		std::wstring agent = settings.GetKey(L"UserAgent", L"");
+		if (agent.empty())
 		{
-			GetPrivateProfileString(L"WebParser.dll", L"UserAgent", nullptr, agent, MAX_PATH, file);  // For backwards compatibility
+			agent = oldSettings.GetKey(L"UserAgent", L"");  // For backwards compatibility
 		}
-		g_ProxyCachePool = new ProxyCachePool(server, agent);
+		g_ProxyCachePool = new ProxyCachePool(server.c_str(), agent.c_str());
 	}
 }
 

@@ -911,47 +911,43 @@ void DialogManage::TabSkins::ReadSkin()
 
 	SetControls();
 
-	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
-	const WCHAR* fileSz = file.c_str();
+	const auto metadata = IniFile::ReadSection(file, L"Metadata");
 
 	item = GetControl(Id_AuthorLabel);
-	if (GetPrivateProfileString(L"Metadata", L"Author", nullptr, buffer, MAX_LINE_LENGTH, fileSz) == 0)
+	std::wstring author = metadata.GetKey(L"Author", L"");
+	if (author.empty())
 	{
 		// For backwards compatibility.
-		GetPrivateProfileString(L"Rainmeter", L"Author", nullptr, buffer, MAX_LINE_LENGTH, fileSz);
+		author = IniFile::ReadKey(file, L"Rainmeter", L"Author", L"");
 	}
-	SetWindowText(item, buffer);
+	SetWindowText(item, author.c_str());
 
 	item = GetControl(Id_AddMetadataLink);
-	if (GetPrivateProfileSection(L"Metadata", buffer, 8, fileSz) > 0)
+	if (!metadata.IsEmpty())
 	{
 		ShowWindow(item, SW_HIDE);
 
 		// Set metadata
 		item = GetControl(Id_VersionLabel);
-		GetPrivateProfileString(L"Metadata", L"Version", nullptr, buffer, MAX_LINE_LENGTH, fileSz);
-		SetWindowText(item, buffer);
+		const std::wstring version = metadata.GetKey(L"Version", L"");
+		SetWindowText(item, version.c_str());
 
 		item = GetControl(Id_LicenseLabel);
-		GetPrivateProfileString(L"Metadata", L"License", nullptr, buffer, MAX_LINE_LENGTH, fileSz);
-		SetWindowText(item, buffer);
+		const std::wstring license = metadata.GetKey(L"License", L"");
+		SetWindowText(item, license.c_str());
 
 		item = GetControl(Id_DescriptionLabel);
-		std::wstring text;
-		if (GetPrivateProfileString(L"Metadata", L"Information", nullptr, buffer, MAX_LINE_LENGTH, fileSz) > 0)
-		{
-			text = buffer;
-		}
-		else
+		std::wstring text = metadata.GetKey(L"Information", L"");
+		if (text.empty())
 		{
 			// For backwards compatibility
-			GetPrivateProfileString(L"Metadata", L"Description", nullptr, buffer, MAX_LINE_LENGTH, fileSz);
-			text = buffer;
+			text = metadata.GetKey(L"Description", L"");
 
-			if (GetPrivateProfileString(L"Metadata", L"Instructions", nullptr, buffer, MAX_LINE_LENGTH, fileSz) > 0)
+			const std::wstring instructions = metadata.GetKey(L"Instructions", L"");
+			if (!instructions.empty())
 			{
 				text += L"\r\n\r\n";
-				text += buffer;
+				text += instructions;
 			}
 		}
 
@@ -988,9 +984,6 @@ void DialogManage::TabSkins::ReadSkin()
 		SetWindowText(item, L"");
 		ShowScrollBar(item, SB_VERT, FALSE);
 	}
-
-	delete [] buffer;
-	buffer = nullptr;
 }
 
 LRESULT CALLBACK DialogManage::TabSkins::NewSkinButtonSubclass(HWND hwnd, UINT msg, WPARAM wParam,

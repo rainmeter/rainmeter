@@ -571,73 +571,68 @@ bool DialogInstall::ReadPackage()
 
 bool DialogInstall::ReadOptions(const WCHAR* file)
 {
-	WCHAR buffer[MAX_LINE_LENGTH] = { 0 };
-
 	const bool newFormat = m_PackageFormat == PackageFormat::New;
 	const WCHAR* section = newFormat ? L"rmskin" : L"Rainstaller";
+	const auto options = IniFile::ReadSection(file, section);
 
-	if (GetPrivateProfileString(section, L"Name", L"", buffer, 64, file) == 0)
-	{
-		return false;
-	}
-	m_Name = buffer;
+	m_Name = options.GetKey(L"Name", L"");
+	if (m_Name.empty()) return false;
 
 	if (!newFormat)
 	{
 		// Determine if skins need to backed up based on name
 		int s = 0;
-		int scanned = swscanf_s(buffer, L"Backup-%d.%d.%d-%d.%d.rmskin", &s, &s, &s, &s, &s);
+		int scanned = swscanf_s(m_Name.c_str(), L"Backup-%d.%d.%d-%d.%d.rmskin", &s, &s, &s, &s, &s);
 		m_BackupPackage = scanned == 5;
 	}
 
-	GetPrivateProfileString(section, L"Author", L"", buffer, 64, file);
-	m_Author = buffer;
-
-	GetPrivateProfileString(section, L"Version", L"", buffer, 64, file);
-	m_Version = buffer;
+	m_Author = options.GetKey(L"Author", L"");
+	m_Version = options.GetKey(L"Version", L"");
 
 	m_MergeSkins = GetPrivateProfileInt(section, newFormat ? L"MergeSkins" : L"Merge", 0, file) != 0;
 
-	GetPrivateProfileString(section, newFormat ? L"VariableFiles" : L"KeepVar", L"", buffer, MAX_LINE_LENGTH, file);
-	m_VariablesFiles = Tokenize(buffer, L"|");
+	const std::wstring variableFiles = options.GetKey(newFormat ? L"VariableFiles" : L"KeepVar", L"");
+	m_VariablesFiles = Tokenize(variableFiles, L"|");
 
-	if (GetPrivateProfileString(section, newFormat ? L"MinimumRainmeter" : L"MinRainmeterVer", L"", buffer, MAX_LINE_LENGTH, file) > 0)
+	const std::wstring minimumRainmeter = options.GetKey(newFormat ? L"MinimumRainmeter" : L"MinRainmeterVer", L"");
+	if (!minimumRainmeter.empty())
 	{
 		std::wstring rainmeterDll = g_Data.programPath + L"Rainmeter.dll";
 		std::wstring rainmeterVersion = GetFileVersionString(rainmeterDll.c_str());
-		if (CompareVersions(buffer, rainmeterVersion) == 1)
+		if (CompareVersions(minimumRainmeter, rainmeterVersion) == 1)
 		{
-			m_ErrorMessage = GetFormattedString(IDS_MinimumRainmeterRequired, buffer);
+			m_ErrorMessage = GetFormattedString(IDS_MinimumRainmeterRequired, minimumRainmeter.c_str());
 			return false;
 		}
 	}
 
-	if (GetPrivateProfileString(section, newFormat ? L"LoadType" : L"LaunchType", L"", buffer, MAX_LINE_LENGTH, file) > 0)
+	const std::wstring loadType = options.GetKey(newFormat ? L"LoadType" : L"LaunchType", L"");
+	if (!loadType.empty())
 	{
-		bool loadSkin = _wcsicmp(buffer, newFormat ? L"Skin" : L"Load") == 0;
+		bool loadSkin = _wcsicmp(loadType.c_str(), newFormat ? L"Skin" : L"Load") == 0;
 
-		GetPrivateProfileString(section, newFormat ? L"Load" : L"LaunchCommand", L"", buffer, MAX_LINE_LENGTH, file);
+		const std::wstring load = options.GetKey(newFormat ? L"Load" : L"LaunchCommand", L"");
 		if (loadSkin)
 		{
 			if (newFormat)
 			{
-				m_LoadSkins.push_back(buffer);
+				m_LoadSkins.push_back(load);
 			}
 			else
 			{
-				m_LoadSkins = Tokenize(buffer, L"|");
+				m_LoadSkins = Tokenize(load, L"|");
 			}
 		}
 		else
 		{
-			m_LoadLayout = buffer;
+			m_LoadLayout = load;
 		}
 	}
 
 	if (newFormat)
 	{
-		if (GetPrivateProfileString(section, L"MinimumWindows", L"", buffer, MAX_LINE_LENGTH, file) > 0 &&
-			CompareVersions(buffer, GetWindowsVersionString()) == 1)
+		const std::wstring minimumWindows = options.GetKey(L"MinimumWindows", L"");
+		if (!minimumWindows.empty() && CompareVersions(minimumWindows, GetWindowsVersionString()) == 1)
 		{
 			m_ErrorMessage = GetString(IDS_UnsupportedWindowsPackage);
 			return false;

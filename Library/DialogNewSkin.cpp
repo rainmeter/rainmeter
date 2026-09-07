@@ -375,11 +375,10 @@ void DialogNewSkin::TabNew::Create(HWND owner)
 	UpdateParentPathTT(false);
 
 	// Get selected template for drop down menu
-	WCHAR buffer[MAX_PATH] = { 0 };
-	GetPrivateProfileString(L"Dialog_NewSkin", L"SelectedTemplate", L"", buffer, MAX_PATH, GetRainmeter().GetDataFile().c_str());
-	if (buffer && *buffer)
+	auto selectedTemplate = IniFile::ReadKey(GetRainmeter().GetDataFile(), L"Dialog_NewSkin", L"SelectedTemplate", L"");
+	if (!selectedTemplate.empty())
 	{
-		m_SelectedTemplate = buffer;
+		m_SelectedTemplate = std::move(selectedTemplate);
 		ValidateSelectedTemplate();
 	}
 }
