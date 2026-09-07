@@ -43,10 +43,9 @@ struct InputTextOptions
 // measure's own Command1..N lines are run in order, opening a box for each one that holds a
 // $UserInput$ token and stopping where a box is dismissed.
 //
-// The box is a window of its own rather than anything the skin draws, so it is opened on a worker
-// thread: the skins behind it go on updating while it waits, which they could not do from a modal
-// loop on the main thread. Nothing but the box itself happens there - every option is read, and
-// every bang is run, back on the main thread between one prompt and the next.
+// The box is a modeless window of its own rather than anything the skin draws. It uses Rainmeter's
+// message loop, so skins keep updating while it waits and every part of a run stays on the main
+// thread.
 class MeasureInputText : public Measure
 {
 public:
@@ -68,38 +67,20 @@ protected:
 	void Command(const std::wstring& command) override;
 
 private:
-	// One line of a run: a bang, and the box that has to be answered before it goes.
 	struct Step
 	{
-		// The bang to run, with its $UserInput$ token still in it where it has one.
 		std::wstring command;
-
-		// Set instead of |command| by the one word form, which names a variable rather than
-		// writing out the bang that sets it.
 		std::wstring variable;
-
 		InputTextOptions options;
 		bool prompts = false;
 	};
 
-	struct SharedData;
 	class InputBox;
-	class PromptTask;
 
-	// Fills m_Steps from the argument of !CommandMeasure. |false| where there is nothing to run.
 	bool ReadSteps(const std::wstring& command);
-
-	// Runs from m_StepIndex until a box has to be opened, or until there is nothing left.
 	void RunSteps();
-
-	// Where a box that was opened comes back to. Nothing means it was dismissed, which ends the
-	// run wherever it had got to.
 	void HandleInput(const std::optional<std::wstring>& input);
-
-	// Clears the run. |dismissed| is the end that OnDismissAction is for.
 	void EndRun(bool dismissed);
-
-	// Closes the box, if one is open. Safe while none is, and while one is on its way up.
 	void CloseBox();
 
 	InputTextOptions m_Options;
@@ -108,11 +89,10 @@ private:
 	std::vector<Step> m_Steps;
 	size_t m_StepIndex = 0;
 
-	// The measure's value: the text last typed into it.
 	std::wstring m_Input;
 
-	// Outlives the measure, so that the box and the task still have somewhere to look when a bang
-	// refreshes the skin out from under them.
-	std::shared_ptr<SharedData> m_Data;
-	PromptTask* m_Task = nullptr;
+	// Outlives the measure, so a window callback can notice when a bang refreshed the skin out from
+	// under it.
+	std::shared_ptr<MeasureInputText*> m_MeasureRef;
+	std::shared_ptr<InputBox> m_Box;
 };

@@ -2,36 +2,18 @@
 
 #include "StdAfx.h"
 #include "MeasureInputText.h"
-#include "AsyncTask.h"
 #include "ConfigParser.h"
 #include "Logger.h"
 #include "Rainmeter.h"
 #include "Skin.h"
-#include "../Common/CriticalSection.h"
 #include <Commctrl.h>
-
-// What the box shares with the measure that opened it. The box is on a worker thread and the
-// measure is not, and a bang between two prompts can refresh the skin and take the measure with
-// it, so what one needs of the other is kept here instead - where it outlives them both.
-struct MeasureInputText::SharedData
-{
-	explicit SharedData(MeasureInputText* measure) : measure(measure) {}
-
-	std::atomic<bool> active = true;
-	CriticalSection criticalSection;
-
-	// The open box, for as long as one is open, so that it can be closed from the main thread.
-	HWND window = nullptr;
-
-	MeasureInputText* measure = nullptr;
-};
 
 namespace {
 
 const WCHAR* c_ClassName = L"RainmeterInputText";
 const WCHAR* c_UserInputToken = L"$UserInput$";
 
-constexpr UINT WM_INPUTTEXT_SETTLE = WM_APP + 0;
+constexpr UINT WM_INPUTTEXT_CLOSE = WM_APP + 0;
 constexpr UINT WM_INPUTTEXT_MENUDONE = WM_APP + 1;
 
 // Whitespace as a skin file can write it. Nothing here parses prose, so the Unicode spaces are not
@@ -299,18 +281,15 @@ std::wstring ScanOverrides(ConfigParser& parser, std::wstring line, InputTextOpt
 
 }  // namespace
 
-// The box itself: one window, open for as long as one prompt lasts. It belongs to the worker
-// thread that shows it, and everything it is drawn with was settled before it was created - the
-// styles of an edit control cannot be changed once the control exists.
-class MeasureInputText::InputBox
+class MeasureInputText::InputBox : public std::enable_shared_from_this<InputBox>
 {
 public:
-	explicit InputBox(const std::shared_ptr<SharedData>& data) : m_Data(data) {}
+	explicit InputBox(const std::shared_ptr<MeasureInputText*>& measure) : m_Measure(measure) {}
+	~InputBox();
 
-	// Opens the box over |skinWindow| and pumps messages until it is answered. Returns the text on
-	// submit, and nothing when it was dismissed - by Escape, by losing focus, or by the measure
-	// closing it from the main thread.
-	std::optional<std::wstring> Show(const InputTextOptions& options, HWND skinWindow, float scale);
+	bool Open(const InputTextOptions& options, HWND skinWindow, float scale);
+	void Close(bool submitted);
+	void Abort();
 
 private:
 	static LRESULT CALLBACK WndProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -319,43 +298,42 @@ private:
 
 	static std::wstring GetControlText(HWND control);
 
-	// |false| for a character the InputNumber filter refuses.
 	bool AcceptsChar(WCHAR ch) const;
 
-	// |true| where a deactivation of the box is Rainmeter answering the click that asked for the
-	// box, rather than the user clicking away from it.
-	bool IsActivationFromOpeningClick(HWND activated) const;
+	void Complete();
+	std::optional<std::wstring> FinishClose();
+	void RestoreSkinEnabledState();
 
-	void Close(bool submitted);
-
-	std::shared_ptr<SharedData> m_Data;
-	const InputTextOptions* m_Options = nullptr;
+	std::shared_ptr<MeasureInputText*> m_Measure;
+	InputTextOptions m_Options;
+	HWND m_SkinWindow = nullptr;
 	HWND m_Window = nullptr;
 	HWND m_Edit = nullptr;
 	HFONT m_Font = nullptr;
 	HBRUSH m_BackBrush = nullptr;
 	bool m_Submitted = false;
+	bool m_SkinDisabled = false;
 
-	// Set for as long as one Close() is on its way through DestroyWindow, since tearing the window
-	// down deactivates it, and being deactivated is itself one of the ways out of the box.
+	// Set once closing starts, since tearing the window down deactivates it and being deactivated is
+	// itself one of the ways out of the box.
 	bool m_Closing = false;
-
-	// Until when a deactivation may still be Rainmeter coming forward behind the box, and whether
-	// that has already been answered.
-	ULONGLONG m_SettleUntil = 0;
-	bool m_Reclaimed = false;
 
 	// Set while the copy and paste menu of the edit control is up, since the menu takes the
 	// activation of the box with it and giving that up is one of the ways out of the box.
 	bool m_MenuOpen = false;
-
-	// What Close() lifted out of the edit control, since the control is gone by the time Show()
-	// has anything to return.
-	std::wstring m_Text;
 };
 
-std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOptions& options, HWND skinWindow, float scale)
+MeasureInputText::InputBox::~InputBox()
 {
+	Abort();
+	DeleteObject(m_Font);
+	DeleteObject(m_BackBrush);
+}
+
+bool MeasureInputText::InputBox::Open(const InputTextOptions& options, HWND skinWindow, float scale)
+{
+	std::shared_ptr<InputBox> keepAlive = shared_from_this();
+
 	// Positions are relative to the skin, which is where the skin wrote them: the box is drawn
 	// over the skin rather than in it, but a skin author places it against what they can see.
 	RECT skinRect = { 0 };
@@ -374,10 +352,11 @@ std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOpti
 	// and the second registration is the one that fails.
 	if (RegisterClassEx(&wndClass) == 0 && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
 	{
-		return std::nullopt;
+		return false;
 	}
 
-	m_Options = &options;
+	m_Options = options;
+	m_SkinWindow = skinWindow;
 
 	// The scale is applied here rather than where the options were read, so that a box opening now
 	// opens at the scale the skin is at now.
@@ -396,23 +375,12 @@ std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOpti
 	if (topMost) exStyle |= WS_EX_TOPMOST;
 	if (options.opacity < 255) exStyle |= WS_EX_LAYERED;
 
-	// Created and published to the measure under the one lock, and the measure having gone is read
-	// back under it too: a box the measure asked to close in the middle of this is either found by
-	// it there, or caught here.
-	bool active = false;
-	{
-		CriticalSectionLock lock(m_Data->criticalSection);
+	m_Window = CreateWindowEx(exStyle, c_ClassName, L"", WS_POPUP,
+		skinRect.left + ScaleCoordinate(options.x, scale),
+		skinRect.top + ScaleCoordinate(options.y, scale),
+		width, height, skinWindow, nullptr, GetRainmeter().GetModuleInstance(), this);
 
-		m_Window = CreateWindowEx(exStyle, c_ClassName, L"", WS_POPUP,
-			skinRect.left + ScaleCoordinate(options.x, scale),
-			skinRect.top + ScaleCoordinate(options.y, scale),
-			width, height, skinWindow, nullptr, GetRainmeter().GetModuleInstance(), this);
-
-		m_Data->window = m_Window;
-		active = m_Data->active;
-	}
-
-	if (m_Window != nullptr && active)
+	if (m_Window)
 	{
 		if (options.opacity < 255)
 		{
@@ -422,62 +390,81 @@ std::optional<std::wstring> MeasureInputText::InputBox::Show(const InputTextOpti
 		// FocusDismiss=0 is the modal case, and a modal dialog disables the window it belongs to.
 		// The box cannot be dismissed by clicking away from it, so leaving the skin clickable
 		// would let a click land on whatever is under a box that is still waiting to be answered.
-		const bool disableSkin = !options.focusDismiss && IsWindowEnabled(skinWindow);
-		if (disableSkin) EnableWindow(skinWindow, FALSE);
-
-		// The click that opens a box leaves activation of its own behind it - of the skin the box
-		// is drawn over, and of whatever else that skin puts up on the way, a tooltip skin the
-		// pointer passed over being the usual one. All of it lands after the box has taken the
-		// foreground, and the box has to sit through it: long enough for a busy skin to get
-		// around to it, short enough that a click the user meant as a dismissal is past it.
-		m_SettleUntil = GetTickCount64() + 500;
+		m_SkinDisabled = !options.focusDismiss && IsWindowEnabled(skinWindow);
+		if (m_SkinDisabled) EnableWindow(skinWindow, FALSE);
 
 		ShowWindow(m_Window, SW_SHOW);
-		SetForegroundWindow(m_Window);
-		SetFocus(m_Edit);
+		if (!m_Window) return false;
 
-		// Select all.
 		SendMessage(m_Edit, EM_SETSEL, 0, (LPARAM)-1);
 
-		PostMessage(m_Window, WM_INPUTTEXT_SETTLE, 0, 0);
-
-		MSG msg;
-		while (GetMessage(&msg, nullptr, 0, 0) > 0)
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-
-		// Before the window goes, or the skin cannot take back the focus the box is dropping.
-		if (disableSkin) EnableWindow(skinWindow, TRUE);
+		SetForegroundWindow(m_Window);
+		if (!m_Window) return false;
+		SetFocus(m_Edit);
 	}
 
-	Close(false);
-
-	DeleteObject(m_Font);
-	m_Font = nullptr;
-	DeleteObject(m_BackBrush);
-	m_BackBrush = nullptr;
-	m_Options = nullptr;
-
-	if (!m_Submitted) return std::nullopt;
-	return m_Text;
+	return keepAlive->m_Window;
 }
 
 void MeasureInputText::InputBox::Close(bool submitted)
 {
-	if (m_Window == nullptr || m_Closing) return;
+	if (!m_Window || m_Closing) return;
 
-	if (submitted)
+	m_Closing = true;
+	m_Submitted = submitted;
+
+	// Completion can unload the skin, so let the input or menu callback that requested it unwind.
+	PostMessage(m_Window, WM_INPUTTEXT_CLOSE, 0, 0);
+}
+
+void MeasureInputText::InputBox::Abort()
+{
+	HWND window = m_Window;
+	m_Window = nullptr;
+	if (window)
+	{
+		m_Closing = true;
+		DestroyWindow(window);
+	}
+
+	RestoreSkinEnabledState();
+	m_Measure.reset();
+}
+
+void MeasureInputText::InputBox::Complete()
+{
+	std::shared_ptr<MeasureInputText*> measureHandle = m_Measure;
+	std::optional<std::wstring> input = FinishClose();
+	MeasureInputText* measure = measureHandle ? *measureHandle : nullptr;
+
+	if (measure && measure->m_Box.get() == this)
+	{
+		measure->m_Box.reset();
+		measure->HandleInput(input);
+	}
+}
+
+std::optional<std::wstring> MeasureInputText::InputBox::FinishClose()
+{
+	std::optional<std::wstring> input;
+	if (m_Submitted)
 	{
 		// Trimmed, as the box has always trimmed it, so that a skin reading the text back does not
 		// have to strip what a stray space at either end would leave in a path or a URL.
-		m_Text = Trim(GetControlText(m_Edit));
-		m_Submitted = true;
+		input = Trim(GetControlText(m_Edit));
 	}
 
-	m_Closing = true;
-	DestroyWindow(m_Window);
+	HWND window = m_Window;
+	m_Window = nullptr;
+	if (window) DestroyWindow(window);
+	RestoreSkinEnabledState();
+	return input;
+}
+
+void MeasureInputText::InputBox::RestoreSkinEnabledState()
+{
+	if (m_SkinDisabled && IsWindow(m_SkinWindow)) EnableWindow(m_SkinWindow, TRUE);
+	m_SkinDisabled = false;
 }
 
 std::wstring MeasureInputText::InputBox::GetControlText(HWND control)
@@ -503,16 +490,17 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 		break;
 
 	default:
-		// Whatever arrives before the box has been attached above is nothing this handles.
-		if (box == nullptr) return DefWindowProc(wnd, msg, wParam, lParam);
+		if (!box) return DefWindowProc(wnd, msg, wParam, lParam);
 		break;
 	}
+
+	std::shared_ptr<InputBox> keepAlive = box->shared_from_this();
 
 	switch (msg)
 	{
 	case WM_CREATE:
 		{
-			const InputTextOptions& options = *box->m_Options;
+			const InputTextOptions& options = box->m_Options;
 
 			RECT client = { 0 };
 			GetClientRect(wnd, &client);
@@ -554,7 +542,7 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 			box->m_Edit = CreateWindowEx(0L, WC_EDIT, options.text.c_str(), style,
 				0, 0, client.right, editHeight, wnd, nullptr,
 				GetRainmeter().GetModuleInstance(), nullptr);
-			if (box->m_Edit == nullptr) return -1;
+			if (!box->m_Edit) return -1;
 
 			SendMessage(box->m_Edit, WM_SETFONT, (WPARAM)box->m_Font, FALSE);
 			if (options.maxLength > 0)
@@ -579,19 +567,18 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 		return 1;
 
 	case WM_CTLCOLOREDIT:
-		SetTextColor((HDC)wParam, box->m_Options->fontColor);
-		SetBkColor((HDC)wParam, box->m_Options->backColor);
+		SetTextColor((HDC)wParam, box->m_Options.fontColor);
+		SetBkColor((HDC)wParam, box->m_Options.backColor);
 		return (LRESULT)box->m_BackBrush;
 
-	case WM_INPUTTEXT_SETTLE:
-		// The skin may have taken the focus back while the box was coming up.
-		if (GetFocus() != box->m_Edit) SetFocus(box->m_Edit);
+	case WM_INPUTTEXT_CLOSE:
+		box->Complete();
 		return 0;
 
 	case WM_INPUTTEXT_MENUDONE:
 		// The menu is gone. Whatever holds the foreground now is where the user went while it was
 		// up, and if that is not the box then they went somewhere else and the box is done.
-		if (box->m_Options->focusDismiss && GetForegroundWindow() != wnd)
+		if (box->m_Options.focusDismiss && GetForegroundWindow() != wnd)
 		{
 			box->Close(false);
 		}
@@ -602,22 +589,8 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 		return 0;
 
 	case WM_ACTIVATE:
-		// Clicking away from the box is the usual way out of it, and the only one a skin that
-		// draws no buttons of its own has.
-		if (LOWORD(wParam) == WA_INACTIVE && box->m_Options->focusDismiss && !box->m_MenuOpen)
+		if (LOWORD(wParam) == WA_INACTIVE && box->m_Options.focusDismiss && !box->m_MenuOpen)
 		{
-			// Except where it is Rainmeter coming up behind the box instead, which would otherwise
-			// dismiss the box before it was ever seen. That is answered by taking the foreground
-			// back, and only ever once, so that a skin which reacts to losing it by activating
-			// something of its own cannot be traded with.
-			if (!box->m_Closing && !box->m_Reclaimed && box->IsActivationFromOpeningClick((HWND)lParam))
-			{
-				box->m_Reclaimed = true;
-				SetForegroundWindow(wnd);
-				SetFocus(box->m_Edit);
-				return 0;
-			}
-
 			box->Close(false);
 		}
 		return 0;
@@ -627,14 +600,8 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 		return 0;
 
 	case WM_DESTROY:
-		{
-			CriticalSectionLock lock(box->m_Data->criticalSection);
-			box->m_Data->window = nullptr;
-		}
-
 		box->m_Window = nullptr;
 		box->m_Edit = nullptr;
-		PostQuitMessage(0);
 		return 0;
 	}
 
@@ -644,6 +611,7 @@ LRESULT CALLBACK MeasureInputText::InputBox::WndProc(HWND wnd, UINT msg, WPARAM 
 LRESULT CALLBACK MeasureInputText::InputBox::EditProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR id, DWORD_PTR data)
 {
 	InputBox* box = (InputBox*)data;
+	std::shared_ptr<InputBox> keepAlive = box->shared_from_this();
 
 	switch (msg)
 	{
@@ -692,7 +660,7 @@ LRESULT CALLBACK MeasureInputText::InputBox::EditProc(HWND wnd, UINT msg, WPARAM
 
 bool MeasureInputText::InputBox::AcceptsChar(WCHAR ch) const
 {
-	if (!m_Options->numeric) return true;
+	if (!m_Options.numeric) return true;
 
 	// Backspace and the rest of the control characters are how the field is edited at all.
 	if (ch < 0x20 || ch == 0x7F) return true;
@@ -719,97 +687,19 @@ bool MeasureInputText::InputBox::AcceptsChar(WCHAR ch) const
 	return true;
 }
 
-bool MeasureInputText::InputBox::IsActivationFromOpeningClick(HWND activated) const
-{
-	// Timed rather than answered by the settle message the box posts itself: that message is on
-	// the queue of the box and orders against nothing the skin does, so a skin slow enough to
-	// activate itself after the box has taken the foreground is also slow enough to do it after
-	// the box has read the settle message. Which is how the box came to be dismissed on the first
-	// click of a heavy skin, and only sometimes.
-	if (GetTickCount64() >= m_SettleUntil) return false;
-
-	// WM_ACTIVATE is not obliged to name the window taking over, and by the time it arrives the
-	// foreground is that window anyway.
-	if (activated == nullptr) activated = GetForegroundWindow();
-
-	// Any window of ours and not the skin alone: what the click stirs up is as often another skin
-	// as it is the one the box belongs to. A window of some other program taking over this early
-	// is the user having gone there, whatever the box was in the middle of.
-	DWORD processId = 0;
-	GetWindowThreadProcessId(activated, &processId);
-	return processId == GetCurrentProcessId();
-}
-
-// One prompt, and the worker thread it is opened on. The box runs a message loop of its own, and
-// running that on the main thread would stop every skin drawing until it was answered.
-class MeasureInputText::PromptTask : public AsyncTask
-{
-public:
-	static PromptTask* Create(MeasureInputText* measure, const std::shared_ptr<SharedData>& data,
-		const InputTextOptions& options, HWND skinWindow, float scale)
-	{
-		auto* task = new PromptTask(measure);
-		task->m_Data = data;
-		task->m_Options = options;
-		task->m_SkinWindow = skinWindow;
-		task->m_Scale = scale;
-
-		if (!task->Start())
-		{
-			delete task;
-			return nullptr;
-		}
-
-		return task;
-	}
-
-private:
-	PromptTask(MeasureInputText* measure) : AsyncTask(measure) {}
-
-	void StartWorkOnWorkerThread() override
-	{
-		if (m_AbortRequested || !m_Data->active) return;
-
-		InputBox box(m_Data);
-		m_Input = box.Show(m_Options, m_SkinWindow, m_Scale);
-	}
-
-	void FinishWorkOnMainThread() override
-	{
-		if (m_AbortRequested || !m_Data->active) return;
-
-		auto* measure = m_Data->measure;
-		if (measure && measure->m_Task == this)
-		{
-			measure->m_Task = nullptr;
-			measure->HandleInput(m_Input);
-		}
-	}
-
-	std::shared_ptr<SharedData> m_Data;
-	InputTextOptions m_Options;
-	HWND m_SkinWindow = nullptr;
-	float m_Scale = 1.0f;
-	std::optional<std::wstring> m_Input;
-};
-
 MeasureInputText::MeasureInputText(Skin* skin, const WCHAR* name) : Measure(skin, name),
-	m_Data(std::make_shared<SharedData>(this))
+	m_MeasureRef(std::make_shared<MeasureInputText*>(this))
 {
 }
 
 MeasureInputText::~MeasureInputText()
 {
-	// The box is on a worker thread and has no way of noticing the measure go, so it is closed
-	// from here. The answer its task posts back afterwards is dropped by the flag.
-	m_Data->active = false;
-	m_Data->measure = nullptr;
+	*m_MeasureRef = nullptr;
 
-	if (m_Task)
+	if (m_Box)
 	{
-		CloseBox();
-		m_Task->AbortWhenPossible();
-		m_Task = nullptr;
+		m_Box->Abort();
+		m_Box.reset();
 	}
 }
 
@@ -826,10 +716,7 @@ void MeasureInputText::HandleSkinScaleChange(Skin* skin)
 
 void MeasureInputText::CloseBox()
 {
-	// Posted rather than sent: the window belongs to the worker thread, and a sent message would
-	// wait on a message loop that may be ending on its own.
-	CriticalSectionLock lock(m_Data->criticalSection);
-	if (m_Data->window != nullptr) PostMessage(m_Data->window, WM_CLOSE, 0, 0);
+	if (m_Box) m_Box->Close(false);
 }
 
 const WCHAR* MeasureInputText::GetStringValue()
@@ -841,7 +728,7 @@ void MeasureInputText::Command(const std::wstring& command)
 {
 	// One box at a time: a second one over the same skin would be waiting for the same keyboard as
 	// the first, so a bang arriving while one is open is dropped rather than queued.
-	if (m_Task != nullptr) return;
+	if (m_Box) return;
 
 	m_Steps.clear();
 	m_StepIndex = 0;
@@ -924,9 +811,8 @@ bool MeasureInputText::ReadSteps(const std::wstring& command)
 void MeasureInputText::RunSteps()
 {
 	// A bang can refresh or unload the skin, and that destroys this measure in the middle of the
-	// run. The state the box shares with its task outlives it and says so, which is what makes
-	// coming back here afterwards safe.
-	std::shared_ptr<SharedData> data = m_Data;
+	// run. The shared state outlives it and says so, which is what makes coming back here safe.
+	std::shared_ptr<MeasureInputText*> measure = m_MeasureRef;
 
 	while (m_StepIndex < m_Steps.size())
 	{
@@ -934,10 +820,13 @@ void MeasureInputText::RunSteps()
 
 		if (step.prompts)
 		{
-			m_Task = PromptTask::Create(this, m_Data, step.options, m_Skin->GetWindow(), m_Skin->GetScale());
+			m_Box = std::make_shared<InputBox>(m_MeasureRef);
+			const bool opened = m_Box->Open(step.options, m_Skin->GetWindow(), m_Skin->GetScale());
+			if (!*measure) return;
 
-			// The rest of the run waits for HandleInput().
-			if (m_Task != nullptr) return;
+			if (opened) return;
+
+			m_Box.reset();
 
 			LogErrorF(this, L"InputText: Unable to open the input box");
 			EndRun(true);
@@ -950,7 +839,7 @@ void MeasureInputText::RunSteps()
 		++m_StepIndex;
 
 		GetRainmeter().ExecuteCommand(command.c_str(), m_Skin);
-		if (!data->active) return;
+		if (!*measure) return;
 	}
 
 	EndRun(false);
@@ -962,8 +851,6 @@ void MeasureInputText::HandleInput(const std::optional<std::wstring>& input)
 
 	if (!input)
 	{
-		// A run stops where it was dismissed: every line after this one was written expecting this
-		// one to have been answered.
 		EndRun(true);
 		return;
 	}
@@ -973,7 +860,7 @@ void MeasureInputText::HandleInput(const std::optional<std::wstring>& input)
 	const Step& step = m_Steps[m_StepIndex];
 	++m_StepIndex;
 
-	std::shared_ptr<SharedData> data = m_Data;
+	std::shared_ptr<MeasureInputText*> measure = m_MeasureRef;
 
 	if (!step.variable.empty())
 	{
@@ -987,7 +874,7 @@ void MeasureInputText::HandleInput(const std::optional<std::wstring>& input)
 		GetRainmeter().ExecuteCommand(command.c_str(), m_Skin);
 	}
 
-	if (!data->active) return;
+	if (!*measure) return;
 
 	RunSteps();
 }
