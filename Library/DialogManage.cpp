@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/IniFile.h"
 #include "../Common/MenuTemplate.h"
 #include "../Common/ShellDialog.h"
 #include "../Common/StringParser.h"
@@ -1524,7 +1525,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				L"Information=\r\n"
 				L"License=\r\n"
 				L"Version";
-			WritePrivateProfileString(L"Rainmeter", str, L"", file.c_str());
+			IniFile::WriteKey(file, L"Rainmeter", str, L"");
 			SendMessage(m_Window, WM_COMMAND, MAKEWPARAM(Id_EditButton, 0), 0);
 			ShowWindow(nm->hwndFrom, SW_HIDE);
 		}
@@ -1880,6 +1881,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 				{
 					ConfigParser parser;
 					parser.Initialize(path);
+					IniFile::Writer ini(path);
 
 					// Remove sections with Active=0
 					for (auto iter = parser.GetSectionNames().begin(); iter != parser.GetSectionNames().end(); ++iter)
@@ -1887,9 +1889,10 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 						const std::wstring* active = parser.GetValue(*iter, L"Active");
 						if (active && *active == L"0")
 						{
-							WritePrivateProfileString((*iter).c_str(), nullptr, nullptr, path.c_str());
+							ini.DeleteSection(*iter);
 						}
 					}
+					ini.Save();
 				}
 
 				// Save wallpaper
@@ -2414,7 +2417,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 				WCHAR buffer[16];
 				_ultow(lcid, buffer, 10);
 				if (!GetLanguage().Load(GetRainmeter().GetPath() + L"Languages\\", buffer)) break;
-				WritePrivateProfileString(L"Rainmeter", L"Language", buffer, GetRainmeter().GetIniFile().c_str());
+				IniFile::WriteKey(GetRainmeter().GetIniFile(), L"Rainmeter", L"Language", buffer);
 
 				if (DialogDebug::GetDialog())
 				{

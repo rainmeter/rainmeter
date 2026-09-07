@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/IniFile.h"
 #include "../Common/Map.h"
 #include "../Common/PathUtil.h"
 #include "../Common/StringUtil.h"

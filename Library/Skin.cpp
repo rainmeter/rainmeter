@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/IniFile.h"
 #include "Skin.h"
 #include "SkinDropTarget.h"
 #include "SkinSelectionOverlay.h"
@@ -2203,6 +2204,8 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	const WCHAR* config = m_FolderPath.c_str();
 
 	WCHAR buffer[32] = { 0 };
+	std::optional<IniFile::Writer> ini;
+	if (isDefault) ini.emplace(iniFile);
 
 	auto makeKey = [&](LPCWSTR key) -> LPCWSTR
 	{
@@ -2214,7 +2217,7 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	{
 		if (parser.GetLastValueDefined())
 		{
-			WritePrivateProfileString(config, key, value, iniFile);
+			ini->WriteKey(config, key, value);
 		}
 	};
 
@@ -2223,7 +2226,7 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 		if (parser.GetLastValueDefined())
 		{
 			_itow_s(value, buffer, 10);
-			WritePrivateProfileString(config, key, buffer, iniFile);
+			ini->WriteKey(config, key, buffer);
 		}
 	};
 
@@ -2266,7 +2269,7 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	if (isDefault && (parser.GetLastKeyDefined() || parser.IsValueDefined(section, makeKey(L"HideOnMouseOver"))))
 	{
 		_itow_s(hideMode, buffer, 10);
-		WritePrivateProfileString(config, L"OnHover", buffer, iniFile);
+		ini->WriteKey(config, L"OnHover", buffer);
 	}
 	m_WindowHide = (hideMode >= HIDEMODE_NONE && hideMode <= HIDEMODE_FADEOUT) ? (HIDEMODE)hideMode : HIDEMODE_NONE;
 
@@ -2306,6 +2309,7 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 	m_FadeDuration = parser.ReadInt(section, makeKey(L"FadeDuration"), 250);
 	m_FadeDuration = std::max(m_FadeDuration, 0);
 	if (isDefault) writeDefaultInt(L"FadeDuration", m_FadeDuration);
+	if (ini) ini->Save();
 
 	if (!isDefault)
 	{
@@ -2362,6 +2366,7 @@ void Skin::WriteOptions(INT setting)
 
 		WCHAR buffer[32] = { 0 };
 		const WCHAR* section = m_FolderPath.c_str();
+		IniFile::Writer ini(iniFile);
 
 		if (setting != OPTION_ALL)
 		{
@@ -2370,90 +2375,96 @@ void Skin::WriteOptions(INT setting)
 
 		if (setting & OPTION_ANCHOR)
 		{
-			WritePrivateProfileString(section, L"AnchorX", m_Position.GetX().GetAnchorOption().c_str(), iniFile);
-			WritePrivateProfileString(section, L"AnchorY", m_Position.GetY().GetAnchorOption().c_str(), iniFile);
+			ini.WriteKey(section, L"AnchorX", m_Position.GetX().GetAnchorOption());
+			ini.WriteKey(section, L"AnchorY", m_Position.GetY().GetAnchorOption());
 		}
 
 		if (setting & OPTION_POSITION)
 		{
 			if (m_SavePosition)
 			{
-				WritePrivateProfileString(section, L"WindowX", m_Position.GetX().GetWindowOptionToSave().c_str(), iniFile);
-				WritePrivateProfileString(section, L"WindowY", m_Position.GetY().GetWindowOptionToSave().c_str(), iniFile);
+				ini.WriteKey(section, L"WindowX", m_Position.GetX().GetWindowOptionToSave());
+				ini.WriteKey(section, L"WindowY", m_Position.GetY().GetWindowOptionToSave());
 			}
 
-			if (setting == OPTION_POSITION) return;
+			if (setting == OPTION_POSITION)
+			{
+				ini.Save();
+				return;
+			}
 		}
 
 		if (setting & OPTION_ALPHAVALUE)
 		{
 			_itow_s(m_AlphaValue, buffer, 10);
-			WritePrivateProfileString(section, L"AlphaValue", buffer, iniFile);
+			ini.WriteKey(section, L"AlphaValue", buffer);
 		}
 
 		if (setting & OPTION_ZOOM)
 		{
 			if (!m_Zoom)
 			{
-				WritePrivateProfileString(section, L"Zoom", nullptr, iniFile);
+				ini.DeleteKey(section, L"Zoom");
 			}
 			else
 			{
 				_itow_s(*m_Zoom, buffer, 10);
-				WritePrivateProfileString(section, L"Zoom", buffer, iniFile);
+				ini.WriteKey(section, L"Zoom", buffer);
 			}
 		}
 
 		if (setting & OPTION_FADEDURATION)
 		{
 			_itow_s(m_FadeDuration, buffer, 10);
-			WritePrivateProfileString(section, L"FadeDuration", buffer, iniFile);
+			ini.WriteKey(section, L"FadeDuration", buffer);
 		}
 
 		if (setting & OPTION_CLICKTHROUGH)
 		{
-			WritePrivateProfileString(section, L"ClickThrough", m_ClickThrough ? L"1" : L"0", iniFile);
+			ini.WriteKey(section, L"ClickThrough", m_ClickThrough ? L"1" : L"0");
 		}
 
 		if (setting & OPTION_DRAGGABLE)
 		{
-			WritePrivateProfileString(section, L"Draggable", m_WindowDraggable ? L"1" : L"0", iniFile);
+			ini.WriteKey(section, L"Draggable", m_WindowDraggable ? L"1" : L"0");
 		}
 
 		if (setting & OPTION_ONHOVER)
 		{
 			// "HideOnMouseOver" is now deprecated, remove the key
-			WritePrivateProfileString(section, L"HideOnMouseOver", nullptr, iniFile);
+			ini.DeleteKey(section, L"HideOnMouseOver");
 
 			_itow_s(m_WindowHide, buffer, 10);
-			WritePrivateProfileString(section, L"OnHover", buffer, iniFile);
+			ini.WriteKey(section, L"OnHover", buffer);
 		}
 
 		if (setting & OPTION_SAVEPOSITION)
 		{
-			WritePrivateProfileString(section, L"SavePosition", m_SavePosition ? L"1" : L"0", iniFile);
+			ini.WriteKey(section, L"SavePosition", m_SavePosition ? L"1" : L"0");
 		}
 
 		if (setting & OPTION_SNAPEDGES)
 		{
-			WritePrivateProfileString(section, L"SnapEdges", m_SnapEdges ? L"1" : L"0", iniFile);
+			ini.WriteKey(section, L"SnapEdges", m_SnapEdges ? L"1" : L"0");
 		}
 
 		if (setting & OPTION_KEEPONSCREEN)
 		{
-			WritePrivateProfileString(section, L"KeepOnScreen", m_KeepOnScreen ? L"1" : L"0", iniFile);
+			ini.WriteKey(section, L"KeepOnScreen", m_KeepOnScreen ? L"1" : L"0");
 		}
 
 		if (setting & OPTION_AUTOSELECTSCREEN)
 		{
-			WritePrivateProfileString(section, L"AutoSelectScreen", m_AutoSelectScreen ? L"1" : L"0", iniFile);
+			ini.WriteKey(section, L"AutoSelectScreen", m_AutoSelectScreen ? L"1" : L"0");
 		}
 
 		if (setting & OPTION_ALWAYSONTOP)
 		{
 			_itow_s(m_WindowZPosition, buffer, 10);
-			WritePrivateProfileString(section, L"AlwaysOnTop", buffer, iniFile);
+			ini.WriteKey(section, L"AlwaysOnTop", buffer);
 		}
+
+		ini.Save();
 	}
 }
 

@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/IniFile.h"
 #include "TrayIcon.h"
 #include "Measure.h"
 #include "resource.h"
@@ -387,7 +388,7 @@ void TrayIcon::SetTrayIcon(bool enabled, bool setTemporarily)
 
 		// Save to Rainmeter.ini.
 		const std::wstring& iniFile = GetRainmeter().GetIniFile();
-		WritePrivateProfileString(L"Rainmeter", L"TrayIcon", enabled ? nullptr : L"0", iniFile.c_str());
+		enabled ? IniFile::DeleteKey(iniFile, L"Rainmeter", L"TrayIcon") : IniFile::WriteKey(iniFile, L"Rainmeter", L"TrayIcon", L"0");
 	}
 }
 

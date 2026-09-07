@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../../Common/IniFile.h"
 #include "PlayerCAD.h"
 #include "CAD/cad_sdk.h"
 #include "Rainmeter.h"
@@ -110,10 +111,18 @@ void PlayerCAD::Initialize()
 		m_PlayerWindow = FindWindow(classSz, nullptr);
 		if (m_PlayerWindow)
 		{
-			WritePrivateProfileString(L"NowPlaying.dll", L"ClassName", classSz, file);
+			IniFile::Writer ini(file);
+			ini.WriteKey(L"NowPlaying.dll", L"ClassName", classSz);
 
 			windowSz = (GetWindowText(m_PlayerWindow, buffer, _countof(buffer)) > 0) ? buffer : nullptr;
-			WritePrivateProfileString(L"NowPlaying.dll", L"WindowName", windowSz, file);
+			if (windowSz)
+			{
+				ini.WriteKey(L"NowPlaying.dll", L"WindowName", windowSz);
+			}
+			else
+			{
+				ini.DeleteKey(L"NowPlaying.dll", L"WindowName");
+			}
 
 			DWORD pID = 0;
 			GetWindowThreadProcessId(m_PlayerWindow, &pID);
@@ -122,11 +131,13 @@ void PlayerCAD::Initialize()
 			{
 				if (GetModuleFileNameEx(hProcess, nullptr, buffer, _countof(buffer)) > 0)
 				{
-					WritePrivateProfileString(L"NowPlaying.dll", L"PlayerPath", buffer, file);
+					ini.WriteKey(L"NowPlaying.dll", L"PlayerPath", buffer);
 				}
 
 				CloseHandle(hProcess);
 			}
+
+			ini.Save();
 		}
 	}
 
@@ -338,9 +349,25 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 					LPCTSTR windowSz = windowName.empty() ? nullptr : windowName.c_str();
 					LPCTSTR file = GetRainmeter().GetDataFile().c_str();
 
-					WritePrivateProfileString(L"NowPlaying.dll", L"ClassName", classSz, file);
-					WritePrivateProfileString(L"NowPlaying.dll", L"WindowName", windowSz, file);
-					WritePrivateProfileString(L"NowPlaying.dll", L"PlayerPath", player->m_PlayerPath.c_str(), file);
+					IniFile::Writer ini(file);
+					if (classSz)
+					{
+						ini.WriteKey(L"NowPlaying.dll", L"ClassName", classSz);
+					}
+					else
+					{
+						ini.DeleteKey(L"NowPlaying.dll", L"ClassName");
+					}
+					if (windowSz)
+					{
+						ini.WriteKey(L"NowPlaying.dll", L"WindowName", windowSz);
+					}
+					else
+					{
+						ini.DeleteKey(L"NowPlaying.dll", L"WindowName");
+					}
+					ini.WriteKey(L"NowPlaying.dll", L"PlayerPath", player->m_PlayerPath);
+					ini.Save();
 
 					player->m_PlayerWindow = FindWindow(classSz, windowSz);
 

@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "DialogInstall.h"
+#include "../Common/IniFile.h"
 #include "../Common/Map.h"
 #include "../Common/ShellDialog.h"
 #include "../Common/StringUtil.h"
@@ -988,12 +989,14 @@ void DialogInstall::KeepVariables()
 		if (GetPrivateProfileSection(L"Variables", section, SHRT_MAX, toPath.c_str()) < 1) continue;	// No variables in the file from rmskin
 		getPairs(section, toVariables);
 
+		IniFile::Writer ini(toPath);
 		for (const auto& var : fromVariables)
 		{
 			if (toVariables.find(var.first) == toVariables.end()) continue;
 
-			WritePrivateProfileString(L"Variables", var.first.c_str(), var.second.c_str(), toPath.c_str());
+			ini.WriteKey(L"Variables", var.first, var.second);
 		}
+		ini.Save();
 	}
 	delete [] section;
 	section = nullptr;
@@ -1127,7 +1130,7 @@ void DialogInstall::LaunchRainmeter()
 void DialogInstall::CleanLayoutFile(const WCHAR* file)
 {
 	// Clear the [Rainmeter] section.
-	WritePrivateProfileSection(L"Rainmeter", L"", file);
+	IniFile::WriteSection(file, L"Rainmeter", {});
 }
 
 // Helper for the IsIgnore... functions.
