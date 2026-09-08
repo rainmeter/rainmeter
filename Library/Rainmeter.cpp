@@ -177,9 +177,9 @@ Rainmeter& Rainmeter::GetInstance()
 
 int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 {
-	if (!IsWindows10OrGreater() || GetPlatform().GetBuildNumber() < 16299)
+	if (!IsWindows10OrGreater() || GetPlatform().GetBuildNumber() < 18362)
 	{
-		MessageBox(nullptr, L"Rainmeter requires Windows 10 version 1709 or later. To use Rainmeter on your computer, update Windows or download the older Rainmeter 4.5 version.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		MessageBox(nullptr, L"Rainmeter requires Windows 10 version 1903 or later. To use Rainmeter on your computer, update Windows or download the older Rainmeter 4.5 version.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		return 1;
 	}
 
