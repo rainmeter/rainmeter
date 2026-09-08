@@ -5,6 +5,7 @@
 #include "ConfigParser.h"
 #include "Logger.h"
 #include "Skin.h"
+#include "Rainmeter.h"
 
 #include <AudioClient.h>
 #include <AudioPolicy.h>
@@ -205,7 +206,7 @@ void MeasureAudioLevel::Initialize()
 		// attempts are not logged since losing the device (e.g. an unplugged microphone) is
 		// normal and would otherwise spam the log.
 		const HRESULT hr = DeviceInit();
-		if (FAILED(hr))
+		if (FAILED(hr) && GetRainmeter().GetDebug())
 		{
 			LogWarningF(this, L"Unable to initialize audio %s device '%s' (error 0x%08x).",
 				m_Port == PORT_OUTPUT ? L"output" : L"input", m_ReqID.empty() ? L"default" : m_ReqID.c_str(), hr);
