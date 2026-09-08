@@ -18,6 +18,7 @@ MeasureNet::MeasureNet(Skin* skin, const WCHAR* name, NET type) : Measure(skin, 
 	m_Cumulative(false),
 	m_UseBits(false)
 {
+	GetRainmeter().InitializeStats();
 }
 
 MeasureNet::~MeasureNet()

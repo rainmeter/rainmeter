@@ -124,6 +124,7 @@ int RainmeterMain(LPWSTR cmdLine)
 
 Rainmeter::Rainmeter() :
 	m_TrayIcon(),
+	m_StatsInitialized(false),
 	m_Debug(false),
 	m_DisableVersionCheck(false),
 	m_NewVersion(false),
@@ -539,9 +540,6 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 			}
 		}
 	}
-
-	ResetStats();
-	ReadStats();
 
 	// Change the work area if necessary
 	if (m_DesktopWorkAreaChanged)
@@ -2156,8 +2154,13 @@ void Rainmeter::UpdateDesktopWorkArea(bool reset)
 	}
 }
 
-void Rainmeter::ReadStats()
+void Rainmeter::InitializeStats()
 {
+	if (m_StatsInitialized) return;
+
+	m_StatsInitialized = true;
+	ResetStats();
+
 	const WCHAR* statsFile = m_StatsFile.c_str();
 
 	// If m_StatsFile doesn't exist, create it and copy the stats section from m_IniFile
@@ -2185,6 +2188,8 @@ void Rainmeter::ReadStats()
 
 void Rainmeter::WriteStats(bool bForce)
 {
+	if (!m_StatsInitialized) return;
+
 	static ULONGLONG lastWrite = 0;
 
 	ULONGLONG ticks = GetTickCount64();
