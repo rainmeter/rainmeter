@@ -276,7 +276,7 @@ static int WriteTextFile(lua_State* L)
 
 	const auto text = LuaHelper::ToWide(3);
 
-	auto encoding = FileUtil::Encoding::UTF16LE;
+	auto encoding = FileUtil::Encoding::UTF8;
 	if (lua_isstring(L, 4))
 	{
 		const auto name = LuaHelper::ToWide(4);
