@@ -44,6 +44,7 @@ class Section
 public:
 	std::optional<std::wstring_view> GetKey(std::wstring_view key) const;
 	std::wstring GetKey(std::wstring_view key, std::wstring_view defaultValue) const;
+	int GetIntKey(std::wstring_view key, int defaultValue) const;
 	bool IsEmpty() const { return m_Values.empty(); }
 
 private:
@@ -165,6 +166,10 @@ std::optional<std::wstring> ReadKey(const std::wstring& path, std::wstring_view 
 // Returns defaultValue if the file cannot be read or the section or key is missing. An empty value
 // in the file is returned as an empty string.
 std::wstring ReadKey(const std::wstring& path, std::wstring_view section, std::wstring_view key, std::wstring_view defaultValue);
+
+// Returns defaultValue if the file cannot be read or the section or key is missing. An empty or
+// nonnumeric value in the file returns zero.
+int ReadIntKey(const std::wstring& path, std::wstring_view section, std::wstring_view key, int defaultValue);
 
 // Edits .ini files with the lexical, placement and encoding behavior measured in
 // Docs/ProfileApiBehavior.md.

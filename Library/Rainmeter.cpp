@@ -246,7 +246,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		m_SettingsPath + L"Crashes\\",
 		fmt::format(L"v{}.{} (commit {})", APPVERSION, revision_number, m_BuildHash));
 
-	m_HardwareAccelerated = 0 != GetPrivateProfileInt(L"Rainmeter", L"HardwareAcceleration", 0, m_IniFile.c_str());
+	m_HardwareAccelerated = IniFile::ReadIntKey(m_IniFile, L"Rainmeter", L"HardwareAcceleration", 0) != 0;
 
 	const auto deviceLostCallback = []() { GetRainmeter().ScheduleReattachGfxDevice(); };
 	if (!Gfx::Canvas::Initialize(m_HardwareAccelerated, deviceLostCallback))
@@ -408,9 +408,9 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	// Reset log file
 	System::RemoveFile(logger.GetLogFilePath());
 
-	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, iniFile);
+	m_Debug = IniFile::ReadIntKey(iniFile, L"Rainmeter", L"Debug", 0) != 0;
 
-	const bool logging = GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, iniFile) != 0;
+	const bool logging = IniFile::ReadIntKey(iniFile, L"Rainmeter", L"Logging", 0) != 0;
 	logger.SetLogToFile(logging);
 	if (logging)
 	{
