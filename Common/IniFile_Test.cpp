@@ -76,15 +76,26 @@ public:
 		TemporaryFile file;
 		file.Write(
 			"[Alpha]\r\nOne=first\r\noNe=second\r\nEmpty=\"\"\r\n"
-			"[Alpha]\r\nOne=later\r\n");
+			"[aLPHa]\r\nOne=later\r\n");
 
 		const auto values = ReadSection(file.GetPath(), L" alpha ");
-		Assert::AreEqual((size_t)2, values.GetEntries().size());
-		Assert::IsTrue(values.GetEntries().find(L"ONE") != values.GetEntries().end());
-		Assert::IsTrue(values.GetEntries().find(L"one") == values.GetEntries().end());
+		Assert::IsFalse(values.IsEmpty());
 		Assert::AreEqual(L"first", values.GetKey(L"ONE", L"").c_str());
 		Assert::AreEqual(L"", values.GetKey(L"empty", L"missing").c_str());
 		Assert::AreEqual(L"default", values.GetKey(L"missing", L"default").c_str());
+
+		const auto ordered = ReadSectionInOrder(file.GetPath(), L"Alpha");
+		Assert::AreEqual((size_t)3, ordered.size());
+		Assert::AreEqual(L"One", ordered[0].first.c_str());
+		Assert::AreEqual(L"first", ordered[0].second.c_str());
+		Assert::AreEqual(L"oNe", ordered[1].first.c_str());
+		Assert::AreEqual(L"second", ordered[1].second.c_str());
+		Assert::AreEqual(L"Empty", ordered[2].first.c_str());
+		Assert::AreEqual(L"", ordered[2].second.c_str());
+
+		const auto sections = ReadSectionNames(file.GetPath());
+		Assert::AreEqual((size_t)1, sections.size());
+		Assert::AreEqual(L"Alpha", sections[0].c_str());
 
 		const auto value = ReadKey(file.GetPath(), L"ALPHA", L"one");
 		Assert::IsTrue(value.has_value());

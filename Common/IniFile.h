@@ -37,13 +37,14 @@
 //   the profile API's own detection accepts was never measured, so this may or may not differ.
 namespace IniFile {
 
+using OrderedSection = std::vector<std::pair<std::wstring, std::wstring>>;
+
 class Section
 {
 public:
 	std::optional<std::wstring_view> GetKey(std::wstring_view key) const;
 	std::wstring GetKey(std::wstring_view key, std::wstring_view defaultValue) const;
 	bool IsEmpty() const { return m_Values.empty(); }
-	const StringMap<std::wstring>& GetEntries() const { return m_Values; }
 
 private:
 	StringMap<std::wstring> m_Values;
@@ -150,6 +151,12 @@ std::optional<DecodedText> ReadFileText(const std::wstring& path);
 
 // Reads the first matching section, stores its keys in uppercase and keeps the first duplicate key.
 Section ReadSection(const std::wstring& path, std::wstring_view section);
+
+// Reads every key and value from the first matching section in file order, including duplicate keys.
+OrderedSection ReadSectionInOrder(const std::wstring& path, std::wstring_view section);
+
+// Reads the first case-insensitive occurrence of each section name in file order.
+std::vector<std::wstring> ReadSectionNames(const std::wstring& path);
 
 // Reads the first matching key from the first matching section. Returns nothing if the file cannot
 // be read or the section or key is missing.

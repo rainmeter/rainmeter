@@ -533,6 +533,48 @@ Section ReadSection(const std::wstring& path, std::wstring_view section)
 	return result;
 }
 
+OrderedSection ReadSectionInOrder(const std::wstring& path, std::wstring_view section)
+{
+	OrderedSection result;
+	const std::optional<DecodedText> text = ReadFileText(path);
+	if (!text) return result;
+
+	section = TrimRequest(section);
+	bool foundSection = false;
+	bool inSection = false;
+	text->Parse(
+		[&](std::wstring_view name)
+		{
+			inSection = !foundSection && EqualsNoCase(name, section);
+			if (inSection) foundSection = true;
+		},
+		[&](std::wstring_view key, std::wstring_view value)
+		{
+			if (inSection) result.emplace_back(key, value);
+		});
+
+	return result;
+}
+
+std::vector<std::wstring> ReadSectionNames(const std::wstring& path)
+{
+	std::vector<std::wstring> names;
+	const std::optional<DecodedText> text = ReadFileText(path);
+	if (!text) return names;
+
+	text->Parse(
+		[&](std::wstring_view name)
+		{
+			for (const auto& existing : names)
+			{
+				if (EqualsNoCase(existing, name)) return;
+			}
+
+			names.emplace_back(name);
+		});
+	return names;
+}
+
 std::optional<std::wstring> ReadKey(const std::wstring& path, std::wstring_view section, std::wstring_view key)
 {
 	const std::optional<DecodedText> text = ReadFileText(path);
