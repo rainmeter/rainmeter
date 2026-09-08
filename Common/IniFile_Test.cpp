@@ -107,6 +107,23 @@ public:
 		Assert::AreEqual(L"default", ReadKey(file.GetPath(), L"Alpha", L"Missing", L"default").c_str());
 	}
 
+	TEST_METHOD(TestReadIntKey)
+	{
+		TemporaryFile file;
+		file.Write("[Alpha]\r\nNumber=-12\r\nInvalid=no\r\nEmpty=\r\n");
+
+		Assert::AreEqual(-12, ReadIntKey(file.GetPath(), L"Alpha", L"Number", 7));
+		Assert::AreEqual(0, ReadIntKey(file.GetPath(), L"Alpha", L"Invalid", 7));
+		Assert::AreEqual(0, ReadIntKey(file.GetPath(), L"Alpha", L"Empty", 7));
+		Assert::AreEqual(7, ReadIntKey(file.GetPath(), L"Alpha", L"Missing", 7));
+
+		const auto section = ReadSection(file.GetPath(), L"Alpha");
+		Assert::AreEqual(-12, section.GetIntKey(L"Number", 7));
+		Assert::AreEqual(0, section.GetIntKey(L"Invalid", 7));
+		Assert::AreEqual(0, section.GetIntKey(L"Empty", 7));
+		Assert::AreEqual(7, section.GetIntKey(L"Missing", 7));
+	}
+
 	TEST_METHOD(TestCreateFile)
 	{
 		TemporaryFile file;

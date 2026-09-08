@@ -504,6 +504,12 @@ std::wstring Section::GetKey(std::wstring_view key, std::wstring_view defaultVal
 	return std::wstring(value ? *value : defaultValue);
 }
 
+int Section::GetIntKey(std::wstring_view key, int defaultValue) const
+{
+	const auto value = GetKey(key);
+	return value ? (int)wcstol(value->data(), nullptr, 10) : defaultValue;
+}
+
 Section ReadSection(const std::wstring& path, std::wstring_view section)
 {
 	Section result;
@@ -606,6 +612,12 @@ std::wstring ReadKey(const std::wstring& path, std::wstring_view section, std::w
 {
 	const auto value = ReadKey(path, section, key);
 	return value ? *value : std::wstring(defaultValue);
+}
+
+int ReadIntKey(const std::wstring& path, std::wstring_view section, std::wstring_view key, int defaultValue)
+{
+	const auto value = ReadKey(path, section, key);
+	return value ? (int)wcstol(value->c_str(), nullptr, 10) : defaultValue;
 }
 
 // Whitespace is every character at or below 0x20 and nothing else, so U+00A0 and U+3000 survive.

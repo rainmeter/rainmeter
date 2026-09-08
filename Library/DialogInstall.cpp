@@ -45,7 +45,7 @@ DialogInstall::DialogInstall(const WCHAR* file) : Dialog(),
 {
 	std::wstring settingsFile = g_Data.settingsPath;
 	settingsFile += L"\\Rainmeter.data";
-	m_ArchivePlugins = GetPrivateProfileInt(L"SkinInstaller", L"ArchivePlugins", 1, settingsFile.c_str()) != 0;
+	m_ArchivePlugins = IniFile::ReadIntKey(settingsFile, L"SkinInstaller", L"ArchivePlugins", 1) != 0;
 }
 
 DialogInstall::~DialogInstall()
@@ -589,7 +589,7 @@ bool DialogInstall::ReadOptions(const WCHAR* file)
 	m_Author = options.GetKey(L"Author", L"");
 	m_Version = options.GetKey(L"Version", L"");
 
-	m_MergeSkins = GetPrivateProfileInt(section, newFormat ? L"MergeSkins" : L"Merge", 0, file) != 0;
+	m_MergeSkins = options.GetIntKey(newFormat ? L"MergeSkins" : L"Merge", 0) != 0;
 
 	const std::wstring variableFiles = options.GetKey(newFormat ? L"VariableFiles" : L"KeepVar", L"");
 	m_VariablesFiles = Tokenize(variableFiles, L"|");

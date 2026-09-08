@@ -431,7 +431,7 @@ void DialogPackage::LoadProfile(const std::wstring& skinFolder)
 		m_Version = profile.GetKey(L"Version", L"");
 		m_MinimumRainmeter = profile.GetKey(L"MinimumRainmeter", L"");
 		m_VariableFiles = profile.GetKey(L"VariableFiles", L"");
-		m_MergeSkins = GetPrivateProfileInt(section, L"MergeSkins", 0, file.c_str()) != 0;
+		m_MergeSkins = profile.GetIntKey(L"MergeSkins", 0) != 0;
 		m_LoadLayout = _wcsicmp(profile.GetKey(L"LoadType", L"").c_str(), L"Layout") == 0;
 		m_Load = profile.GetKey(L"Load", L"");
 
