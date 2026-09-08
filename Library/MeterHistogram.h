@@ -22,8 +22,8 @@ public:
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
-	void BindMeasures(ConfigParser& parser, std::wstring_view section) override;
+	void ReadOptions(ConfigParser& parser) override;
+	void BindMeasures(ConfigParser& parser) override;
 
 	virtual bool IsFixedSize(bool overwrite = false) { return m_PrimaryImageName.empty(); }
 

@@ -8,6 +8,9 @@
 
 namespace {
 
+StringMap<IniSectionID> g_Sections;
+StringMap<IniOptionID> g_Options;
+
 template <typename ID>
 ID InternName(StringMap<ID>& names, std::wstring_view name)
 {
@@ -36,36 +39,45 @@ std::optional<std::wstring_view> NormalizeName(std::wstring_view name, WCHAR* bu
 
 }  // namespace
 
-IniSectionID IniNameRegistry::InternSection(std::wstring_view name)
+namespace IniNameRegistry {
+
+IniSectionID InternSection(std::wstring_view name)
 {
 	WCHAR buffer[256];
 	const auto normalized = NormalizeName(name, buffer, _countof(buffer));
-	return normalized ? InternName(m_Sections, *normalized) : IniSectionID{};
+	return normalized ? InternName(g_Sections, *normalized) : IniSectionID{};
 }
 
-IniOptionID IniNameRegistry::InternOption(std::wstring_view name)
+IniOptionID InternOption(std::wstring_view name)
 {
 	WCHAR buffer[256];
 	const auto normalized = NormalizeName(name, buffer, _countof(buffer));
-	return normalized ? InternName(m_Options, *normalized) : IniOptionID{};
+	return normalized ? InternName(g_Options, *normalized) : IniOptionID{};
 }
 
-std::optional<IniSectionID> IniNameRegistry::FindSection(std::wstring_view name) const
+std::optional<IniSectionID> FindSection(std::wstring_view name)
 {
 	WCHAR buffer[256];
 	const auto normalized = NormalizeName(name, buffer, _countof(buffer));
-	return normalized ? FindName(m_Sections, *normalized) : std::nullopt;
+	return normalized ? FindName(g_Sections, *normalized) : std::nullopt;
 }
 
-std::optional<IniOptionID> IniNameRegistry::FindOption(std::wstring_view name) const
+std::optional<IniOptionID> FindOption(std::wstring_view name)
 {
 	WCHAR buffer[256];
 	const auto normalized = NormalizeName(name, buffer, _countof(buffer));
-	return normalized ? FindName(m_Options, *normalized) : std::nullopt;
+	return normalized ? FindName(g_Options, *normalized) : std::nullopt;
 }
 
-IniNameRegistry& GetIniNameRegistry()
+const std::wstring& GetOptionName(IniOptionID id)
 {
-	static IniNameRegistry registry;
-	return registry;
+	for (const auto& option : g_Options)
+	{
+		if (option.second == id) return option.first;
+	}
+
+	static const std::wstring empty;
+	return empty;
 }
+
+}  // namespace IniNameRegistry

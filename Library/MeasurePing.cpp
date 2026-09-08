@@ -215,15 +215,15 @@ MeasurePing::~MeasurePing()
 	}
 }
 
-void MeasurePing::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasurePing::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
-	parser.ReadString(m_Destination, section, L"DestAddress", L"");
-	m_UpdateRate = parser.ReadUInt(section, L"UpdateRate", 32);
-	m_Timeout = parser.ReadUInt(section, L"Timeout", 30000);
-	m_TimeoutValue = parser.ReadFloat(section, L"TimeoutValue", 30000.0);
-	parser.ReadString(m_FinishAction, section, L"FinishAction", L"", { .sectionVariables = false });
+	parser.ReadString<"DestAddress">(m_Destination, m_ID, L"");
+	m_UpdateRate = parser.ReadUInt<"UpdateRate">(m_ID, 32);
+	m_Timeout = parser.ReadUInt<"Timeout">(m_ID, 30000);
+	m_TimeoutValue = parser.ReadFloat<"TimeoutValue">(m_ID, 30000.0);
+	parser.ReadString<"FinishAction">(m_FinishAction, m_ID, L"", { .sectionVariables = false });
 }
 
 void MeasurePing::UpdateValue()

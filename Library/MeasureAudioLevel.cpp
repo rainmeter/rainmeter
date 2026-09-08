@@ -218,9 +218,9 @@ void MeasureAudioLevel::Initialize()
 	SAFE_RELEASE(m_Enum);
 }
 
-void MeasureAudioLevel::ResolveParent(ConfigParser& parser, std::wstring_view section)
+void MeasureAudioLevel::ResolveParent(ConfigParser& parser)
 {
-	std::wstring parentName = parser.ReadString(section, L"Parent", L"");
+	std::wstring parentName = parser.ReadString<"Parent">(m_ID, L"");
 	if (parentName.empty())
 	{
 		m_Parent = nullptr;
@@ -245,7 +245,7 @@ void MeasureAudioLevel::ResolveParent(ConfigParser& parser, std::wstring_view se
 	LogErrorF(this, L"Couldn't find Parent measure '%s'.", parentName.c_str());
 }
 
-void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureAudioLevel::ReadOptions(ConfigParser& parser)
 {
 	static const LPCWSTR s_typeName[MeasureAudioLevel::NUM_TYPES] =
 	{
@@ -275,24 +275,24 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		{ L"Sum", L"Avg", L"", }, // CHANNEL_SUM
 	};
 
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
 	if (!m_Initialized)
 	{
-		ResolveParent(parser, section);
+		ResolveParent(parser);
 
 		static constexpr ConfigParser::EnumOption<Port> s_Ports[] =
 		{
 			{ L"Output", PORT_OUTPUT },
 			{ L"Input", PORT_INPUT },
 		};
-		m_Port = parser.ReadEnum(section, L"Port", PORT_OUTPUT, s_Ports);
+		m_Port = parser.ReadEnum<"Port">(m_ID, PORT_OUTPUT, s_Ports);
 
 		// Parse requested device ID (optional).
-		parser.ReadString(m_ReqID, section, L"ID", L"");
+		parser.ReadString<"ID">(m_ReqID, m_ID, L"");
 
 		// Initialize FFT data.
-		m_FFTSize = parser.ReadInt(section, L"FFTSize", m_FFTSize);
+		m_FFTSize = parser.ReadInt<"FFTSize">(m_ID, m_FFTSize);
 		if (m_FFTSize < 0 || m_FFTSize & 1)
 		{
 			LogErrorF(this, L"Invalid FFTSize %ld: must be an even integer >= 0. (powers of 2 work best)", m_FFTSize);
@@ -301,7 +301,7 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view sect
 
 		if (m_FFTSize)
 		{
-			m_FFTOverlap = parser.ReadInt(section, L"FFTOverlap", m_FFTOverlap);
+			m_FFTOverlap = parser.ReadInt<"FFTOverlap">(m_ID, m_FFTOverlap);
 			if (m_FFTOverlap < 0 || m_FFTOverlap >= m_FFTSize)
 			{
 				LogErrorF(this, L"Invalid FFTOverlap %ld: must be an integer between 0 and FFTSize(%ld).", m_FFTOverlap, m_FFTSize);
@@ -310,22 +310,22 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		}
 
 		// Initialize frequency bands.
-		m_NBands = parser.ReadInt(section, L"Bands", m_NBands);
+		m_NBands = parser.ReadInt<"Bands">(m_ID, m_NBands);
 		if (m_NBands < 0)
 		{
 			LogErrorF(this, L"AudioLevel: Invalid Bands %ld: must be an integer >= 0.", m_NBands);
 			m_NBands = 0;
 		}
 
-		m_FreqMin = std::max(0.0, parser.ReadFloat(section, L"FreqMin", m_FreqMin));
-		m_FreqMax = std::max(0.0, parser.ReadFloat(section, L"FreqMax", m_FreqMax));
+		m_FreqMin = std::max(0.0, parser.ReadFloat<"FreqMin">(m_ID, m_FreqMin));
+		m_FreqMax = std::max(0.0, parser.ReadFloat<"FreqMax">(m_ID, m_FreqMax));
 
 		// Initialize the watchdog timer.
 		QueryPerformanceCounter(&m_PcPoll);
 	}
 
 	// parse channel specifier
-	const WCHAR* channel = parser.ReadString(section, L"Channel", L"").c_str();
+	const WCHAR* channel = parser.ReadString<"Channel">(m_ID, L"").c_str();
 	if (*channel)
 	{
 		bool found = false;
@@ -357,7 +357,7 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view sect
 	}
 
 	// parse data type
-	const WCHAR* type = parser.ReadString(section, L"Type", L"").c_str();
+	const WCHAR* type = parser.ReadString<"Type">(m_ID, L"").c_str();
 	if (*type)
 	{
 		int iType;
@@ -385,27 +385,27 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser, std::wstring_view sect
 
 	// parse FFT index request
 	const int fftIdxMax = (m_Parent ? m_Parent->m_FFTSize : m_FFTSize) / 2;
-	m_FFTIdx = std::clamp(parser.ReadInt(section, L"FFTIdx", m_FFTIdx), 0, fftIdxMax);
+	m_FFTIdx = std::clamp(parser.ReadInt<"FFTIdx">(m_ID, m_FFTIdx), 0, fftIdxMax);
 
 	// parse band index request
 	const int bandIdxMax = m_Parent ? m_Parent->m_NBands : m_NBands;
-	m_BandIdx = std::clamp(parser.ReadInt(section, L"BandIdx", m_BandIdx), 0, bandIdxMax);
+	m_BandIdx = std::clamp(parser.ReadInt<"BandIdx">(m_ID, m_BandIdx), 0, bandIdxMax);
 
 	// parse envelope values on parents only
 	if (!m_Parent)
 	{
 		// (re)parse envelope values
-		m_EnvRMS[0] = std::max(0, parser.ReadInt(section, L"RMSAttack", m_EnvRMS[0]));
-		m_EnvRMS[1] = std::max(0, parser.ReadInt(section, L"RMSDecay", m_EnvRMS[1]));
-		m_EnvPeak[0] = std::max(0, parser.ReadInt(section, L"PeakAttack", m_EnvPeak[0]));
-		m_EnvPeak[1] = std::max(0, parser.ReadInt(section, L"PeakDecay", m_EnvPeak[1]));
-		m_EnvFFT[0] = std::max(0, parser.ReadInt(section, L"FFTAttack", m_EnvFFT[0]));
-		m_EnvFFT[1] = std::max(0, parser.ReadInt(section, L"FFTDecay", m_EnvFFT[1]));
+		m_EnvRMS[0] = std::max(0, parser.ReadInt<"RMSAttack">(m_ID, m_EnvRMS[0]));
+		m_EnvRMS[1] = std::max(0, parser.ReadInt<"RMSDecay">(m_ID, m_EnvRMS[1]));
+		m_EnvPeak[0] = std::max(0, parser.ReadInt<"PeakAttack">(m_ID, m_EnvPeak[0]));
+		m_EnvPeak[1] = std::max(0, parser.ReadInt<"PeakDecay">(m_ID, m_EnvPeak[1]));
+		m_EnvFFT[0] = std::max(0, parser.ReadInt<"FFTAttack">(m_ID, m_EnvFFT[0]));
+		m_EnvFFT[1] = std::max(0, parser.ReadInt<"FFTDecay">(m_ID, m_EnvFFT[1]));
 
 		// (re)parse gain constants
-		m_GainRMS = std::max(0.0, parser.ReadFloat(section, L"RMSGain", m_GainRMS));
-		m_GainPeak = std::max(0.0, parser.ReadFloat(section, L"PeakGain", m_GainPeak));
-		m_Sensitivity = std::max(1.0, parser.ReadFloat(section, L"Sensitivity", m_Sensitivity));
+		m_GainRMS = std::max(0.0, parser.ReadFloat<"RMSGain">(m_ID, m_GainRMS));
+		m_GainPeak = std::max(0.0, parser.ReadFloat<"PeakGain">(m_ID, m_GainPeak));
+		m_Sensitivity = std::max(1.0, parser.ReadFloat<"Sensitivity">(m_ID, m_Sensitivity));
 
 		UpdateFilterConstants();
 	}

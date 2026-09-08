@@ -19,18 +19,18 @@ MeasureLoop::~MeasureLoop()
 {
 }
 
-void MeasureLoop::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureLoop::ReadOptions(ConfigParser& parser)
 {
 	int oldStart = m_StartValue, oldEnd = m_EndValue, oldInc = m_Increment, oldCount = m_LoopCount;
 	bool oldInvert = m_Invert;
 
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
-	m_StartValue = parser.ReadInt(section, L"StartValue", 1);
-	m_EndValue = parser.ReadInt(section, L"EndValue", 100);
-	m_Increment = parser.ReadInt(section, L"Increment", 1);
+	m_StartValue = parser.ReadInt<"StartValue">(m_ID, 1);
+	m_EndValue = parser.ReadInt<"EndValue">(m_ID, 100);
+	m_Increment = parser.ReadInt<"Increment">(m_ID, 1);
 
-	m_LoopCount = parser.ReadInt(section, L"LoopCount", 0);
+	m_LoopCount = parser.ReadInt<"LoopCount">(m_ID, 0);
 
 	if (!m_Initialized || oldStart != m_StartValue || oldEnd != m_EndValue ||
 		oldInc != m_Increment || oldCount != m_LoopCount || oldInvert != m_Invert)

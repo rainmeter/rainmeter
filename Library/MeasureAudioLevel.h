@@ -29,7 +29,7 @@ public:
 	const WCHAR* GetStringValue() override;
 
 protected:
-	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
+	void ReadOptions(ConfigParser& parser) override;
 	void UpdateValue() override;
 
 private:
@@ -77,7 +77,7 @@ private:
 		NUM_FORMATS
 	};
 
-	void ResolveParent(ConfigParser& parser, std::wstring_view section);
+	void ResolveParent(ConfigParser& parser);
 	void UpdateFilterConstants();
 	double UpdateAudioValue();
 	HRESULT DeviceInit();

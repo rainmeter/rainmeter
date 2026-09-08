@@ -5,10 +5,13 @@
 #include "ConfigParser.h"
 #include "Rainmeter.h"
 
-Section::Section(Skin* skin, const WCHAR* name) : m_Skin(skin), m_Name(name),
+Section::Section(Skin* skin, const WCHAR* name) :
+	m_Name(name),
+	m_ID(IniNameRegistry::InternSection(name)),
 	m_DynamicVariables(false),
 	m_UpdateDivider(1),
-	m_UpdateCounter(1)
+	m_UpdateCounter(1),
+	m_Skin(skin)
 {
 }
 
@@ -18,21 +21,21 @@ Section::~Section()
 
 // Read the common options specified in the ini file. The inherited classes must
 // call this base implementation if they overwrite this method.
-void Section::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void Section::ReadOptions(ConfigParser& parser)
 {
 	const int defaultUpdateDivider =
 		m_Skin ? m_Skin->GetDefaultUpdateDivider() : 1;
-	int updateDivider = parser.ReadInt(section, L"UpdateDivider", defaultUpdateDivider);
+	int updateDivider = parser.ReadInt<"UpdateDivider">(m_ID, defaultUpdateDivider);
 	if (updateDivider != m_UpdateDivider)
 	{
 		m_UpdateCounter = m_UpdateDivider = updateDivider;
 	}
 
-	m_DynamicVariables = parser.ReadBool(section, L"DynamicVariables", false);
+	m_DynamicVariables = parser.ReadBool<"DynamicVariables">(m_ID, false);
 
-	parser.ReadString(m_OnUpdateAction, section, L"OnUpdateAction", L"", { .sectionVariables = false });
+	parser.ReadString<"OnUpdateAction">(m_OnUpdateAction, m_ID, L"", { .sectionVariables = false });
 
-	const std::wstring& group = parser.ReadString(section, L"Group", L"");
+	const std::wstring& group = parser.ReadString<"Group">(m_ID, L"");
 	InitializeGroup(group);
 }
 

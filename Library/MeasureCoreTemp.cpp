@@ -24,12 +24,12 @@ MeasureCoreTemp::~MeasureCoreTemp()
 {
 }
 
-void MeasureCoreTemp::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureCoreTemp::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
-	m_Type = ConvertType(parser.ReadString(section, L"CoreTempType", L"Temperature").c_str());
-	m_Index = parser.ReadInt(section, L"CoreTempIndex", 0);
+	m_Type = ConvertType(parser.ReadString<"CoreTempType">(m_ID, L"Temperature").c_str());
+	m_Index = parser.ReadInt<"CoreTempIndex">(m_ID, 0);
 }
 
 void MeasureCoreTemp::UpdateValue()

@@ -70,7 +70,7 @@ void MeterLine::Initialize()
 	}
 }
 
-void MeterLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeterLine::ReadOptions(ConfigParser& parser)
 {
 	WCHAR tmpName[64] = { 0 };
 
@@ -79,9 +79,9 @@ void MeterLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
 	int oldSize = m_GraphHorizontalOrientation ? m_H : m_W;
 	bool oldGraphHorizontalOrientation = m_GraphHorizontalOrientation;
 
-	Meter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser);
 
-	int lineCount = parser.ReadInt(section, L"LineCount", 1);
+	int lineCount = parser.ReadInt<"LineCount">(m_ID, 1);
 
 	m_Colors.clear();
 	m_ScaleValues.clear();
@@ -97,7 +97,7 @@ void MeterLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
 			_snwprintf_s(tmpName, _TRUNCATE, L"LineColor%i", i + 1);
 		}
 
-		m_Colors.push_back(parser.ReadColor(section, tmpName, D2D1::ColorF(D2D1::ColorF::White)));
+		m_Colors.push_back(parser.ReadColor(m_ID, tmpName, D2D1::ColorF(D2D1::ColorF::White)));
 
 		if (i == 0)
 		{
@@ -108,33 +108,33 @@ void MeterLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
 			_snwprintf_s(tmpName, _TRUNCATE, L"Scale%i", i + 1);
 		}
 
-		m_ScaleValues.push_back(parser.ReadFloat(section, tmpName, 1.0));
+		m_ScaleValues.push_back(parser.ReadFloat(m_ID, tmpName, 1.0));
 	}
 
-	m_Flip = parser.ReadBool(section, L"Flip", false);
-	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
-	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
+	m_Flip = parser.ReadBool<"Flip">(m_ID, false);
+	m_Autoscale = parser.ReadBool<"AutoScale">(m_ID, false);
+	m_LineWidth = parser.ReadFloat<"LineWidth">(m_ID, 1.0);
 	m_LineWidth = std::max(1.0, m_LineWidth);
-	m_HorizontalLines = parser.ReadBool(section, L"HorizontalLines", false);
+	m_HorizontalLines = parser.ReadBool<"HorizontalLines">(m_ID, false);
 
-	D2D1_COLOR_F color = parser.ReadColor(section, L"HorizontalColor", D2D1::ColorF(D2D1::ColorF::Black));		// This is left here for backwards compatibility
-	m_HorizontalColor = parser.ReadColor(section, L"HorizontalLineColor", color);	// This is what it should be
+	D2D1_COLOR_F color = parser.ReadColor<"HorizontalColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Black));		// This is left here for backwards compatibility
+	m_HorizontalColor = parser.ReadColor<"HorizontalLineColor">(m_ID, color);	// This is what it should be
 
 	static constexpr ConfigParser::EnumOption<bool> s_GraphStarts[] =
 	{
 		{ L"RIGHT", false },
 		{ L"LEFT", true },
 	};
-	m_GraphStartLeft = parser.ReadEnum(section, L"GraphStart", false, s_GraphStarts);
+	m_GraphStartLeft = parser.ReadEnum<"GraphStart">(m_ID, false, s_GraphStarts);
 
 	static constexpr ConfigParser::EnumOption<bool> s_GraphOrientations[] =
 	{
 		{ L"VERTICAL", false },
 		{ L"HORIZONTAL", true },
 	};
-	m_GraphHorizontalOrientation = parser.ReadEnum(section, L"GraphOrientation", false, s_GraphOrientations);
+	m_GraphHorizontalOrientation = parser.ReadEnum<"GraphOrientation">(m_ID, false, s_GraphOrientations);
 
-	const std::wstring& join = parser.ReadString(section, L"LineJoin", L"MITER");
+	const std::wstring& join = parser.ReadString<"LineJoin">(m_ID, L"MITER");
 	if (_wcsicmp(join.c_str(), L"MITER") == 0)
 	{
 		m_LineJoin = D2D1_LINE_JOIN_MITER;
@@ -157,7 +157,7 @@ void MeterLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		LogErrorF(this, L"LineJoin=%s is not valid", join.c_str());
 	}
 
-	m_MiterLimit = (FLOAT)parser.ReadFloat(section, L"MiterLimit", 10.0);
+	m_MiterLimit = (FLOAT)parser.ReadFloat<"MiterLimit">(m_ID, 10.0);
 	if (m_MiterLimit <= 0.0f)
 	{
 		LogErrorF(this, L"MiterLimit must be positive");
@@ -169,7 +169,7 @@ void MeterLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		{ L"NORMAL", D2D1_STROKE_TRANSFORM_TYPE_NORMAL },
 		{ L"FIXED", D2D1_STROKE_TRANSFORM_TYPE_FIXED },
 	};
-	m_StrokeType = parser.ReadEnum(section, L"TransformStroke", D2D1_STROKE_TRANSFORM_TYPE_NORMAL, s_StrokeTypes);
+	m_StrokeType = parser.ReadEnum<"TransformStroke">(m_ID, D2D1_STROKE_TRANSFORM_TYPE_NORMAL, s_StrokeTypes);
 
 	if (m_Initialized)
 	{
@@ -459,10 +459,10 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterLine::BindMeasures(ConfigParser& parser, std::wstring_view section)
+void MeterLine::BindMeasures(ConfigParser& parser)
 {
-	if (BindPrimaryMeasure(parser, section, false))
+	if (BindPrimaryMeasure(parser, false))
 	{
-		BindSecondaryMeasures(parser, section);
+		BindSecondaryMeasures(parser);
 	}
 }

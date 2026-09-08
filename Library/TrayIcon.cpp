@@ -426,6 +426,7 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 			m_Measure = Measure::Create(measureName.c_str(), nullptr, L"TrayMeasure");
 			if (m_Measure)
 			{
+				ConfigParser::OptionReader optionReader(parser, m_Measure->GetOriginalName(), m_Measure->GetSectionID());
 				m_Measure->ReadOptions(parser);
 			}
 

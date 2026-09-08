@@ -69,6 +69,7 @@ ConfigParser::ConfigParser() :
 	m_LastValueDefined(false),
 	m_MonitorVariableMode(MonitorVariableMode::DEFAULT_LOGICAL),
 	m_CurrentSection(),
+	m_CurrentSectionID(),
 	m_Skin()
 {
 }
@@ -77,22 +78,29 @@ ConfigParser::~ConfigParser()
 {
 }
 
-ConfigParser::InheritChainScope::InheritChainScope(ConfigParser& parser, LPCTSTR section, bool allowMeterStyle) :
+ConfigParser::OptionReader::OptionReader(ConfigParser& parser, std::wstring_view sectionName, IniSectionID sectionID, bool allowMeterStyle) :
 	m_Parser(parser),
-	m_PreviousChain(parser.m_InheritChain)
+	m_PreviousChain(parser.m_InheritChain),
+	m_PreviousSection(parser.m_CurrentSection),
+	m_PreviousSectionID(parser.m_CurrentSectionID)
 {
-	std::wstring_view inherit = parser.ReadString(section, L"@Inherit", L"");
+	parser.m_CurrentSection = sectionName;
+	parser.m_CurrentSectionID = sectionID;
+
+	std::wstring_view inherit = parser.ReadString<"@Inherit">(sectionID);
 	if (inherit.empty() && allowMeterStyle)
 	{
-		inherit = parser.ReadString(section, L"MeterStyle", L"");
+		inherit = parser.ReadString<"MeterStyle">(sectionID);
 	}
 
 	StringParser::Split(inherit, L'|', parser.m_InheritChain);
 }
 
-ConfigParser::InheritChainScope::~InheritChainScope()
+ConfigParser::OptionReader::~OptionReader()
 {
 	m_Parser.m_InheritChain = std::move(m_PreviousChain);
+	m_Parser.m_CurrentSection = m_PreviousSection;
+	m_Parser.m_CurrentSectionID = m_PreviousSectionID;
 }
 
 void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR skinSection)
@@ -113,6 +121,7 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 	m_MonitorVariableMode = MonitorVariableMode::DEFAULT_LOGICAL;
 
 	m_CurrentSection = {};
+	m_CurrentSectionID = {};
 	m_CurrentPath = PathUtil::GetFolderFromFilePath(filename);
 	m_SectionNamesInsertPos = m_SectionNames.end();
 
@@ -922,12 +931,18 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 	// Since actions are parsed when executed, get the current active
 	// section in case the current section variable is used.
 	bool hasCurrentAction = false;
+	std::wstring_view previousSection;
+	IniSectionID previousSectionID;
 	if (depth == 0 && m_Skin && (m_CurrentSection.empty() || meter))
 	{
 		Section* section = m_Skin->GetCurrentActionSection();
 		if (section || meter)
 		{
-			m_CurrentSection = meter ? meter->GetOriginalName() : section->GetOriginalName();
+			Section* currentSection = meter ? meter : section;
+			previousSection = m_CurrentSection;
+			previousSectionID = m_CurrentSectionID;
+			m_CurrentSection = currentSection->GetOriginalName();
+			m_CurrentSectionID = currentSection->GetSectionID();
 			hasCurrentAction = true;
 		}
 	}
@@ -1112,10 +1127,11 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 		GetLogger().Log(&delayedLogEntry);
 	}
 
-	// Reset the current section
+	// Restore the current section
 	if (hasCurrentAction)
 	{
-		m_CurrentSection = {};
+		m_CurrentSection = previousSection;
+		m_CurrentSectionID = previousSectionID;
 	}
 
 	return replaced;
@@ -1218,17 +1234,34 @@ std::wstring ConfigParser::GetDollarMouseVariable(std::wstring_view variable, Me
 
 void ConfigParser::ReadString(std::wstring& result, std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options)
 {
+	ReadStringInternal(result, FindSectionID(section), FindOptionID(key), section, defValue, options);
+}
+
+void ConfigParser::ReadString(std::wstring& result, IniSectionID section, IniOptionID option, std::wstring_view defValue, ReadOptions options)
+{
+	const std::wstring_view sectionName = section == m_CurrentSectionID ? m_CurrentSection : GetSectionName(section);
+	ReadStringInternal(result, section, option, sectionName, defValue, options);
+}
+
+void ConfigParser::ReadString(std::wstring& result, IniSectionID section, std::wstring_view option, std::wstring_view defValue, ReadOptions options)
+{
+	ReadString(result, section, FindOptionID(option), defValue, options);
+}
+
+void ConfigParser::ReadStringInternal(std::wstring& result, IniSectionID section, IniOptionID option, std::wstring_view sectionName, std::wstring_view defValue, ReadOptions options)
+{
 	// Clear last status
 	m_LastReplaced = false;
 	m_LastDefaultUsed = false;
 	m_LastValueDefined = false;
 
-	const std::wstring* value = GetValue(section, key);
+	const std::wstring* value = option.IsValid() ? GetValue(section, option) : nullptr;
 	if (!value)
 	{
 		for (auto iter = m_InheritChain.rbegin(); iter != m_InheritChain.rend(); ++iter)
 		{
-			value = GetValue(*iter, key);
+			const auto inheritedSection = IniNameRegistry::FindSection(*iter);
+			value = inheritedSection ? GetValue(*inheritedSection, option) : nullptr;
 			if (value) break;
 		}
 
@@ -1244,7 +1277,10 @@ void ConfigParser::ReadString(std::wstring& result, std::wstring_view section, s
 
 	if (!result.empty())
 	{
-		m_CurrentSection = section;  // Set temporarily
+		const auto previousSection = m_CurrentSection;
+		const auto previousSectionID = m_CurrentSectionID;
+		m_CurrentSection = sectionName;
+		m_CurrentSectionID = section;
 		m_LastValueDefined = true;
 
 		if (result.size() >= 3)
@@ -1252,7 +1288,8 @@ void ConfigParser::ReadString(std::wstring& result, std::wstring_view section, s
 			if (result.find(L'#') != std::wstring::npos)
 			{
 				// Make sure new-style variables are processed for the [Variables] section
-				bool runNewStyle = section == L"Variables" ? true : false;
+				static const auto variablesSectionID = IniNameRegistry::InternSection(L"Variables");
+				bool runNewStyle = section == variablesSectionID;
 				if (ReplaceVariables(result, runNewStyle))
 				{
 					m_LastReplaced = true;
@@ -1268,11 +1305,28 @@ void ConfigParser::ReadString(std::wstring& result, std::wstring_view section, s
 				m_LastReplaced = true;
 			}
 		}
-		m_CurrentSection = {};  // Reset
+		m_CurrentSection = previousSection;
+		m_CurrentSectionID = previousSectionID;
 	}
 }
 
 const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options)
+{
+	return ReadStringInternal(FindSectionID(section), FindOptionID(key), section, defValue, options);
+}
+
+const std::wstring& ConfigParser::ReadString(IniSectionID section, IniOptionID option, std::wstring_view defValue, ReadOptions options)
+{
+	const std::wstring_view sectionName = section == m_CurrentSectionID ? m_CurrentSection : GetSectionName(section);
+	return ReadStringInternal(section, option, sectionName, defValue, options);
+}
+
+const std::wstring& ConfigParser::ReadString(IniSectionID section, std::wstring_view option, std::wstring_view defValue, ReadOptions options)
+{
+	return ReadString(section, FindOptionID(option), defValue, options);
+}
+
+const std::wstring& ConfigParser::ReadStringInternal(IniSectionID section, IniOptionID option, std::wstring_view sectionName, std::wstring_view defValue, ReadOptions options)
 {
 	static size_t s_Depth = 0;
 	static std::deque<std::wstring> s_Results;
@@ -1284,13 +1338,18 @@ const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wst
 	++s_Depth;
 	auto depthGuard = Scoped([&] { --s_Depth; });
 
-	ReadString(result, section, key, defValue, options);
+	ReadStringInternal(result, section, option, sectionName, defValue, options);
 	return result;
 }
 
 size_t ConfigParser::MatchEnumOption(std::wstring_view section, std::wstring_view key, const WCHAR* const* names, size_t count, size_t stride)
 {
-	const auto* value = ReadString(section, key, L"").c_str();
+	return MatchEnumOption(FindSectionID(section), FindOptionID(key), names, count, stride);
+}
+
+size_t ConfigParser::MatchEnumOption(IniSectionID section, IniOptionID option, const WCHAR* const* names, size_t count, size_t stride)
+{
+	const auto* value = ReadString(section, option, L"").c_str();
 	if (!*value) return count;
 
 	for (size_t i = 0; i < count; ++i)
@@ -1300,7 +1359,8 @@ size_t ConfigParser::MatchEnumOption(std::wstring_view section, std::wstring_vie
 		if (_wcsicmp(value, name) == 0) return i;
 	}
 
-	LogErrorF(GetSection(section), L"%.*s=%s is not valid", (int)key.length(), key.data(), value);
+	const std::wstring& optionName = GetOptionName(option);
+	LogErrorF(GetSection(section), L"%s=%s is not valid", optionName.c_str(), value);
 	return count;
 }
 
@@ -1310,9 +1370,21 @@ bool ConfigParser::IsKeyDefined(std::wstring_view section, std::wstring_view key
 	return !m_LastDefaultUsed;
 }
 
+bool ConfigParser::IsKeyDefined(IniSectionID section, IniOptionID option)
+{
+	ReadString(section, option, L"", { .sectionVariables = false });
+	return !m_LastDefaultUsed;
+}
+
 bool ConfigParser::IsValueDefined(std::wstring_view section, std::wstring_view key)
 {
 	ReadString(section, key, L"", { .sectionVariables = false });
+	return m_LastValueDefined;
+}
+
+bool ConfigParser::IsValueDefined(IniSectionID section, IniOptionID option)
+{
+	ReadString(section, option, L"", { .sectionVariables = false });
 	return m_LastValueDefined;
 }
 
@@ -1335,6 +1407,29 @@ Section* ConfigParser::GetSection(std::wstring_view name)
 	return nullptr;
 }
 
+Section* ConfigParser::GetSection(IniSectionID id)
+{
+	for (const auto& section : m_Sections)
+	{
+		if (section.second->GetSectionID() == id) return section.second;
+	}
+	return nullptr;
+}
+
+std::wstring_view ConfigParser::GetSectionName(IniSectionID id) const
+{
+	for (const auto& section : m_Sections)
+	{
+		if (section.second->GetSectionID() == id) return section.second->GetOriginalName();
+	}
+	for (const auto& name : m_SectionNames)
+	{
+		const auto sectionID = IniNameRegistry::FindSection(name);
+		if (sectionID && *sectionID == id) return name;
+	}
+	return {};
+}
+
 Measure* ConfigParser::GetMeasure(std::wstring_view name)
 {
 	Section* section = GetSection(name);
@@ -1349,7 +1444,12 @@ Meter* ConfigParser::GetMeter(std::wstring_view name)
 
 int ConfigParser::ReadInt(std::wstring_view section, std::wstring_view key, int defValue)
 {
-	const std::wstring& result = ReadString(section, key, L"");
+	return ReadInt(FindSectionID(section), FindOptionID(key), defValue);
+}
+
+int ConfigParser::ReadInt(IniSectionID section, IniOptionID option, int defValue)
+{
+	const std::wstring& result = ReadString(section, option, L"");
 
 	if (!m_LastDefaultUsed)
 	{
@@ -1363,7 +1463,8 @@ int ConfigParser::ReadInt(std::wstring_view section, std::wstring_view key, int 
 				return (int)dblValue;
 			}
 
-			LogFormulaKeyError(m_Skin, errMsg, section, key);
+			const std::wstring& optionName = GetOptionName(option);
+			LogFormulaKeyError(m_Skin, errMsg, GetSectionName(section), optionName);
 		}
 		else if (*str)
 		{
@@ -1381,7 +1482,12 @@ int ConfigParser::ReadInt(std::wstring_view section, std::wstring_view key, int 
 
 uint32_t ConfigParser::ReadUInt(std::wstring_view section, std::wstring_view key, uint32_t defValue)
 {
-	const std::wstring& result = ReadString(section, key, L"");
+	return ReadUInt(FindSectionID(section), FindOptionID(key), defValue);
+}
+
+uint32_t ConfigParser::ReadUInt(IniSectionID section, IniOptionID option, uint32_t defValue)
+{
+	const std::wstring& result = ReadString(section, option, L"");
 
 	if (!m_LastDefaultUsed)
 	{
@@ -1395,7 +1501,8 @@ uint32_t ConfigParser::ReadUInt(std::wstring_view section, std::wstring_view key
 				return (uint32_t)dblValue;
 			}
 
-			LogFormulaKeyError(m_Skin, errMsg, section, key);
+			const std::wstring& optionName = GetOptionName(option);
+			LogFormulaKeyError(m_Skin, errMsg, GetSectionName(section), optionName);
 		}
 		else if (*str)
 		{
@@ -1413,7 +1520,12 @@ uint32_t ConfigParser::ReadUInt(std::wstring_view section, std::wstring_view key
 
 uint64_t ConfigParser::ReadUInt64(std::wstring_view section, std::wstring_view key, uint64_t defValue)
 {
-	const std::wstring& result = ReadString(section, key, L"");
+	return ReadUInt64(FindSectionID(section), FindOptionID(key), defValue);
+}
+
+uint64_t ConfigParser::ReadUInt64(IniSectionID section, IniOptionID option, uint64_t defValue)
+{
+	const std::wstring& result = ReadString(section, option, L"");
 
 	if (!m_LastDefaultUsed)
 	{
@@ -1427,7 +1539,8 @@ uint64_t ConfigParser::ReadUInt64(std::wstring_view section, std::wstring_view k
 				return (uint64_t)dblValue;
 			}
 
-			LogFormulaKeyError(m_Skin, errMsg, section, key);
+			const std::wstring& optionName = GetOptionName(option);
+			LogFormulaKeyError(m_Skin, errMsg, GetSectionName(section), optionName);
 		}
 		else if (*str)
 		{
@@ -1445,7 +1558,12 @@ uint64_t ConfigParser::ReadUInt64(std::wstring_view section, std::wstring_view k
 
 double ConfigParser::ReadFloat(std::wstring_view section, std::wstring_view key, double defValue)
 {
-	const std::wstring& result = ReadString(section, key, L"");
+	return ReadFloat(FindSectionID(section), FindOptionID(key), defValue);
+}
+
+double ConfigParser::ReadFloat(IniSectionID section, IniOptionID option, double defValue)
+{
+	const std::wstring& result = ReadString(section, option, L"");
 
 	if (!m_LastDefaultUsed)
 	{
@@ -1459,7 +1577,8 @@ double ConfigParser::ReadFloat(std::wstring_view section, std::wstring_view key,
 				return value;
 			}
 
-			LogFormulaKeyError(m_Skin, errMsg, section, key);
+			const std::wstring& optionName = GetOptionName(option);
+			LogFormulaKeyError(m_Skin, errMsg, GetSectionName(section), optionName);
 		}
 		else if (*str)
 		{
@@ -1521,21 +1640,36 @@ std::wstring ConfigParser::ParseFormulaWithModifiers(const std::wstring& formula
 
 D2D1_COLOR_F ConfigParser::ReadColor(std::wstring_view section, std::wstring_view key, const D2D1_COLOR_F& defValue)
 {
-	const std::wstring& result = ReadString(section, key, L"");
+	return ReadColor(FindSectionID(section), FindOptionID(key), defValue);
+}
+
+D2D1_COLOR_F ConfigParser::ReadColor(IniSectionID section, IniOptionID option, const D2D1_COLOR_F& defValue)
+{
+	const std::wstring& result = ReadString(section, option, L"");
 
 	return (m_LastDefaultUsed || result.empty()) ? defValue : ParseColor(result.c_str());
 }
 
 D2D1_RECT_F ConfigParser::ReadRect(std::wstring_view section, std::wstring_view key, const D2D1_RECT_F& defValue)
 {
-	const std::wstring& result = ReadString(section, key, L"");
+	return ReadRect(FindSectionID(section), FindOptionID(key), defValue);
+}
+
+D2D1_RECT_F ConfigParser::ReadRect(IniSectionID section, IniOptionID option, const D2D1_RECT_F& defValue)
+{
+	const std::wstring& result = ReadString(section, option, L"");
 
 	return (m_LastDefaultUsed) ? defValue : ParseRect(result.c_str());
 }
 
 RECT ConfigParser::ReadRECT(std::wstring_view section, std::wstring_view key, const RECT& defValue)
 {
-	const std::wstring& result = ReadString(section, key, L"");
+	return ReadRECT(FindSectionID(section), FindOptionID(key), defValue);
+}
+
+RECT ConfigParser::ReadRECT(IniSectionID section, IniOptionID option, const RECT& defValue)
+{
+	const std::wstring& result = ReadString(section, option, L"");
 
 	RECT r = { 0 };
 	if (m_LastDefaultUsed)
@@ -1646,32 +1780,34 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	}
 	else
 	{
-		StringSet fileSections;
+		ankerl::unordered_dense::set<IniSectionID> fileSections;
 		text->Parse(
 			[&](std::wstring_view name)
 			{
+				const auto sectionID = IniNameRegistry::InternSection(name);
+				if (!sectionID.IsValid()) return;
+
 				// Only the first of duplicate sections can be read, as in the profile API.
-				const auto& [iter, inserted] = fileSections.insert(StrToUpper(name));
+				const auto& [iter, inserted] = fileSections.insert(sectionID);
 				if (!inserted) return;
 
 				++sectionCount;
-				if (m_FoundSections.insert(*iter).second)
+				if (m_FoundSections.insert(sectionID).second)
 				{
 					m_SectionNames.insert(m_SectionNamesInsertPos, std::wstring(name));
 				}
 			});
 	}
 
-	StringSet fileSections;
-	StringSet sectionOptions;
+	ankerl::unordered_dense::set<IniSectionID> fileSections;
+	ankerl::unordered_dense::set<IniOptionID> sectionOptions;
 
-	std::wstring skinSectionUpperCase;
-	if (skinSection != nullptr) StrToUpperC(skinSectionUpperCase = skinSection);
+	const auto rainmeterSectionID = IniNameRegistry::InternSection(L"Rainmeter");
+	const auto variablesSectionID = IniNameRegistry::InternSection(L"Variables");
+	const auto metadataSectionID = IniNameRegistry::InternSection(L"Metadata");
+	const auto skinSectionID = skinSection ? IniNameRegistry::InternSection(skinSection) : IniSectionID{};
 
 	std::wstring sectionName;
-	std::wstring optionUpperCase;  // buffer
-
-	WCHAR sectionUpperCase[512];
 	IniSectionID sectionID;
 
 	size_t sectionsSeen = 0;
@@ -1688,41 +1824,41 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 			sectionOptions.clear();
 			sectionID = {};
 
+			const auto foundSectionID = IniNameRegistry::FindSection(name);
+			if (!foundSectionID) return;
+			sectionID = *foundSectionID;
+
 			// Grouped exactly as the pass above grouped them, so that the numbering matches.
-			if (!fileSections.insert(StrToUpper(name)).second) return;
+			if (!fileSections.insert(sectionID).second) return;
 
 			sectionIndex = sectionsSeen++;
 			resetInsertPos = true;
 			sectionName = name;
 
-			if (!StringUtil::ToUpperCase(name, sectionUpperCase, _countof(sectionUpperCase))) return;
-
-			sectionID = GetIniNameRegistry().InternSection(name);
-			if (!sectionID.IsValid()) return;
-
-			const bool isRainmeter = (wcscmp(sectionUpperCase, L"RAINMETER") == 0);
+			const bool isRainmeter = sectionID == rainmeterSectionID;
 			if (skinSection != nullptr)
 			{
-				if (!isRainmeter && wcscmp(sectionUpperCase, skinSectionUpperCase.c_str()) != 0) return;
+				if (!isRainmeter && sectionID != skinSectionID) return;
 
 				// Ordered as the special case above lists them, not as the file happens to.
 				sectionIndex = isRainmeter ? 0 : 1;
 			}
 
-			isVariables = (wcscmp(sectionUpperCase, L"VARIABLES") == 0);
-			isMetadata = (skinSection == nullptr && !isVariables && wcscmp(sectionUpperCase, L"METADATA") == 0);
+			isVariables = sectionID == variablesSectionID;
+			isMetadata = skinSection == nullptr && !isVariables && sectionID == metadataSectionID;
 			readSection = true;
 		},
 		[&](std::wstring_view option, std::wstring_view value)
 		{
 			if (!readSection || option.empty()) return;
 
-			StrToUpperC(optionUpperCase.assign(option));
+			const auto optionID = IniNameRegistry::InternOption(option);
+			if (!optionID.IsValid()) return;
 
 			// Only the first of duplicate options can be read.
-			if (!sectionOptions.insert(optionUpperCase).second) return;
+			if (!sectionOptions.insert(optionID).second) return;
 
-			if (wcsncmp(optionUpperCase.c_str(), L"@INCLUDE", 8) == 0)
+			if (option.length() >= 8 && _wcsnicmp(option.data(), L"@Include", 8) == 0)
 			{
 				if (value.empty()) return;
 
@@ -1768,22 +1904,36 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 			if (isMetadata) return;
 
-			const auto optionID = GetIniNameRegistry().InternOption(option);
-			if (!optionID.IsValid()) return;
-
 			m_Values.insert_or_assign(MakeIniValueID(sectionID, optionID), std::wstring(value));
 
 			if (isVariables) m_ListVariables.emplace_back(option);
 		});
 }
 
-const std::wstring* ConfigParser::GetValue(std::wstring_view section, std::wstring_view option)
+const std::wstring* ConfigParser::GetValue(std::wstring_view section, std::wstring_view option) const
 {
-	const auto sectionID = GetIniNameRegistry().FindSection(section);
+	const auto sectionID = IniNameRegistry::FindSection(section);
 	if (!sectionID) return nullptr;
 
-	const auto optionID = GetIniNameRegistry().FindOption(option);
+	const auto optionID = IniNameRegistry::FindOption(option);
 	return optionID ? GetValue(*sectionID, *optionID) : nullptr;
+}
+
+IniSectionID ConfigParser::FindSectionID(std::wstring_view section) const
+{
+	const auto id = IniNameRegistry::FindSection(section);
+	return id ? *id : IniSectionID{};
+}
+
+IniOptionID ConfigParser::FindOptionID(std::wstring_view option) const
+{
+	const auto id = IniNameRegistry::FindOption(option);
+	return id ? *id : IniOptionID{};
+}
+
+const std::wstring& ConfigParser::GetOptionName(IniOptionID option) const
+{
+	return IniNameRegistry::GetOptionName(option);
 }
 
 const std::wstring* ConfigParser::GetValue(IniSectionID section, IniOptionID option) const
@@ -1794,21 +1944,33 @@ const std::wstring* ConfigParser::GetValue(IniSectionID section, IniOptionID opt
 
 void ConfigParser::SetValue(std::wstring_view section, std::wstring_view option, std::wstring value)
 {
-	const auto sectionID = GetIniNameRegistry().InternSection(section);
-	const auto optionID = GetIniNameRegistry().InternOption(option);
+	const auto sectionID = IniNameRegistry::InternSection(section);
+	const auto optionID = IniNameRegistry::InternOption(option);
 	if (!sectionID.IsValid() || !optionID.IsValid()) return;
 
-	m_Values[MakeIniValueID(sectionID, optionID)] = std::move(value);
+	SetValue(sectionID, optionID, std::move(value));
+}
+
+void ConfigParser::SetValue(IniSectionID section, IniOptionID option, std::wstring value)
+{
+	if (!section.IsValid() || !option.IsValid()) return;
+	m_Values[MakeIniValueID(section, option)] = std::move(value);
 }
 
 void ConfigParser::DeleteValue(std::wstring_view section, std::wstring_view option)
 {
-	const auto sectionID = GetIniNameRegistry().FindSection(section);
+	const auto sectionID = IniNameRegistry::FindSection(section);
 	if (!sectionID) return;
 
-	const auto optionID = GetIniNameRegistry().FindOption(option);
+	const auto optionID = IniNameRegistry::FindOption(option);
 	if (!optionID) return;
 
-	auto iter = m_Values.find(MakeIniValueID(*sectionID, *optionID));
+	DeleteValue(*sectionID, *optionID);
+}
+
+void ConfigParser::DeleteValue(IniSectionID section, IniOptionID option)
+{
+	if (!section.IsValid() || !option.IsValid()) return;
+	auto iter = m_Values.find(MakeIniValueID(section, option));
 	if (iter != m_Values.end()) m_Values.erase(iter);
 }

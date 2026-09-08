@@ -208,9 +208,9 @@ MeasureFolderInfo::~MeasureFolderInfo()
 	}
 }
 
-void MeasureFolderInfo::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureFolderInfo::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
 	static constexpr ConfigParser::EnumOption<Type> s_InfoTypes[] =
 	{
@@ -221,9 +221,9 @@ void MeasureFolderInfo::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		{ L"FileCount", Type::FileCount },
 		{ L"FileCountStr", Type::FileCount },
 	};
-	m_Type = parser.ReadEnum(section, L"InfoType", Type::FileCount, s_InfoTypes);
+	m_Type = parser.ReadEnum<"InfoType">(m_ID, Type::FileCount, s_InfoTypes);
 
-	const std::wstring_view folder = parser.ReadString(section, L"Folder", L"", { .sectionVariables = false });
+	const std::wstring_view folder = parser.ReadString<"Folder">(m_ID, L"", { .sectionVariables = false });
 	if (folder.starts_with(L'['))
 	{
 		if (m_Parent)
@@ -264,16 +264,16 @@ void MeasureFolderInfo::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		m_Parent = new FolderInfoParentMeasure(this);
 	}
 
-	std::wstring path = parser.ReadString(section, L"Folder", L"");
+	std::wstring path = parser.ReadString<"Folder">(m_ID, L"");
 	GetSkin()->MakePathAbsolute(path);
 	m_Parent->folder.SetPath(path.c_str());
 
-	const WCHAR* filter = parser.ReadString(section, L"RegExpFilter", L"").c_str();
+	const WCHAR* filter = parser.ReadString<"RegExpFilter">(m_ID, L"").c_str();
 	m_Parent->folder.SetRegExpFilter(filter);
 
-	m_Parent->folder.SetSubFolders(parser.ReadBool(section, L"IncludeSubFolders", false));
-	m_Parent->folder.SetHiddenFiles(parser.ReadBool(section, L"IncludeHiddenFiles", false));
-	m_Parent->folder.SetSystemFiles(parser.ReadBool(section, L"IncludeSystemFiles", false));
+	m_Parent->folder.SetSubFolders(parser.ReadBool<"IncludeSubFolders">(m_ID, false));
+	m_Parent->folder.SetHiddenFiles(parser.ReadBool<"IncludeHiddenFiles">(m_ID, false));
+	m_Parent->folder.SetSystemFiles(parser.ReadBool<"IncludeSystemFiles">(m_ID, false));
 }
 
 void MeasureFolderInfo::UpdateValue()

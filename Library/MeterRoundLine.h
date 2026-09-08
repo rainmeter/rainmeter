@@ -19,8 +19,8 @@ public:
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
-	void BindMeasures(ConfigParser& parser, std::wstring_view section) override;
+	void ReadOptions(ConfigParser& parser) override;
+	void BindMeasures(ConfigParser& parser) override;
 
 private:
 	bool m_Solid;

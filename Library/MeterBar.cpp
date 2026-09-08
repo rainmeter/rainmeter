@@ -52,32 +52,32 @@ void MeterBar::InvalidateDeviceResources()
 	m_Image.InvalidateDeviceResources();
 }
 
-void MeterBar::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeterBar::ReadOptions(ConfigParser& parser)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 
-	Meter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser);
 
-	m_Color = parser.ReadColor(section, L"BarColor", D2D1::ColorF(D2D1::ColorF::Green));
+	m_Color = parser.ReadColor<"BarColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Green));
 
-	parser.ReadString(m_ImageName, section, L"BarImage", L"");
+	parser.ReadString<"BarImage">(m_ImageName, m_ID, L"");
 	if (!m_ImageName.empty())
 	{
 		// Read tinting options
-		m_Image.ReadOptions(parser, section);
+		m_Image.ReadOptions(parser, m_ID);
 	}
 
-	m_Border = parser.ReadInt(section, L"BarBorder", 0);
+	m_Border = parser.ReadInt<"BarBorder">(m_ID, 0);
 
-	m_Flip = parser.ReadBool(section, L"Flip", false);
+	m_Flip = parser.ReadBool<"Flip">(m_ID, false);
 
 	static constexpr ConfigParser::EnumOption<ORIENTATION> s_Orientations[] =
 	{
 		{ L"VERTICAL", VERTICAL },
 		{ L"HORIZONTAL", HORIZONTAL },
 	};
-	m_Orientation = parser.ReadEnum(section, L"BarOrientation", VERTICAL, s_Orientations);
+	m_Orientation = parser.ReadEnum<"BarOrientation">(m_ID, VERTICAL, s_Orientations);
 
 	if (m_Initialized)
 	{

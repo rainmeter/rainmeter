@@ -62,30 +62,30 @@ MeasureDragDrop::~MeasureDragDrop()
 {
 }
 
-void MeasureDragDrop::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureDragDrop::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
-	parser.ReadString(m_Path, section, L"Path", L"");
+	parser.ReadString<"Path">(m_Path, m_ID, L"");
 	m_Skin->MakePathAbsolute(m_Path);
 
-	parser.ReadString(m_OnDropAction, section, L"OnDropAction", L"");
+	parser.ReadString<"OnDropAction">(m_OnDropAction, m_ID, L"");
 	if (m_OnDropAction.empty())
 	{
 		// For backwards compatibility.
-		parser.ReadString(m_OnDropAction, section, L"OnDroppedAction", L"");
+		parser.ReadString<"OnDroppedAction">(m_OnDropAction, m_ID, L"");
 	}
 
-	parser.ReadString(m_OnEnterAction, section, L"OnEnterAction", L"");
-	parser.ReadString(m_OnOverAction, section, L"OnOverAction", L"");
-	parser.ReadString(m_OnLeaveAction, section, L"OnLeaveAction", L"");
+	parser.ReadString<"OnEnterAction">(m_OnEnterAction, m_ID, L"");
+	parser.ReadString<"OnOverAction">(m_OnOverAction, m_ID, L"");
+	parser.ReadString<"OnLeaveAction">(m_OnLeaveAction, m_ID, L"");
 
-	m_ProcessAllFiles = parser.ReadBool(section, L"ProcessAllFiles", false);
-	m_OverrideExisting = parser.ReadBool(section, L"OverrideExisting", false);
-	m_Silent = parser.ReadBool(section, L"Silent", false);
+	m_ProcessAllFiles = parser.ReadBool<"ProcessAllFiles">(m_ID, false);
+	m_OverrideExisting = parser.ReadBool<"OverrideExisting">(m_ID, false);
+	m_Silent = parser.ReadBool<"Silent">(m_ID, false);
 
 	m_Action = DropAction::None;
-	const auto* action = parser.ReadString(section, L"Action", L"").c_str();
+	const auto* action = parser.ReadString<"Action">(m_ID, L"").c_str();
 	if (_wcsicmp(action, L"Move") == 0)
 	{
 		m_Action = DropAction::Move;
@@ -122,7 +122,7 @@ void MeasureDragDrop::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 	m_BoundsMeter.clear();
 	m_BoundsFormulas.fill(L"");
 
-	const std::wstring& bounds = parser.ReadString(section, L"Bounds", L"", { .sectionVariables = false });
+	const std::wstring& bounds = parser.ReadString<"Bounds">(m_ID, L"", { .sectionVariables = false });
 	if (!bounds.empty())
 	{
 		std::vector<std::wstring_view> tokens;

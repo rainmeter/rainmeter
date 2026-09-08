@@ -2611,7 +2611,8 @@ bool Skin::ReadSkin()
 	auto& selectionColor = GetRainmeter().GetDefaultSelectionColor();
 	m_SelectedColor = m_Parser.ReadColor(L"Rainmeter", L"SelectedColor", selectionColor);
 
-	m_Mouse.ReadOptions(m_Parser, L"Rainmeter", true);
+	const auto rainmeterSectionID = IniNameRegistry::InternSection(L"Rainmeter");
+	m_Mouse.ReadOptions(m_Parser, rainmeterSectionID, true);
 
 	m_Parser.ReadString(m_OnRefreshAction, L"Rainmeter", L"OnRefreshAction", L"", { .sectionVariables = false });
 	m_Parser.ReadString(m_OnCloseAction, L"Rainmeter", L"OnCloseAction", L"", { .sectionVariables = false });
@@ -2878,6 +2879,7 @@ bool Skin::ReadSkin()
 	// First read the container option, then set the appropriate relative meter.
 	for (Meter* meter : m_Meters)
 	{
+		ConfigParser::OptionReader optionReader(m_Parser, meter->GetOriginalName(), meter->GetSectionID(), true);
 		meter->ReadContainerOptions(m_Parser);
 	}
 	m_ResetRelativeMeters = true;
@@ -2889,6 +2891,7 @@ bool Skin::ReadSkin()
 	for (auto iter = m_Measures.cbegin(); iter != m_Measures.cend(); ++iter)
 	{
 		Measure* measure = *iter;
+		ConfigParser::OptionReader optionReader(m_Parser, measure->GetOriginalName(), measure->GetSectionID());
 		measure->ReadOptions(m_Parser);
 	}
 
@@ -2896,6 +2899,7 @@ bool Skin::ReadSkin()
 	for (auto iter = m_Meters.cbegin(); iter != m_Meters.cend(); ++iter)
 	{
 		Meter* meter = *iter;
+		ConfigParser::OptionReader optionReader(m_Parser, meter->GetOriginalName(), meter->GetSectionID(), true);
 		meter->ReadOptions(m_Parser);
 		meter->Initialize();
 	}
@@ -2955,7 +2959,7 @@ bool Skin::ResizeWindow(bool reset)
 	{
 		m_Background = new GeneralImage(L"Background", nullptr, false, this);
 
-		m_Background->ReadOptions(m_Parser, L"Rainmeter");
+		m_Background->ReadOptions(m_Parser, rainmeterSectionID);
 		m_Background->LoadImage(m_BackgroundName);
 
 		auto bitmap = m_Background->GetImage();
@@ -3366,6 +3370,7 @@ bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 		if (meter->HasDynamicVariables() &&
 			(meter->GetUpdateCounter() + 1) >= updateDivider)
 		{
+			ConfigParser::OptionReader optionReader(m_Parser, meter->GetOriginalName(), meter->GetSectionID(), true);
 			meter->ReadOptions(m_Parser);
 		}
 

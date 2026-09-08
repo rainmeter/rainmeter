@@ -16,7 +16,7 @@ public:
 	UINT GetTypeID() override { return TypeID<MeasureCoreTemp>(); }
 
 protected:
-	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
+	void ReadOptions(ConfigParser& parser) override;
 	void UpdateValue() override;
 	const WCHAR* GetStringValue() override;
 

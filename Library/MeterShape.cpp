@@ -121,14 +121,14 @@ void MeterShape::InvalidateDeviceResources()
 	}
 }
 
-void MeterShape::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeterShape::ReadOptions(ConfigParser& parser)
 {
-	Meter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser);
 
 	bool shapeOptionsChanged = m_ShapeOptions.empty();
 	for (auto& option : m_ShapeOptions)
 	{
-		const auto& value = parser.ReadString(section, option.first.c_str(), L"");
+		const auto& value = parser.ReadString(m_ID, option.first.c_str(), L"");
 		if (value != option.second) shapeOptionsChanged = true;
 		option.second = value;
 	}
@@ -144,14 +144,14 @@ void MeterShape::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		{
 			if (i > 1) _snwprintf_s(key, _TRUNCATE, L"Shape%zu", i);
 			// Cache the first empty ShapeN option so newly added shapes are detected.
-			auto shape = ReadShapeOption(parser, section, key);
+			auto shape = ReadShapeOption(parser, key);
 			if (shape.empty()) break;
 
 			StringParser options(shape);
 			const auto definition = ConsumeOption(options);
 
 			bool isCombined = false;
-			if (!CreateShape(definition, parser, section, isCombined, i - 1)) break;
+			if (!CreateShape(definition, parser, isCombined, i - 1)) break;
 
 			// If the shape is combined with another, process later once all shapes have been read.
 			if (isCombined)
@@ -160,7 +160,7 @@ void MeterShape::ReadOptions(ConfigParser& parser, std::wstring_view section)
 			}
 			else
 			{
-				ParseModifiers(m_Shapes[i - 1], options, parser, section);
+				ParseModifiers(m_Shapes[i - 1], options, parser);
 			}
 		}
 
@@ -192,14 +192,14 @@ void MeterShape::ReadOptions(ConfigParser& parser, std::wstring_view section)
 	}
 }
 
-std::wstring MeterShape::ReadShapeOption(ConfigParser& parser, std::wstring_view section, std::wstring key)
+std::wstring MeterShape::ReadShapeOption(ConfigParser& parser, std::wstring key)
 {
 	StringUtil::ToUpperCase(key);
 
 	auto iter = m_ShapeOptions.find(key);
 	if (iter != m_ShapeOptions.end()) return iter->second;
 
-	const auto& value = parser.ReadString(section, key.c_str(), L"");
+	const auto& value = parser.ReadString(m_ID, key.c_str(), L"");
 	m_ShapeOptions.emplace(std::move(key), value);
 	return value;
 }
@@ -254,16 +254,15 @@ bool MeterShape::HitTest(int x, int y)
 	return false;
 }
 
-void MeterShape::BindMeasures(ConfigParser& parser, std::wstring_view section)
+void MeterShape::BindMeasures(ConfigParser& parser)
 {
-	if (BindPrimaryMeasure(parser, section, true))
+	if (BindPrimaryMeasure(parser, true))
 	{
-		BindSecondaryMeasures(parser, section);
+		BindSecondaryMeasures(parser);
 	}
 }
 
-bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
-	std::wstring_view section, bool& isCombined, size_t keyId)
+bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser, bool& isCombined, size_t keyId)
 {
 	auto addShape = [&](std::optional<Gfx::Shape> shape) -> bool
 	{
@@ -412,7 +411,7 @@ bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
 	else if (values.Consume(L"Path1"))
 	{
 		values.ConsumeWhitespace();
-		auto opt = ReadShapeOption(parser, section, std::wstring(values.Remaining()));
+		auto opt = ReadShapeOption(parser, std::wstring(values.Remaining()));
 		if (opt.empty() || !ParsePath(parser, opt, D2D1_FILL_MODE_WINDING))
 		{
 			LogErrorF(this, L"Path shape has invalid parameters: %s", opt.c_str());
@@ -424,7 +423,7 @@ bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
 	else if (values.Consume(L"Path"))
 	{
 		values.ConsumeWhitespace();
-		auto opt = ReadShapeOption(parser, section, std::wstring(values.Remaining()));
+		auto opt = ReadShapeOption(parser, std::wstring(values.Remaining()));
 		if (opt.empty() || !ParsePath(parser, opt, D2D1_FILL_MODE_ALTERNATE))
 		{
 			LogErrorF(this, L"Path shape has invalid parameters: %s", opt.c_str());
@@ -547,7 +546,7 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 	return true;
 }
 
-void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, ConfigParser& parser, std::wstring_view section, bool recursive)
+void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, ConfigParser& parser, bool recursive)
 {
 	auto parseCap = [this](StringParser& cap) -> D2D1_CAP_STYLE
 	{
@@ -566,7 +565,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 	// The rest of the modifier names the option holding the gradient.
 	auto parseGradient = [&](StringParser& option, Gfx::BrushType type, const WCHAR* name, bool altGamma, bool isStroke) -> void
 	{
-		auto opt = ReadShapeOption(parser, section, std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)));
+		auto opt = ReadShapeOption(parser, std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)));
 		if (opt.empty() || !ParseGradient(shape, parser, type, opt, altGamma, isStroke))
 		{
 			LogErrorF(this, L"%s has invalid parameters: %s", name, opt.c_str());
@@ -724,11 +723,11 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 			{
 				if (extend->empty()) continue;
 
-				std::wstring key = ReadShapeOption(parser, section, std::wstring(*extend));
+				std::wstring key = ReadShapeOption(parser, std::wstring(*extend));
 				if (!key.empty())
 				{
 					StringParser extendedModifiers(key);
-					ParseModifiers(shape, extendedModifiers, parser, section, true);
+					ParseModifiers(shape, extendedModifiers, parser, true);
 				}
 			}
 		}

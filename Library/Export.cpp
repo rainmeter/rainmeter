@@ -173,9 +173,10 @@ LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
+	const auto sectionID = IniNameRegistry::FindSection(section).value_or(IniSectionID{});
 
-	ConfigParser::InheritChainScope inheritChain(parser, section, AllowMeterStyleInheritance(measure, section));
-	return parser.ReadString(section, option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
+	ConfigParser::OptionReader optionReader(parser, section, sectionID, AllowMeterStyleInheritance(measure, section));
+	return parser.ReadString(sectionID, option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
 }
 
 double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
@@ -211,9 +212,10 @@ double __stdcall RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
+	const auto sectionID = IniNameRegistry::FindSection(section).value_or(IniSectionID{});
 
-	ConfigParser::InheritChainScope inheritChain(parser, section, AllowMeterStyleInheritance(measure, section));
-	return parser.ReadFloat(section, option, defValue);
+	ConfigParser::OptionReader optionReader(parser, section, sectionID, AllowMeterStyleInheritance(measure, section));
+	return parser.ReadFloat(sectionID, option, defValue);
 }
 
 LPCWSTR __stdcall RmReplaceVariables(void* rm, LPCWSTR str)

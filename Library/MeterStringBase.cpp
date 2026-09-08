@@ -431,7 +431,7 @@ void MeterStringBase::Initialize()
 		m_Skin->GetFontCollection());
 }
 
-void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeterStringBase::ReadOptions(ConfigParser& parser)
 {
 	// Store the current values so we know if the font needs to be updated, and whether the text
 	// has to be measured again. Everything the measurement depends on is compared here, bar what
@@ -452,19 +452,19 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 	bool oldWDefined = m_WDefined;
 	bool oldHDefined = m_HDefined;
 
-	Meter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser);
 
-	m_Color = parser.ReadColor(section, L"FontColor", D2D1::ColorF(D2D1::ColorF::Black));
-	m_EffectColor = parser.ReadColor(section, L"FontEffectColor", D2D1::ColorF(D2D1::ColorF::Black));
+	m_Color = parser.ReadColor<"FontColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Black));
+	m_EffectColor = parser.ReadColor<"FontEffectColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Black));
 
-	int clipping = parser.ReadInt(section, L"ClipString", 0);
+	int clipping = parser.ReadInt<"ClipString">(m_ID, 0);
 	switch (clipping)
 	{
 	case 2:
 		m_ClipType = CLIP_AUTO;
 
-		m_ClipStringW = parser.ReadInt(section, L"ClipStringW", -1);
-		m_ClipStringH = parser.ReadInt(section, L"ClipStringH", -1);
+		m_ClipStringW = parser.ReadInt<"ClipStringW">(m_ID, -1);
+		m_ClipStringH = parser.ReadInt<"ClipStringH">(m_ID, -1);
 		break;
 
 	case 1:
@@ -479,19 +479,19 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		LogErrorF(this, L"ClipString=%i is not valid", clipping);
 	}
 
-	parser.ReadString(m_FontFace, section, L"FontFace", L"Arial");
+	parser.ReadString<"FontFace">(m_FontFace, m_ID, L"Arial");
 	if (m_FontFace.empty())
 	{
 		m_FontFace = L"Arial";
 	}
 
-	m_FontSize = (FLOAT)parser.ReadFloat(section, L"FontSize", 10.0);
+	m_FontSize = (FLOAT)parser.ReadFloat<"FontSize">(m_ID, 10.0);
 	if (m_FontSize < 0.0f)
 	{
 		m_FontSize = 10.0f;
 	}
 
-	auto alignParser = StringParser(parser.ReadString(section, L"StringAlign", L"LEFT"));
+	auto alignParser = StringParser(parser.ReadString<"StringAlign">(m_ID, L"LEFT"));
 	bool horizontalMatched = true;
 	if (alignParser.Consume(L"LEFT"))
 	{
@@ -527,11 +527,11 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		m_TextFormat->SetVerticalAlignment(Gfx::VerticalAlignment::Top);
 	}
 
-	m_Style = ReadStringStyle(parser, section, L"StringStyle", NORMAL);
+	m_Style = ReadStringStyle(parser, L"StringStyle", NORMAL);
 
-	m_Case = ReadStringCase(parser, section, L"StringCase", TEXTCASE_NONE);
+	m_Case = ReadStringCase(parser, L"StringCase", TEXTCASE_NONE);
 
-	int weight = parser.ReadInt(section, L"FontWeight", -1);
+	int weight = parser.ReadInt<"FontWeight">(m_ID, -1);
 	if (parser.GetLastValueDefined())
 	{
 		if (weight > 0 && weight < 1000)
@@ -550,7 +550,7 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		{ L"SHADOW", EFFECT_SHADOW },
 		{ L"BORDER", EFFECT_BORDER },
 	};
-	m_Effect = parser.ReadEnum(section, L"StringEffect", EFFECT_NONE, s_Effects);
+	m_Effect = parser.ReadEnum<"StringEffect">(m_ID, EFFECT_NONE, s_Effects);
 
 	std::vector<Gfx::TextInlineOption> inlineOptions;
 	inlineOptions.reserve(m_TextFormat->GetInlineOptionCount());
@@ -562,7 +562,7 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 
 		WCHAR settingKey[32] = L"InlineSetting";
 		wcscat_s(settingKey, num);
-		const auto& option = parser.ReadString(section, settingKey, L"");
+		const auto& option = parser.ReadString(m_ID, settingKey, L"");
 		if (option.empty()) break;
 
 		auto setting = ParseInlineSetting(option, parser);
@@ -570,7 +570,7 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 
 		WCHAR patternKey[32] = L"InlinePattern";
 		wcscat_s(patternKey, num);
-		std::wstring pattern = parser.ReadString(section, patternKey, L"");
+		std::wstring pattern = parser.ReadString(m_ID, patternKey, L"");
 		if (pattern.empty()) pattern = L".*";
 
 		inlineOptions.push_back({ std::move(pattern), std::move(*setting) });
@@ -607,8 +607,7 @@ void MeterStringBase::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 	}
 }
 
-MeterStringBase::TEXTSTYLE MeterStringBase::ReadStringStyle(
-	ConfigParser& parser, std::wstring_view section, const WCHAR* option, TEXTSTYLE defaultStyle)
+MeterStringBase::TEXTSTYLE MeterStringBase::ReadStringStyle(ConfigParser& parser, const WCHAR* option, TEXTSTYLE defaultStyle)
 {
 	static constexpr ConfigParser::EnumOption<TEXTSTYLE> s_Styles[] =
 	{
@@ -617,11 +616,10 @@ MeterStringBase::TEXTSTYLE MeterStringBase::ReadStringStyle(
 		{ L"ITALIC", ITALIC },
 		{ L"BOLDITALIC", BOLDITALIC },
 	};
-	return parser.ReadEnum(section, option, defaultStyle, s_Styles);
+	return parser.ReadEnum(m_ID, option, defaultStyle, s_Styles);
 }
 
-MeterStringBase::TEXTCASE MeterStringBase::ReadStringCase(
-	ConfigParser& parser, std::wstring_view section, const WCHAR* option, TEXTCASE defaultCase)
+MeterStringBase::TEXTCASE MeterStringBase::ReadStringCase(ConfigParser& parser, const WCHAR* option, TEXTCASE defaultCase)
 {
 	static constexpr ConfigParser::EnumOption<TEXTCASE> s_Cases[] =
 	{
@@ -630,7 +628,7 @@ MeterStringBase::TEXTCASE MeterStringBase::ReadStringCase(
 		{ L"LOWER", TEXTCASE_LOWER },
 		{ L"PROPER", TEXTCASE_PROPER },
 	};
-	return parser.ReadEnum(section, option, defaultCase, s_Cases);
+	return parser.ReadEnum(m_ID, option, defaultCase, s_Cases);
 }
 
 void MeterStringBase::ApplyCase(std::wstring& text, TEXTCASE textCase) const

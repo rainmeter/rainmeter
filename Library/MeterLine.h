@@ -20,8 +20,8 @@ public:
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
-	void BindMeasures(ConfigParser& parser, std::wstring_view section) override;
+	void ReadOptions(ConfigParser& parser) override;
+	void BindMeasures(ConfigParser& parser) override;
 
 private:
 	std::vector<D2D1_COLOR_F> m_Colors;

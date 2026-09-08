@@ -48,7 +48,7 @@ public:
 	UINT GetBaseTypeID() override { return TypeID<Measure>(); }
 
 	virtual void Initialize();
-	void ReadOptions(ConfigParser& parser);
+	void ReadOptions(ConfigParser& parser) override;
 	bool Update(bool rereadOptions = false);
 
 	void Disable();
@@ -82,12 +82,11 @@ public:
 protected:
 	Measure(Skin* skin, const WCHAR* name);
 
-	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
 	virtual void UpdateValue() = 0;
 
 	// Reads NumberConversionFormat, which selects the separators used by the measures that convert
 	// a string into their number value.
-	LocaleUtil::NumberFormat ReadNumberFormatOption(ConfigParser& parser, std::wstring_view section);
+	LocaleUtil::NumberFormat ReadNumberFormatOption(ConfigParser& parser);
 
 	bool ParseSubstitute(std::wstring buffer);
 	std::wstring ExtractWord(std::wstring& buffer);

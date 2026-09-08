@@ -737,11 +737,11 @@ void MeasureInputText::Command(const std::wstring& command)
 	m_Options = InputTextOptions();
 	for (const OptionName& entry : c_Options)
 	{
-		const std::wstring value = parser.ReadString(GetName(), entry.name, L"");
+		const std::wstring value = parser.ReadString(m_ID, entry.name, L"");
 		if (!value.empty()) ApplyOption(m_Options, parser, entry.option, value);
 	}
 
-	parser.ReadString(m_DismissAction, GetName(), L"OnDismissAction", L"", { .sectionVariables = false });
+	parser.ReadString<"OnDismissAction">(m_DismissAction, m_ID, L"", { .sectionVariables = false });
 
 	if (ReadSteps(command)) RunSteps();
 }
@@ -749,7 +749,6 @@ void MeasureInputText::Command(const std::wstring& command)
 bool MeasureInputText::ReadSteps(const std::wstring& command)
 {
 	ConfigParser& parser = m_Skin->GetParser();
-	const std::wstring& section = GetOriginalName();
 	const std::wstring args = Trim(command);
 
 	// One word is the whole of the simple form, and the word names a variable: the box opens, and
@@ -796,7 +795,7 @@ bool MeasureInputText::ReadSteps(const std::wstring& command)
 	{
 		std::wstring name = L"Command";
 		name += std::to_wstring(i);
-		const auto& line = parser.ReadString(section, name, L"", { .sectionVariables = false });
+		const auto& line = parser.ReadString(m_ID, name, L"", { .sectionVariables = false });
 		if (line.empty()) break;
 
 		Step& step = m_Steps.emplace_back();

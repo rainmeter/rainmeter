@@ -34,8 +34,8 @@ public:
 	bool HasCommand() const { return !m_Command.empty(); }
 
 protected:
-	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
-	void BindMeasures(ConfigParser& parser, std::wstring_view section) override;
+	void ReadOptions(ConfigParser& parser) override;
+	void BindMeasures(ConfigParser& parser) override;
 
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite; }
 

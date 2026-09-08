@@ -15,13 +15,13 @@ MeasureString::~MeasureString()
 {
 }
 
-void MeasureString::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureString::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
-	m_NumberFormat = ReadNumberFormatOption(parser, section);
+	m_NumberFormat = ReadNumberFormatOption(parser);
 
-	parser.ReadString(m_String, section, L"String", L"");
+	parser.ReadString<"String">(m_String, m_ID, L"");
 
 	if (!m_Initialized && !m_Disabled && !m_Paused)
 	{

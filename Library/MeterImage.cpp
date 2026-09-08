@@ -95,30 +95,30 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 	}
 }
 
-void MeterImage::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeterImage::ReadOptions(ConfigParser& parser)
 {
-	Meter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser);
 
-	parser.ReadString(m_ImageName, section, L"ImageName", L"");
-	parser.ReadString(m_MaskImageName, section, L"MaskImageName", L"");
+	parser.ReadString<"ImageName">(m_ImageName, m_ID, L"");
+	parser.ReadString<"MaskImageName">(m_MaskImageName, m_ID, L"");
 
-	m_Tile = parser.ReadBool(section, L"Tile", false);
+	m_Tile = parser.ReadBool<"Tile">(m_ID, false);
 	if (!m_Tile)
 	{
-		m_AspectRatioMode = ParseAspectRatioMode(parser.ReadInt(section, L"PreserveAspectRatio", 0));
+		m_AspectRatioMode = ParseAspectRatioMode(parser.ReadInt<"PreserveAspectRatio">(m_ID, 0));
 	}
 
 	static const RECT defMargins = { 0 };
-	m_ScaleMargins = parser.ReadRECT(section, L"ScaleMargins", defMargins);
+	m_ScaleMargins = parser.ReadRECT<"ScaleMargins">(m_ID, defMargins);
 
 	// Deprecated!
-	std::wstring path = parser.ReadString(section, L"Path", L"");
+	std::wstring path = parser.ReadString<"Path">(m_ID, L"");
 	PathUtil::AppendBackslashIfMissing(path);
 
 	// Read tinting options
-	m_Image.ReadOptions(parser, section, path.c_str());
+	m_Image.ReadOptions(parser, m_ID, path.c_str());
 
-	m_MaskImage.ReadOptions(parser, section, L"");
+	m_MaskImage.ReadOptions(parser, m_ID, L"");
 
 	if (m_Initialized && m_Measures.empty() && !m_DynamicVariables)
 	{
@@ -325,10 +325,10 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterImage::BindMeasures(ConfigParser& parser, std::wstring_view section)
+void MeterImage::BindMeasures(ConfigParser& parser)
 {
-	if (BindPrimaryMeasure(parser, section, true))
+	if (BindPrimaryMeasure(parser, true))
 	{
-		BindSecondaryMeasures(parser, section);
+		BindSecondaryMeasures(parser);
 	}
 }

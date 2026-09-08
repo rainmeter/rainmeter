@@ -336,9 +336,9 @@ MeasureFileView::~MeasureFileView()
 	}
 }
 
-void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureFileView::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
 	static constexpr ConfigParser::EnumOption<DateType> s_DateTypes[] =
 	{
@@ -347,7 +347,7 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		{ L"ACCESSED", DTYPE_ACCESSED },
 	};
 
-	const std::wstring_view path = parser.ReadString(section, L"Path", L"", { .sectionVariables = false });
+	const std::wstring_view path = parser.ReadString<"Path">(m_ID, L"", { .sectionVariables = false });
 	if (path.starts_with(L'[') && path.ends_with(L']'))
 	{
 		// Path is a reference to another FileView measure, so share its parent data
@@ -397,17 +397,17 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 			{ L"TYPE", STYPE_TYPE },
 			{ L"DATE", STYPE_DATE },
 		};
-		m_Parent->sortType = parser.ReadEnum(section, L"SortType", STYPE_NAME, s_SortTypes);
+		m_Parent->sortType = parser.ReadEnum<"SortType">(m_ID, STYPE_NAME, s_SortTypes);
 
 		if (m_Parent->sortType == STYPE_DATE)
 		{
-			m_Parent->sortDateType = parser.ReadEnum(section, L"SortDateType", DTYPE_MODIFIED, s_DateTypes);
+			m_Parent->sortDateType = parser.ReadEnum<"SortDateType">(m_ID, DTYPE_MODIFIED, s_DateTypes);
 		}
 
-		int count = parser.ReadInt(section, L"Count", 1);
+		int count = parser.ReadInt<"Count">(m_ID, 1);
 		m_Parent->count = count > 0 ? count : 1;
 
-		int recursive = parser.ReadInt(section, L"Recursive", 0);
+		int recursive = parser.ReadInt<"Recursive">(m_ID, 0);
 		switch (recursive)
 		{
 		default:
@@ -426,38 +426,38 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 			break;
 		}
 
-		m_Parent->sortAscending = parser.ReadBool(section, L"SortAscending", true);
-		m_Parent->showDotDot = parser.ReadBool(section, L"ShowDotDot", true);
-		m_Parent->showFile = parser.ReadBool(section, L"ShowFile", true);
-		m_Parent->showFolder = parser.ReadBool(section, L"ShowFolder", true);
-		m_Parent->showHidden = parser.ReadBool(section, L"ShowHidden", true);
-		m_Parent->showSystem = parser.ReadBool(section, L"ShowSystem", false);
-		m_Parent->hideExtension = parser.ReadBool(section, L"HideExtensions", false);
-		const std::wstring* extensions = &parser.ReadString(section, L"Extensions", L"");
+		m_Parent->sortAscending = parser.ReadBool<"SortAscending">(m_ID, true);
+		m_Parent->showDotDot = parser.ReadBool<"ShowDotDot">(m_ID, true);
+		m_Parent->showFile = parser.ReadBool<"ShowFile">(m_ID, true);
+		m_Parent->showFolder = parser.ReadBool<"ShowFolder">(m_ID, true);
+		m_Parent->showHidden = parser.ReadBool<"ShowHidden">(m_ID, true);
+		m_Parent->showSystem = parser.ReadBool<"ShowSystem">(m_ID, false);
+		m_Parent->hideExtension = parser.ReadBool<"HideExtensions">(m_ID, false);
+		const std::wstring* extensions = &parser.ReadString<"Extensions">(m_ID, L"");
 		if (!parser.GetLastDefaultUsed())
 		{
 			m_Parent->extensionsFilter = ExtensionsFilter::Include;
 		}
 		else
 		{
-			extensions = &parser.ReadString(section, L"ExcludeExtensions", L"");
+			extensions = &parser.ReadString<"ExcludeExtensions">(m_ID, L"");
 			m_Parent->extensionsFilter = ExtensionsFilter::Exclude;
 		}
 		StringParser::Split(*extensions, L';', m_Parent->extensions);
 
 		extensions = nullptr;
 
-		parser.ReadString(m_Parent->wildcardSearch, section, L"WildcardSearch", L"*");
+		parser.ReadString<"WildcardSearch">(m_Parent->wildcardSearch, m_ID, L"*");
 
-		parser.ReadString(m_Parent->finishAction, section, L"FinishAction", L"", { .sectionVariables = false });
+		parser.ReadString<"FinishAction">(m_Parent->finishAction, m_ID, L"", { .sectionVariables = false });
 	}
 
 	SetParent(m_Parent);
 
-	int index = parser.ReadInt(section, L"Index", 1) - 1;
+	int index = parser.ReadInt<"Index">(m_ID, 1) - 1;
 	m_Index = index >= 0 ? index : 1;
 
-	m_IgnoreCount = parser.ReadBool(section, L"IgnoreCount", false);
+	m_IgnoreCount = parser.ReadBool<"IgnoreCount">(m_ID, false);
 
 	const MeasureType previousType = m_Type;
 
@@ -475,11 +475,11 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		{ L"PATHTOFILE", TYPE_PATHTOFILE },
 		{ L"ICON", TYPE_ICON },
 	};
-	m_Type = parser.ReadEnum(section, L"Type", TYPE_FOLDERPATH, s_Types);
+	m_Type = parser.ReadEnum<"Type">(m_ID, TYPE_FOLDERPATH, s_Types);
 
 	if (m_Type == TYPE_FILEDATE)
 	{
-		m_DateType = parser.ReadEnum(section, L"DateType", DTYPE_MODIFIED, s_DateTypes);
+		m_DateType = parser.ReadEnum<"DateType">(m_ID, DTYPE_MODIFIED, s_DateTypes);
 	}
 	else if (m_Type == TYPE_ICON)
 	{
@@ -487,7 +487,7 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 		{
 			// Remove icons written by versions that predate SystemImage support.
 			const std::wstring defaultValue = fmt::format(L"icon{}.ico", m_Index + 1);
-			std::wstring iconPath = parser.ReadString(section, L"IconPath", defaultValue.c_str());
+			std::wstring iconPath = parser.ReadString<"IconPath">(m_ID, defaultValue.c_str());
 			GetSkin()->MakePathAbsolute(iconPath);
 			DeleteFile(iconPath.c_str());
 		}
@@ -499,7 +499,7 @@ void MeasureFileView::ReadOptions(ConfigParser& parser, std::wstring_view sectio
 			{ L"LARGE", SHIL_EXTRALARGE },
 			{ L"EXTRALARGE", SHIL_JUMBO },
 		};
-		m_IconSize = parser.ReadEnum(section, L"IconSize", (int)SHIL_LARGE, s_IconSizes);
+		m_IconSize = parser.ReadEnum<"IconSize">(m_ID, (int)SHIL_LARGE, s_IconSizes);
 	}
 }
 

@@ -73,11 +73,11 @@ const WCHAR* MeasureScript::GetStringValue()
 	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
 }
 
-void MeasureScript::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureScript::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
-	std::wstring scriptFile = parser.ReadString(section, L"ScriptFile", L"");
+	std::wstring scriptFile = parser.ReadString<"ScriptFile">(m_ID, L"");
 	if (!scriptFile.empty())
 	{
 		if (m_Skin)
@@ -130,7 +130,7 @@ void MeasureScript::ReadOptions(ConfigParser& parser, std::wstring_view section)
 							const char* strKey = lua_tostring(L, -1);
 							const std::wstring wstrKey = StringUtil::Widen(strKey);
 							const std::wstring& wstrValue =
-								parser.ReadString(section, wstrKey.c_str(), L"");
+								parser.ReadString(m_ID, wstrKey.c_str(), L"");
 							if (!wstrValue.empty())
 							{
 								const std::string strStrVal = StringUtil::Narrow(wstrValue);

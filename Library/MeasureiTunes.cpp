@@ -527,19 +527,19 @@ MeasureiTunes::~MeasureiTunes()
 	}
 }
 
-void MeasureiTunes::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureiTunes::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
 	size_t pos = m_Skin->GetFilePath().find_last_of(L"\\/");
 	m_BaseDir = (pos != std::wstring::npos) ? m_Skin->GetFilePath().substr(0, pos + 1) : L"";
 
-	const std::wstring& command = parser.ReadString(section, L"Command", L"");
+	const std::wstring& command = parser.ReadString<"Command">(m_ID, L"");
 	m_Command = ParseCommand(command.c_str());
 
 	if (m_Command == COMMAND_GETCURRENTTRACK_ARTWORK)
 	{
-		parser.ReadString(m_DefaultTrackArtworkPath, section, L"DefaultArtwork", L"");
+		parser.ReadString<"DefaultArtwork">(m_DefaultTrackArtworkPath, m_ID, L"");
 		m_CurrentTrackArtworkPath = m_BaseDir + m_DefaultTrackArtworkPath;
 	}
 

@@ -92,34 +92,34 @@ bool MeasurePerfMon::GetRawValue(ULONGLONG& value)
 	return true;
 }
 
-void MeasurePerfMon::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasurePerfMon::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
 	bool changed = false;
 
-	std::wstring value = parser.ReadString(section, L"PerfMonObject", L"");
+	std::wstring value = parser.ReadString<"PerfMonObject">(m_ID, L"");
 	if (_wcsicmp(value.c_str(), m_ObjectName.c_str()) != 0)
 	{
 		m_ObjectName = value;
 		changed = true;
 	}
 
-	parser.ReadString(value, section, L"PerfMonCounter", L"");
+	parser.ReadString<"PerfMonCounter">(value, m_ID, L"");
 	if (_wcsicmp(value.c_str(), m_CounterName.c_str()) != 0)
 	{
 		m_CounterName = value;
 		changed = true;
 	}
 
-	parser.ReadString(value, section, L"PerfMonInstance", L"");
+	parser.ReadString<"PerfMonInstance">(value, m_ID, L"");
 	if (_wcsicmp(value.c_str(), m_InstanceName.c_str()) != 0)
 	{
 		m_InstanceName = value;
 		changed = true;
 	}
 
-	const bool difference = parser.ReadBool(section, L"PerfMonDifference", true);
+	const bool difference = parser.ReadBool<"PerfMonDifference">(m_ID, true);
 	if (difference != m_Difference)
 	{
 		m_Difference = difference;

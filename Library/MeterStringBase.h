@@ -69,7 +69,7 @@ protected:
 
 	MeterStringBase(Skin* skin, const WCHAR* name);
 
-	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
+	void ReadOptions(ConfigParser& parser) override;
 
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite; }
 
@@ -81,12 +81,10 @@ protected:
 	void ApplyCase(std::wstring& text) const { ApplyCase(text, m_Case); }
 
 	// Returns |defaultCase| when the option is unset, and logs an unrecognised value.
-	TEXTCASE ReadStringCase(ConfigParser& parser, std::wstring_view section, const WCHAR* option,
-		TEXTCASE defaultCase);
+	TEXTCASE ReadStringCase(ConfigParser& parser, const WCHAR* option, TEXTCASE defaultCase);
 
 	// Returns |defaultStyle| when the option is unset, and logs an unrecognised value.
-	TEXTSTYLE ReadStringStyle(ConfigParser& parser, std::wstring_view section, const WCHAR* option,
-		TEXTSTYLE defaultStyle);
+	TEXTSTYLE ReadStringStyle(ConfigParser& parser, const WCHAR* option, TEXTSTYLE defaultStyle);
 
 	// The bounds m_String needs, or nothing when it cannot be measured. Also decides, for CLIP_AUTO,
 	// whether the text needs clipping. |str| and |format| override what is measured, so a subclass

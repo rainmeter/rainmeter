@@ -200,9 +200,9 @@ void MeasureNet::UpdateValue()
 	}
 }
 
-void MeasureNet::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureNet::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
 	double value = 0.0;
 	const WCHAR* netName = nullptr;
@@ -223,10 +223,10 @@ void MeasureNet::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		value = GetRainmeter().GetGlobalOptions().netInSpeed + GetRainmeter().GetGlobalOptions().netOutSpeed;
 	}
 
-	double maxValue = parser.ReadFloat(section, L"MaxValue", -1.0);
+	double maxValue = parser.ReadFloat<"MaxValue">(m_ID, -1.0);
 	if (maxValue == -1.0)
 	{
-		maxValue = parser.ReadFloat(section, netName, -1.0);
+		maxValue = parser.ReadFloat(m_ID, netName, -1.0);
 		if (maxValue == -1.0)
 		{
 			maxValue = value;
@@ -236,23 +236,23 @@ void MeasureNet::ReadOptions(ConfigParser& parser, std::wstring_view section)
 	// Option 'Interface' represents either the number of the interface in the 'iftable',
 	// or the name of the interface (ie. its Description). Optionally, if 'Interface=Best',
 	// there will be an attempt to find the best interface.
-	std::wstring iface = parser.ReadString(section, L"Interface", L"BEST");
+	std::wstring iface = parser.ReadString<"Interface">(m_ID, L"BEST");
 	if (!iface.empty() && !std::all_of(iface.begin(), iface.end(), iswdigit))
 	{
 		m_Interface = NetworkUtil::FindBestInterface(iface.c_str());
 	}
 	else
 	{
-		m_Interface = parser.ReadUInt(section, L"Interface", 0);
+		m_Interface = parser.ReadUInt<"Interface">(m_ID, 0);
 	}
 
-	m_Cumulative = parser.ReadBool(section, L"Cumulative", false);
+	m_Cumulative = parser.ReadBool<"Cumulative">(m_ID, false);
 	if (m_Cumulative)
 	{
 		GetRainmeter().SetNetworkStatisticsTimer();
 	}
 
-	m_UseBits = parser.ReadBool(section, L"UseBits", false);
+	m_UseBits = parser.ReadBool<"UseBits">(m_ID, false);
 
 	if (maxValue == 0.0)
 	{
