@@ -2361,9 +2361,6 @@ void Skin::WriteOptions(INT setting)
 
 	if (*iniFile)
 	{
-		// Insert section name in settings file, if needed
-		GetRainmeter().DoesSkinHaveSettings(m_FolderPath);
-
 		WCHAR buffer[32] = { 0 };
 		const WCHAR* section = m_FolderPath.c_str();
 		IniFile::Writer ini(iniFile);
