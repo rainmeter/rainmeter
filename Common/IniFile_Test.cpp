@@ -256,20 +256,59 @@ public:
 		TemporaryFile file;
 		file.Write("\xFF\xFE");
 
+		const auto text = ReadFileText(file.GetPath());
+		Assert::IsTrue(text.has_value());
+		Assert::IsTrue(text->IsEmpty());
 		Assert::IsTrue(WriteKey(file.GetPath(), L"Alpha", L"One", L"1"));
 		Assert::IsTrue(std::string("\xFF\xFE") + ToBytes(L"[Alpha]\r\nOne=1\r\n") == file.Read());
 	}
 
-	TEST_METHOD(TestUtf8BomIsNotDetected)
+	TEST_METHOD(TestUtf8WithoutBomStaysUtf8WithoutBom)
+	{
+		TemporaryFile file;
+		file.Write("[Alpha]\r\nOne=\xC3\xA9\r\n");
+
+		Assert::AreEqual(L"\u00E9", ReadKey(file.GetPath(), L"Alpha", L"One", L"").c_str());
+		Assert::IsTrue(WriteKey(file.GetPath(), L"Alpha", L"Two", L"\u65E5"));
+		Assert::AreEqual("[Alpha]\r\nOne=\xC3\xA9\r\nTwo=\xE6\x97\xA5\r\n", file.Read().c_str());
+	}
+
+	TEST_METHOD(TestAsciiFileWritesAsUtf8)
+	{
+		TemporaryFile file;
+		file.Write("[Alpha]\r\nOne=1\r\n");
+
+		Assert::IsTrue(WriteKey(file.GetPath(), L"Alpha", L"Two", L"\u65E5"));
+		Assert::AreEqual("[Alpha]\r\nOne=1\r\nTwo=\xE6\x97\xA5\r\n", file.Read().c_str());
+	}
+
+	TEST_METHOD(TestUtf8BomStaysUtf8WithBom)
 	{
 		TemporaryFile file;
 		file.Write("\xEF\xBB\xBF[Alpha]\r\nOne=1\r\n");
 
 		Assert::IsTrue(WriteKey(file.GetPath(), L"Alpha", L"Two", L"2"));
-		const std::string bytes = file.Read();
-		const size_t first = bytes.find("[Alpha]");
-		Assert::IsTrue(first != std::string::npos);
-		Assert::IsTrue(bytes.find("[Alpha]", first + 1) != std::string::npos);
+		Assert::AreEqual("\xEF\xBB\xBF[Alpha]\r\nOne=1\r\nTwo=2\r\n", file.Read().c_str());
+	}
+
+	TEST_METHOD(TestUtf8BomOnlyStaysUtf8)
+	{
+		TemporaryFile file;
+		file.Write("\xEF\xBB\xBF");
+
+		const auto text = ReadFileText(file.GetPath());
+		Assert::IsTrue(text.has_value());
+		Assert::IsTrue(text->IsEmpty());
+		Assert::IsTrue(WriteKey(file.GetPath(), L"Alpha", L"One", L"\u65E5"));
+		Assert::AreEqual("\xEF\xBB\xBF[Alpha]\r\nOne=\xE6\x97\xA5\r\n", file.Read().c_str());
+	}
+
+	TEST_METHOD(TestInvalidUtf8FallsBackToAnsi)
+	{
+		const BYTE bytes[] = { 0xC3, 0xA9, 0xFF };
+		const auto text = DecodedText::FromMemory(bytes, _countof(bytes));
+
+		Assert::IsTrue(text.GetEncoding() == Encoding::ANSI);
 	}
 };
 
