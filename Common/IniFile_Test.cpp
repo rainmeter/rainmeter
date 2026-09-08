@@ -202,7 +202,21 @@ public:
 
 		Assert::IsTrue(ini.Save());
 		Assert::AreEqual(
-			"[Alpha]\r\nOne=changed\r\nAdded=new\r\n\r\n[Bravo]\r\nReplacement=3\r\n[Charlie]\r\nFour=4\r\n",
+			"[Alpha]\r\nOne=changed\r\nAdded=new\r\n\r\n[Bravo]\r\nReplacement=3\r\n\r\n[Charlie]\r\nFour=4\r\n",
+			file.Read().c_str());
+	}
+
+	TEST_METHOD(TestAppendSectionAddsBlankLine)
+	{
+		TemporaryFile file;
+		file.Write("[Alpha]\nOne=1");
+
+		Assert::IsTrue(WriteSection(file.GetPath(), L"Bravo", { L"Two=2" }));
+		Assert::AreEqual("[Alpha]\nOne=1\r\n\r\n[Bravo]\r\nTwo=2\r\n", file.Read().c_str());
+
+		Assert::IsTrue(WriteKey(file.GetPath(), L"Charlie", L"Three", L"3"));
+		Assert::AreEqual(
+			"[Alpha]\nOne=1\r\n\r\n[Bravo]\r\nTwo=2\r\n\r\n[Charlie]\r\nThree=3\r\n",
 			file.Read().c_str());
 	}
 

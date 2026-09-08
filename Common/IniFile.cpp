@@ -398,9 +398,19 @@ void AppendLine(std::wstring& text, size_t offset, std::wstring_view line)
 
 void AppendSection(std::wstring& text, std::wstring_view section, const std::vector<std::wstring_view>& lines)
 {
-	// The writer terminates an unfinished final line, but does not add a blank line before the new
-	// section.
-	if (!text.empty() && text.back() != L'\r' && text.back() != L'\n') text += L"\r\n";
+	if (!text.empty())
+	{
+		if (text.back() != L'\r' && text.back() != L'\n')
+		{
+			text += L"\r\n\r\n";
+		}
+		else
+		{
+			size_t previous = text.length() - 1;
+			if (text[previous] == L'\n' && previous > 0 && text[previous - 1] == L'\r') --previous;
+			if (previous == 0 || (text[previous - 1] != L'\r' && text[previous - 1] != L'\n')) text += L"\r\n";
+		}
+	}
 
 	text += L'[';
 	text.append(section);
