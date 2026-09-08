@@ -28,6 +28,7 @@
 //   This follows GetPrivateProfileString; GetPrivateProfileSection disagrees on both behaviors.
 // - DecodedText::Parse reports every duplicate section and key. The higher-level lookup helpers
 //   still use only the first match, like the profile APIs.
+// - New sections in a non-empty file are separated from the existing contents by a blank line.
 //
 // The compatible behavior includes:
 // - UTF-16LE is recognized with or without a BOM; UTF-16BE and odd-sized UTF-16LE input are
