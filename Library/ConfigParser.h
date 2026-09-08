@@ -39,7 +39,8 @@ public:
 
 	// Keeps the section's original name and interned ID available while its options are read. The
 	// name is used for section variables and diagnostics, while numeric lookups use the ID.
-	// Missing options are also read from @Inherit, or MeterStyle when allowed.
+	// Missing options are also read from @Inherit, or MeterStyle when allowed. Inherited section
+	// names are resolved once when the reader is created.
 	class OptionReader
 	{
 	public:
@@ -51,7 +52,7 @@ public:
 
 	private:
 		ConfigParser& m_Parser;
-		std::vector<std::wstring> m_PreviousChain;
+		std::vector<IniSectionID> m_PreviousChain;
 		std::wstring_view m_PreviousSection;
 		IniSectionID m_PreviousSectionID;
 	};
@@ -254,7 +255,7 @@ private:
 
 	StringMap<Section*> m_Sections;
 
-	std::vector<std::wstring> m_InheritChain;
+	std::vector<IniSectionID> m_InheritChain;
 
 	bool m_LastReplaced;
 	bool m_LastDefaultUsed;

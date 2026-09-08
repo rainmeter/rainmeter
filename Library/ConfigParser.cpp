@@ -93,7 +93,12 @@ ConfigParser::OptionReader::OptionReader(ConfigParser& parser, std::wstring_view
 		inherit = parser.ReadString<"MeterStyle">(sectionID);
 	}
 
-	StringParser::Split(inherit, L'|', parser.m_InheritChain);
+	parser.m_InheritChain.clear();
+	StringParser::ForEachToken(inherit, L'|', [&](std::wstring_view name)
+		{
+			const auto id = IniNameRegistry::FindSection(name);
+			if (id) parser.m_InheritChain.push_back(*id);
+		});
 }
 
 ConfigParser::OptionReader::~OptionReader()
@@ -354,7 +359,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			// Lua (and possibly plugins) can reset the inherit chain when
 			// reading values, so save the inherit chain here and reset it
 			// back after the lua/plugin has returned.
-			std::vector<std::wstring> inheritChain = m_InheritChain;
+			auto inheritChain = m_InheritChain;
 
 			bool retValue = false;
 			const auto type = measure->GetTypeID();
@@ -1260,8 +1265,7 @@ void ConfigParser::ReadStringInternal(std::wstring& result, IniSectionID section
 	{
 		for (auto iter = m_InheritChain.rbegin(); iter != m_InheritChain.rend(); ++iter)
 		{
-			const auto inheritedSection = IniNameRegistry::FindSection(*iter);
-			value = inheritedSection ? GetValue(*inheritedSection, option) : nullptr;
+			value = GetValue(*iter, option);
 			if (value) break;
 		}
 
