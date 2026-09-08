@@ -1115,69 +1115,6 @@ void Rainmeter::OpenSkinFolder(const std::wstring& name)
 	CommandHandler::RunFile(folderPath);
 }
 
-bool Rainmeter::DoesSkinHaveSettings(const std::wstring& folderPath)
-{
-	const bool hasSettings = !IniFile::ReadSectionInOrder(m_IniFile, folderPath).empty();
-	if (!hasSettings)
-	{
-		// Since there are no settings for this skin in Rainmeter.ini, attempt to insert
-		// a empty line between the last defined section, and the new section for this skin.
-
-		HANDLE hFile = CreateFile(m_IniFile.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-			nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-		if (hFile != INVALID_HANDLE_VALUE)
-		{
-			LARGE_INTEGER fileSize = { 0 };
-			if (GetFileSizeEx(hFile, &fileSize) != FALSE && fileSize.QuadPart > 4)
-			{
-				LARGE_INTEGER newSize = { 0 };
-				newSize.QuadPart = -4;
-
-				LARGE_INTEGER newPtr = { 0 };
-				while (SetFilePointerEx(hFile, newSize, &newPtr, FILE_END) == TRUE)
-				{
-					WCHAR lastTwoChars[2] = { 0 };
-					DWORD bytesRead = 0;
-					if (ReadFile(hFile, lastTwoChars, 4, &bytesRead, nullptr) == FALSE)
-					{
-						break;
-					}
-
-					if (bytesRead > 0 && lastTwoChars[0] != L'\r' && lastTwoChars[1] != L'\n')
-					{
-						break;  // Found the last non newline character sequence "\r\n"
-					}
-
-					fileSize.QuadPart -= 4;
-
-					if (SetFilePointerEx(hFile, fileSize, &newPtr, FILE_BEGIN) == FALSE)
-					{
-						break;
-					}
-
-					if (SetEndOfFile(hFile) == FALSE)
-					{
-						break;
-					}
-				}
-
-				// Insert skin entry
-				std::wstring section = L"\r\n\r\n[";
-				section += folderPath;
-				section += L"]\r\nActive=0\r\n";  // The "Active" setting is set later
-
-				// If the following WriteFile fails, there will be no space between sections, however,
-				// IniFile will create the section at the end of the file if this write fails.
-				DWORD bytesWritten = 0;
-				WriteFile(hFile, (LPCVOID)section.c_str(), (DWORD)(section.size() * 2), &bytesWritten, nullptr);
-			}
-			CloseHandle(hFile);
-		}
-	}
-
-	return hasSettings;
-}
-
 void Rainmeter::ActivateActiveSkins()
 {
 	std::multimap<int, int>::const_iterator iter = m_SkinOrders.begin();
@@ -1264,7 +1201,7 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		}
 
 		// Verify whether the skin config has an entry in the settings file
-		const bool hasSettings = DoesSkinHaveSettings(folderPath);
+		const bool hasSettings = !IniFile::ReadSectionInOrder(m_IniFile, folderPath).empty();
 
 		if (skinFolder.active != fileIndex + 1)
 		{
@@ -1365,8 +1302,6 @@ void Rainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
 {
 	WCHAR buffer[16] = { 0 };
 	_itow_s(fileIndex + 1, buffer, 10);
-
-	DoesSkinHaveSettings(folderPath);
 
 	IniFile::WriteKey(m_IniFile, folderPath, L"Active", buffer);
 }
