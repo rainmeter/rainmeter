@@ -1016,7 +1016,6 @@ Retry:
 		RMDir /r "$APPDATA\Rainmeter"
 		RMDir /r "$DOCUMENTS\Rainmeter\Skins"
 		RMDir "$DOCUMENTS\Rainmeter"
-		RMDir /r "$1\Rainmeter"
 	${EndIf}
 	
 	!insertmacro UAC_AsUser_Call Function un.RemoveShortcuts ${UAC_SYNCREGISTERS}
