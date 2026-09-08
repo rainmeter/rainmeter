@@ -135,7 +135,7 @@ public:
 	void OpenSkinFolder(const std::wstring& name = std::wstring());
 	bool DoesSkinHaveSettings(const std::wstring& folderPath);
 
-	void ReadStats();
+	void InitializeStats();
 	void WriteStats(bool bForce);
 	void ResetStats();
 	bool ReadDialogWindowPlacement(LPCWSTR key, WINDOWPLACEMENT& placement);
@@ -269,6 +269,7 @@ private:
 	std::wstring m_TrayExecuteDR;
 	std::wstring m_TrayExecuteDM;
 
+	bool m_StatsInitialized;
 	bool m_Debug;
 
 	bool m_DisableVersionCheck;
