@@ -792,9 +792,9 @@ SkipIniMove:
 		WriteRegStr HKCR "Rainmeter.SkinInstaller" "FriendlyTypeName" "Rainmeter Skin Package"
 		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell" "" "open"
 		WriteRegStr HKCR "Rainmeter.SkinInstaller\DefaultIcon" "" "$INSTDIR\SkinInstaller.exe,0"
-		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell\open\command" "" '"$INSTDIR\SkinInstaller.exe" %1'
+		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell\open\command" "" '"$INSTDIR\SkinInstaller.exe" "%1"'
 		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell\edit" "" "Install Rainmeter skin"
-		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell\edit\command" "" '"$INSTDIR\SkinInstaller.exe" %1'
+		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell\edit\command" "" '"$INSTDIR\SkinInstaller.exe" "%1"'
 
 		; If .inc isn't associated, use the .ini association for it.
 		ReadRegStr $1 HKCR ".inc" ""
