@@ -77,6 +77,7 @@ public:
 	void SetMonitorVariableMode(MonitorVariableMode mode) { m_MonitorVariableMode = mode; }
 
 	const std::wstring* GetValue(std::wstring_view section, std::wstring_view option);
+	const std::wstring* GetValue(IniSectionID section, IniOptionID option) const;
 	void SetValue(std::wstring_view section, std::wstring_view option, std::wstring value);
 	void DeleteValue(std::wstring_view section, std::wstring_view option);
 
@@ -188,7 +189,7 @@ private:
 
 	std::vector<std::wstring> m_IniFiles;
 	std::list<std::wstring> m_SectionNames;	// Ordered
-	StringMap<std::wstring> m_Values;
+	ankerl::unordered_dense::map<IniValueID, std::wstring> m_Values;
 
 	StringSet m_FoundSections;
 	std::list<std::wstring> m_ListVariables;
