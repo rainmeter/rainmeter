@@ -12,22 +12,25 @@ namespace {
 
 enum class DetectedEncoding
 {
-	ANSI,
+	Unknown8Bit,
+	UTF8,
 	UTF16,
 	Unreadable
 };
 
 DetectedEncoding DetectEncoding(const BYTE* data, size_t size)
 {
-	// A UTF-8 BOM is deliberately not recognized, so those three bytes go through the ANSI
-	// codepage like any others and corrupt the first line of the file, exactly as the profile API
-	// leaves it.
+	// UTF-16BE is not supported.
 	if (size >= 2 && data[0] == 0xFE && data[1] == 0xFF) return DetectedEncoding::Unreadable;
 
 	// An odd byte count leaves half a code unit dangling, and the file is rejected outright.
 	if (size >= 2 && data[0] == 0xFF && data[1] == 0xFE)
 	{
 		return (size % 2 == 0) ? DetectedEncoding::UTF16 : DetectedEncoding::Unreadable;
+	}
+	if (size >= 3 && data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF)
+	{
+		return DetectedEncoding::UTF8;
 	}
 
 	// UTF-16LE is detected by content too, so a file without a BOM reads exactly like one with it.
@@ -41,7 +44,7 @@ DetectedEncoding DetectEncoding(const BYTE* data, size_t size)
 		return (size % 2 == 0) ? DetectedEncoding::UTF16 : DetectedEncoding::Unreadable;
 	}
 
-	return DetectedEncoding::ANSI;
+	return DetectedEncoding::Unknown8Bit;
 }
 
 std::unique_ptr<WCHAR[]> Decode(const BYTE* data, size_t size, size_t& textLength, IniFile::Encoding& fileEncoding, bool& hasBom)
@@ -69,18 +72,42 @@ std::unique_ptr<WCHAR[]> Decode(const BYTE* data, size_t size, size_t& textLengt
 		textLength = count;
 		return text;
 	}
+	const bool utf8Bom = encoding == DetectedEncoding::UTF8;
+	hasBom = utf8Bom;
+	if (utf8Bom) fileEncoding = IniFile::Encoding::UTF8;
+	const size_t offset = utf8Bom ? 3 : 0;
+	const size_t byteCount = size - offset;
+	if (byteCount == 0 || byteCount > INT_MAX) return nullptr;
 
-	// No MB_ERR_INVALID_CHARS, which is what the API does: the bytes CP1252 leaves undefined
-	// become C1 controls rather than U+FFFD. No codepage can produce more characters than it is
-	// given bytes, so one pass into a buffer of |size| is both safe and enough.
-	std::unique_ptr<WCHAR[]> text(new (std::nothrow) WCHAR[size]);
+	// A UTF-8 character cannot produce more UTF-16 code units than it consumes bytes, so decoding
+	// directly into this buffer validates the whole file and produces the result in one pass.
+	std::unique_ptr<WCHAR[]> text(new (std::nothrow) WCHAR[byteCount]);
 	if (!text) return nullptr;
+	const int utf8Count = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (const char*)data + offset, (int)byteCount, text.get(), (int)byteCount);
+	if (utf8Count > 0)
+	{
+		fileEncoding = IniFile::Encoding::UTF8;
+		textLength = (size_t)utf8Count;
+		return text;
+	}
+	if (utf8Bom) return nullptr;
 
+	// Match the profile API fallback by decoding with the process ANSI codepage and accepting
+	// invalid input. CP1252 maps its undefined bytes to C1 controls, while codepage 65001 replaces
+	// each invalid UTF-8 byte with U+FFFD. The output cannot have more characters than the input has
+	// bytes, so the same buffer is large enough.
 	const int count = MultiByteToWideChar(CP_ACP, 0, (const char*)data, (int)size, text.get(), (int)size);
 	if (count <= 0) return nullptr;
 
 	textLength = (size_t)count;
 	return text;
+}
+
+bool IsEmptyUnicodeBom(size_t size, const IniFile::DecodedText& decoded)
+{
+	return decoded.IsEmpty() && decoded.HasBom() &&
+		((size == 2 && decoded.GetEncoding() == IniFile::Encoding::UTF16) ||
+		(size == 3 && decoded.GetEncoding() == IniFile::Encoding::UTF8));
 }
 
 struct Document
@@ -255,9 +282,8 @@ bool LoadDocument(const std::wstring& path, Document& document)
 
 	IniFile::DecodedText decoded = IniFile::DecodedText::FromMemory(bytes.data(), bytes.size());
 
-	// A UTF-16 BOM by itself is a valid empty UTF-16 file, not a decoding failure.
-	const bool emptyUtf16 = bytes.size() == 2 && decoded.GetEncoding() == IniFile::Encoding::UTF16 && decoded.HasBom();
-	if (!bytes.empty() && decoded.IsEmpty() && !emptyUtf16)
+	// A BOM by itself is a valid empty Unicode file, not a decoding failure.
+	if (!bytes.empty() && decoded.IsEmpty() && !IsEmptyUnicodeBom(bytes.size(), decoded))
 	{
 		return false;
 	}
@@ -288,13 +314,36 @@ bool Encode(const Document& document, std::vector<BYTE>& bytes)
 		return true;
 	}
 
+	if (document.encoding == IniFile::Encoding::UTF8)
+	{
+		if (document.text.length() > INT_MAX) return false;
+
+		const int size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, document.text.data(), (int)document.text.length(), nullptr, 0, nullptr, nullptr);
+		if (size == 0 && !document.text.empty()) return false;
+
+		const size_t bomSize = document.hasBom ? 3 : 0;
+		bytes.resize(bomSize + (size_t)size);
+		if (document.hasBom)
+		{
+			bytes[0] = 0xEF;
+			bytes[1] = 0xBB;
+			bytes[2] = 0xBF;
+		}
+		if (size != 0 && WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, document.text.data(), (int)document.text.length(), (char*)bytes.data() + bomSize, size, nullptr, nullptr) != size)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	if (document.text.length() > INT_MAX)
 	{
 		return false;
 	}
 
-	// This is intentionally lossy. The profile writer treats every non-UTF-16 file as ANSI and
-	// substitutes characters that the active codepage cannot represent.
+	// This is intentionally lossy to preserve the behavior of files that failed strict UTF-8
+	// validation and were therefore detected as ANSI.
 	const int size = WideCharToMultiByte(CP_ACP, 0, document.text.data(), (int)document.text.length(), nullptr, 0, nullptr, nullptr);
 	if (size == 0 && !document.text.empty()) return false;
 
@@ -482,7 +531,7 @@ std::optional<DecodedText> ReadFileText(const std::wstring& path)
 	// A file with bytes in it that decodes to nothing was turned down by the encoding detection:
 	// UTF-16BE, or an odd byte count. Report it rather than hand back empty text, which the caller
 	// cannot tell apart from an empty file.
-	if (size != 0 && text.IsEmpty()) return std::nullopt;
+	if (size != 0 && text.IsEmpty() && !IsEmptyUnicodeBom(size, text)) return std::nullopt;
 
 	return std::optional<DecodedText>(std::move(text));
 }

@@ -13,9 +13,26 @@
 
 #include "Map.h"
 
-// These helpers reproduce the Win32 private-profile behavior that skins depend on:
-// - ANSI input uses the process codepage. UTF-16LE is recognized with or without a BOM; UTF-16BE
-//   and odd-sized UTF-16LE input are rejected.
+// IniFile keeps the Win32 private-profile behavior that skins depend on, with these deliberate
+// differences:
+// - A UTF-8 BOM or strictly valid UTF-8 content is read and written as UTF-8. The profile APIs
+//   instead treat UTF-8 as ANSI, so a BOM spoils the first line and writes can mix in ACP bytes.
+// - Lines are never truncated. The profile APIs silently cut very long lines at a position that
+//   depends on the file contents.
+// - Paths are used as given instead of being resolved against the Windows directory or through
+//   IniFileMapping.
+// - UTF-16LE without a BOM is detected only when NUL bytes appear where UTF-16 puts them. The
+//   byte-frequency heuristic in IsTextUnicode is deliberately excluded because it accepts some
+//   plain ASCII files too.
+// - Section reads drop lines without '=' and always strip one matching pair of quotes from values.
+//   This follows GetPrivateProfileString; GetPrivateProfileSection disagrees on both behaviors.
+// - DecodedText::Parse reports every duplicate section and key. The higher-level lookup helpers
+//   still use only the first match, like the profile APIs.
+//
+// The compatible behavior includes:
+// - UTF-16LE is recognized with or without a BOM; UTF-16BE and odd-sized UTF-16LE input are
+//   rejected. BOMless input that is neither UTF-16LE nor strictly valid UTF-8 uses the process
+//   ANSI codepage.
 // - CR, LF and CRLF end lines. Names and values are trimmed only while their characters are at or
 //   below U+0020. A section starts at the first non-whitespace '[' and ends at the first ']' or
 //   the end of the line. A key/value line splits at its first '='.
@@ -24,28 +41,16 @@
 //   of surrounding single or double quotes after trimming.
 // - Lookups are case-insensitive and use the first matching section and key. Enumeration keeps
 //   file order and original spelling.
-// - Writing preserves an existing file's ANSI or UTF-16LE encoding, updates only the first match,
-//   preserves untouched text, appends new keys and sections, and emits changed lines with CRLF.
-//   Replacing a value keeps the text before '=' and replaces everything after it. Deleting a key
-//   removes its line; deleting a section removes its header and contents.
+// - Writing preserves an existing file's ANSI, UTF-8 or UTF-16LE encoding, updates only the first
+//   match, preserves untouched text, appends new keys and sections, and emits changed lines with
+//   CRLF. Replacing a value keeps the text before '=' and replaces everything after it. Deleting
+//   a key removes its line; deleting a section removes its header and contents. A missing file is
+//   created as ANSI without a BOM.
 //
 // Decoding a file and walking it are separate steps, so that a caller needing more than one pass
 // -- ConfigParser needs the section names before it reads any keys -- pays for the decoding once.
 // Nothing is stored and no string is copied: the views handed to the callbacks point into the
 // decoded text and are only valid for the duration of the call.
-//
-// Where it deliberately differs from the profile API:
-// - Lines are never truncated. The profile API silently cuts very long ones at a position that
-//   depends on the contents of the file.
-// - The path is used as given, instead of being resolved against the Windows directory.
-// - Nothing is looked up by name, so first-match-wins for duplicate sections and keys is the
-//   caller's to apply: the callbacks see every occurrence.
-// - A line with no '=' is dropped and a value always has its quotes stripped, which is what
-//   GetPrivateProfileString does. GetPrivateProfileSection disagrees on both, and nothing needs
-//   the value that way.
-// - A file with no BOM is UTF-16 only if it has NUL bytes where UTF-16 would put them, never on
-//   the byte-frequency heuristic in IsTextUnicode, which accepts some plain ASCII as well. What
-//   the profile API's own detection accepts was never measured, so this may or may not differ.
 namespace IniFile {
 
 using OrderedSection = std::vector<std::pair<std::wstring, std::wstring>>;
@@ -67,6 +72,7 @@ private:
 enum class Encoding
 {
 	ANSI,
+	UTF8,
 	UTF16
 };
 
