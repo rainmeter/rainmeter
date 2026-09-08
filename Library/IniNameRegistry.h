@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <functional>
 #include <optional>
+#include <string>
 #include <string_view>
 
 struct IniSectionID
@@ -45,6 +46,14 @@ struct FixedWString
 		}
 	}
 
+	constexpr FixedWString(const char (&string)[N]) : value{}
+	{
+		for (size_t i = 0; i < N; ++i)
+		{
+			value[i] = static_cast<wchar_t>(string[i]);
+		}
+	}
+
 	constexpr std::wstring_view View() const { return std::wstring_view(value, N - 1); }
 };
 
@@ -64,28 +73,19 @@ struct hash<IniOptionID>
 
 }  // namespace std
 
-class IniNameRegistry
-{
-public:
-	IniNameRegistry() = default;
-	IniNameRegistry(const IniNameRegistry&) = delete;
-	IniNameRegistry& operator=(const IniNameRegistry&) = delete;
+namespace IniNameRegistry {
 
-	IniSectionID InternSection(std::wstring_view name);
-	IniOptionID InternOption(std::wstring_view name);
-	std::optional<IniSectionID> FindSection(std::wstring_view name) const;
-	std::optional<IniOptionID> FindOption(std::wstring_view name) const;
+IniSectionID InternSection(std::wstring_view name);
+IniOptionID InternOption(std::wstring_view name);
+std::optional<IniSectionID> FindSection(std::wstring_view name);
+std::optional<IniOptionID> FindOption(std::wstring_view name);
+const std::wstring& GetOptionName(IniOptionID id);
 
-private:
-	StringMap<IniSectionID> m_Sections;
-	StringMap<IniOptionID> m_Options;
-};
-
-IniNameRegistry& GetIniNameRegistry();
+}  // namespace IniNameRegistry
 
 template <FixedWString Name>
 IniOptionID GetStaticIniOptionID()
 {
-	static const IniOptionID optionID = GetIniNameRegistry().InternOption(Name.View());
+	static const IniOptionID optionID = IniNameRegistry::InternOption(Name.View());
 	return optionID;
 }

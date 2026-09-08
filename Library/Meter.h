@@ -25,7 +25,7 @@ public:
 
 	virtual void Initialize();
 	virtual void InvalidateDeviceResources();
-	void ReadOptions(ConfigParser& parser);
+	void ReadOptions(ConfigParser& parser) override;
 	void ReadContainerOptions(ConfigParser& parser);
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
@@ -126,15 +126,12 @@ protected:
 
 	Meter(Skin* skin, const WCHAR* name);
 
-	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
-	virtual void BindMeasures(ConfigParser& parser, std::wstring_view section);
+	virtual void BindMeasures(ConfigParser& parser);
 
 	virtual bool IsFixedSize(bool overwrite = false) { return true; }
 
-	void ReadContainerOptions(ConfigParser& parser, std::wstring_view section);
-
-	bool BindPrimaryMeasure(ConfigParser& parser, std::wstring_view section, bool optional);
-	void BindSecondaryMeasures(ConfigParser& parser, std::wstring_view section);
+	bool BindPrimaryMeasure(ConfigParser& parser, bool optional);
+	void BindSecondaryMeasures(ConfigParser& parser);
 
 	HWND GetToolTipWindow() { return m_ToolTip ? m_ToolTip->handle : nullptr; }
 	void CreateToolTip();

@@ -28,17 +28,17 @@ MeasureQuote::~MeasureQuote()
 {
 }
 
-void MeasureQuote::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureQuote::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
-	parser.ReadString(m_PathName, section, L"PathName", L"");
+	parser.ReadString<"PathName">(m_PathName, m_ID, L"");
 	m_Skin->MakePathAbsolute(m_PathName);
 
 	if (PathIsDirectory(m_PathName.c_str()))
 	{
 		std::vector<std::wstring> fileFilters;
-		const std::wstring& filter = parser.ReadString(section, L"FileFilter", L"");
+		const std::wstring& filter = parser.ReadString<"FileFilter">(m_ID, L"");
 		if (!filter.empty())
 		{
 			size_t start = 0;
@@ -58,12 +58,12 @@ void MeasureQuote::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		}
 
 		m_Files.clear();
-		bool subfolders = parser.ReadInt(section, L"Subfolders", 1) == 1;
+		bool subfolders = parser.ReadInt<"Subfolders">(m_ID, 1) == 1;
 		ScanFolder(m_Files, fileFilters, subfolders, m_PathName);
 	}
 	else
 	{
-		parser.ReadString(m_Separator, section, L"Separator", L"\n");
+		parser.ReadString<"Separator">(m_Separator, m_ID, L"\n");
 		m_Files.clear();
 	}
 }

@@ -34,11 +34,11 @@ void MeasureMemory::UpdateValue()
 	}
 }
 
-void MeasureMemory::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureMemory::ReadOptions(ConfigParser& parser)
 {
 	double oldMaxValue = m_MaxValue;
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 	m_MaxValue = oldMaxValue;
 
-	m_Total = parser.ReadBool(section, L"Total", false);
+	m_Total = parser.ReadBool<"Total">(m_ID, false);
 }

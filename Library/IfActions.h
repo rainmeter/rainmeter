@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "IniNameRegistry.h"
 
 class ConfigParser;
 class Measure;
@@ -49,8 +50,8 @@ public:
 	IfActions(const IfActions& other) = delete;
 	IfActions& operator=(IfActions other) = delete;
 
-	void ReadOptions(ConfigParser& parser, std::wstring_view section);
-	void ReadConditionOptions(ConfigParser& parser, std::wstring_view section);
+	void ReadOptions(ConfigParser& parser, IniSectionID section);
+	void ReadConditionOptions(ConfigParser& parser, IniSectionID section);
 	void DoIfActions(Measure& measure, double value);
 	void SetState(double& value);
 

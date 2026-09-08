@@ -215,24 +215,24 @@ MeasureMouse::~MeasureMouse()
 	}
 }
 
-void MeasureMouse::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureMouse::ReadOptions(ConfigParser& parser)
 {
 	const bool wasCapturing = WantsCapture();
 
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
-	m_Mouse.ReadOptions(parser, section);
+	m_Mouse.ReadOptions(parser, m_ID);
 
-	parser.ReadString(m_MouseMoveAction, section, L"MouseMoveAction", L"", { .sectionVariables = false });
-	parser.ReadString(m_LeftDragAction, section, L"LeftMouseDragAction", L"", { .sectionVariables = false });
-	parser.ReadString(m_MiddleDragAction, section, L"MiddleMouseDragAction", L"", { .sectionVariables = false });
-	parser.ReadString(m_RightDragAction, section, L"RightMouseDragAction", L"", { .sectionVariables = false });
-	parser.ReadString(m_X1DragAction, section, L"X1MouseDragAction", L"", { .sectionVariables = false });
-	parser.ReadString(m_X2DragAction, section, L"X2MouseDragAction", L"", { .sectionVariables = false });
+	parser.ReadString<"MouseMoveAction">(m_MouseMoveAction, m_ID, L"", { .sectionVariables = false });
+	parser.ReadString<"LeftMouseDragAction">(m_LeftDragAction, m_ID, L"", { .sectionVariables = false });
+	parser.ReadString<"MiddleMouseDragAction">(m_MiddleDragAction, m_ID, L"", { .sectionVariables = false });
+	parser.ReadString<"RightMouseDragAction">(m_RightDragAction, m_ID, L"", { .sectionVariables = false });
+	parser.ReadString<"X1MouseDragAction">(m_X1DragAction, m_ID, L"", { .sectionVariables = false });
+	parser.ReadString<"X2MouseDragAction">(m_X2DragAction, m_ID, L"", { .sectionVariables = false });
 
-	m_RelativeToSkin = parser.ReadBool(section, L"RelativeToSkin", true);
-	m_RequireDragging = parser.ReadBool(section, L"RequireDragging", false);
-	m_Delay = parser.ReadUInt(section, L"Delay", 16);
+	m_RelativeToSkin = parser.ReadBool<"RelativeToSkin">(m_ID, true);
+	m_RequireDragging = parser.ReadBool<"RequireDragging">(m_ID, false);
+	m_Delay = parser.ReadUInt<"Delay">(m_ID, 16);
 
 	if (!m_RequireDragging)
 	{

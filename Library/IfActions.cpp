@@ -7,12 +7,12 @@
 #include "../Common/MathParser.h"
 #include "Pcre.h"
 
-void IfActions::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void IfActions::ReadOptions(ConfigParser& parser, IniSectionID section)
 {
 	std::wstring aboveAction, belowAction, equalAction;
-	parser.ReadString(aboveAction, section, L"IfAboveAction", L"", { .sectionVariables = false });
-	parser.ReadString(belowAction, section, L"IfBelowAction", L"", { .sectionVariables = false });
-	parser.ReadString(equalAction, section, L"IfEqualAction", L"", { .sectionVariables = false });
+	parser.ReadString<"IfAboveAction">(aboveAction, section, L"", { .sectionVariables = false });
+	parser.ReadString<"IfBelowAction">(belowAction, section, L"", { .sectionVariables = false });
+	parser.ReadString<"IfEqualAction">(equalAction, section, L"", { .sectionVariables = false });
 
 	if (aboveAction.empty() && belowAction.empty() && equalAction.empty())
 	{
@@ -23,19 +23,19 @@ void IfActions::ReadOptions(ConfigParser& parser, std::wstring_view section)
 	if (!m_ValueActions) m_ValueActions = std::make_unique<ValueActions>();
 
 	m_ValueActions->aboveAction = std::move(aboveAction);
-	m_ValueActions->aboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0);
+	m_ValueActions->aboveValue = parser.ReadFloat<"IfAboveValue">(section, 0.0);
 
 	m_ValueActions->belowAction = std::move(belowAction);
-	m_ValueActions->belowValue = parser.ReadFloat(section, L"IfBelowValue", 0.0);
+	m_ValueActions->belowValue = parser.ReadFloat<"IfBelowValue">(section, 0.0);
 
 	m_ValueActions->equalAction = std::move(equalAction);
-	m_ValueActions->equalValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0);
+	m_ValueActions->equalValue = (int64_t)parser.ReadFloat<"IfEqualValue">(section, 0.0);
 }
 
-void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view section)
+void IfActions::ReadConditionOptions(ConfigParser& parser, IniSectionID section)
 {
-	std::wstring condition = parser.ReadString(section, L"IfCondition", L"");
-	std::wstring match = parser.ReadString(section, L"IfMatch", L"");
+	std::wstring condition = parser.ReadString<"IfCondition">(section, L"");
+	std::wstring match = parser.ReadString<"IfMatch">(section, L"");
 	if (condition.empty() && match.empty())
 	{
 		m_ExpressionActions.reset();
@@ -47,12 +47,12 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view sec
 	auto& actions = *m_ExpressionActions;
 
 	// IfCondition options
-	actions.conditionMode = parser.ReadBool(section, L"IfConditionMode", false);
+	actions.conditionMode = parser.ReadBool<"IfConditionMode">(section, false);
 
 	if (!condition.empty())
 	{
-		std::wstring tAction = parser.ReadString(section, L"IfTrueAction", L"", { .sectionVariables = false });
-		std::wstring fAction = parser.ReadString(section, L"IfFalseAction", L"", { .sectionVariables = false });
+		std::wstring tAction = parser.ReadString<"IfTrueAction">(section, L"", { .sectionVariables = false });
+		std::wstring fAction = parser.ReadString<"IfFalseAction">(section, L"", { .sectionVariables = false });
 		if (!tAction.empty() || !fAction.empty())
 		{
 			size_t i = 1;
@@ -92,12 +92,12 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, std::wstring_view sec
 	}
 
 	// IfMatch options
-	actions.matchMode = parser.ReadBool(section, L"IfMatchMode", false);
+	actions.matchMode = parser.ReadBool<"IfMatchMode">(section, false);
 
 	if (!match.empty())
 	{
-		std::wstring tAction = parser.ReadString(section, L"IfMatchAction", L"", { .sectionVariables = false });
-		std::wstring fAction = parser.ReadString(section, L"IfNotMatchAction", L"", { .sectionVariables = false });
+		std::wstring tAction = parser.ReadString<"IfMatchAction">(section, L"", { .sectionVariables = false });
+		std::wstring fAction = parser.ReadString<"IfNotMatchAction">(section, L"", { .sectionVariables = false });
 		if (!tAction.empty() || !fAction.empty())
 		{
 			size_t i = 1;

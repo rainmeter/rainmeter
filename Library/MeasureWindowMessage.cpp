@@ -19,12 +19,12 @@ MeasureWindowMessage::~MeasureWindowMessage()
 {
 }
 
-void MeasureWindowMessage::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureWindowMessage::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
-	parser.ReadString(m_WindowName, section, L"WindowName", L"");
-	parser.ReadString(m_WindowClass, section, L"WindowClass", L"");
+	parser.ReadString<"WindowName">(m_WindowName, m_ID, L"");
+	parser.ReadString<"WindowClass">(m_WindowClass, m_ID, L"");
 
 	m_Message = 0;
 	m_WParam = 0;
@@ -33,7 +33,7 @@ void MeasureWindowMessage::ReadOptions(ConfigParser& parser, std::wstring_view s
 	UINT message = 0;
 	UINT wParam = 0;
 	UINT lParam = 0;
-	const std::wstring& windowMessage = parser.ReadString(section, L"WindowMessage", L"");
+	const std::wstring& windowMessage = parser.ReadString<"WindowMessage">(m_ID, L"");
 	if (swscanf_s(windowMessage.c_str(), L"%u %u %u", &message, &wParam, &lParam) == 3)
 	{
 		m_Message = message;

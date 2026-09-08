@@ -138,13 +138,13 @@ const WCHAR* MeasureDiskSpace::GetStringValue()
 	return (m_Type || m_Label) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
 }
 
-void MeasureDiskSpace::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureDiskSpace::ReadOptions(ConfigParser& parser)
 {
 	double oldMaxValue = m_MaxValue;
 
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
-	parser.ReadString(m_Drive, section, L"Drive", L"C:\\");
+	parser.ReadString<"Drive">(m_Drive, m_ID, L"C:\\");
 	if (m_Drive.empty())
 	{
 		LogWarningF(this, L"FreeDiskSpace: Drive= empty");
@@ -159,11 +159,11 @@ void MeasureDiskSpace::ReadOptions(ConfigParser& parser, std::wstring_view secti
 		PathUtil::AppendBackslashIfMissing(m_Drive);
 	}
 
-	m_Type = parser.ReadBool(section, L"Type", false);
-	m_Total = parser.ReadBool(section, L"Total", false);
-	m_Label = parser.ReadBool(section, L"Label", false);
-	m_IgnoreRemovable = parser.ReadBool(section, L"IgnoreRemovable", true);
-	m_DiskQuota = parser.ReadBool(section, L"DiskQuota", true);
+	m_Type = parser.ReadBool<"Type">(m_ID, false);
+	m_Total = parser.ReadBool<"Total">(m_ID, false);
+	m_Label = parser.ReadBool<"Label">(m_ID, false);
+	m_IgnoreRemovable = parser.ReadBool<"IgnoreRemovable">(m_ID, true);
+	m_DiskQuota = parser.ReadBool<"DiskQuota">(m_ID, true);
 
 	// Set the m_MaxValue
 	if (!m_Initialized)

@@ -54,11 +54,11 @@ MeasureCPU::~MeasureCPU()
 {
 }
 
-void MeasureCPU::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureCPU::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
-	int processor = parser.ReadInt(section, L"Processor", 0);
+	int processor = parser.ReadInt<"Processor">(m_ID, 0);
 
 	if (processor < 0 || processor > c_NumOfProcessors)
 	{

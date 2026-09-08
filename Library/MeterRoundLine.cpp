@@ -38,24 +38,24 @@ MeterRoundLine::~MeterRoundLine()
 {
 }
 
-void MeterRoundLine::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeterRoundLine::ReadOptions(ConfigParser& parser)
 {
-	Meter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser);
 
-	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
-	m_LineLength = parser.ReadFloat(section, L"LineLength", 20.0);
-	m_LineStart = parser.ReadFloat(section, L"LineStart", -1.0);
-	m_StartAngle = parser.ReadFloat(section, L"StartAngle", 0.0);
-	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 6.2832);
-	m_ValueRemainder = parser.ReadUInt(section, L"ValueReminder", 0);		// Typo
-	m_ValueRemainder = parser.ReadUInt(section, L"ValueRemainder", m_ValueRemainder);
-	m_LineColor = parser.ReadColor(section, L"LineColor", D2D1::ColorF(D2D1::ColorF::Black));
-	m_Solid = parser.ReadBool(section, L"Solid", false);
-	m_CntrlAngle = parser.ReadBool(section, L"ControlAngle", true);
-	m_CntrlLineStart = parser.ReadBool(section, L"ControlStart", false);
-	m_CntrlLineLength = parser.ReadBool(section, L"ControlLength", false);
-	m_LineStartShift = parser.ReadFloat(section, L"StartShift", 0.0);
-	m_LineLengthShift = parser.ReadFloat(section, L"LengthShift", 0.0);
+	m_LineWidth = parser.ReadFloat<"LineWidth">(m_ID, 1.0);
+	m_LineLength = parser.ReadFloat<"LineLength">(m_ID, 20.0);
+	m_LineStart = parser.ReadFloat<"LineStart">(m_ID, -1.0);
+	m_StartAngle = parser.ReadFloat<"StartAngle">(m_ID, 0.0);
+	m_RotationAngle = parser.ReadFloat<"RotationAngle">(m_ID, 6.2832);
+	m_ValueRemainder = parser.ReadUInt<"ValueReminder">(m_ID, 0);		// Typo
+	m_ValueRemainder = parser.ReadUInt<"ValueRemainder">(m_ID, m_ValueRemainder);
+	m_LineColor = parser.ReadColor<"LineColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Black));
+	m_Solid = parser.ReadBool<"Solid">(m_ID, false);
+	m_CntrlAngle = parser.ReadBool<"ControlAngle">(m_ID, true);
+	m_CntrlLineStart = parser.ReadBool<"ControlStart">(m_ID, false);
+	m_CntrlLineLength = parser.ReadBool<"ControlLength">(m_ID, false);
+	m_LineStartShift = parser.ReadFloat<"StartShift">(m_ID, 0.0);
+	m_LineLengthShift = parser.ReadFloat<"LengthShift">(m_ID, 0.0);
 }
 
 bool MeterRoundLine::Update()
@@ -173,7 +173,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterRoundLine::BindMeasures(ConfigParser& parser, std::wstring_view section)
+void MeterRoundLine::BindMeasures(ConfigParser& parser)
 {
-	BindPrimaryMeasure(parser, section, true);
+	BindPrimaryMeasure(parser, true);
 }

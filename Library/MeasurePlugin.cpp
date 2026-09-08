@@ -13,7 +13,7 @@ MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name
 	m_Plugin(),
 	m_MonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL),
 	m_ReloadFunc(),
-	m_ID(),
+	m_InstanceID(),
 	m_Update2(false),
 	m_UpdateFunc(),
 	m_GetStringFunc(),
@@ -36,7 +36,7 @@ MeasurePlugin::~MeasurePlugin()
 			}
 			else
 			{
-				((FINALIZE)finalizeFunc)(m_Plugin, m_ID);
+				((FINALIZE)finalizeFunc)(m_Plugin, m_InstanceID);
 			}
 		}
 
@@ -57,11 +57,11 @@ void MeasurePlugin::UpdateValue()
 		{
 			if (m_Update2)
 			{
-				m_Value = ((UPDATE2)m_UpdateFunc)(m_ID);
+				m_Value = ((UPDATE2)m_UpdateFunc)(m_InstanceID);
 			}
 			else
 			{
-				m_Value = ((UPDATE)m_UpdateFunc)(m_ID);
+				m_Value = ((UPDATE)m_UpdateFunc)(m_InstanceID);
 			}
 		}
 
@@ -70,11 +70,11 @@ void MeasurePlugin::UpdateValue()
 	}
 }
 
-void MeasurePlugin::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasurePlugin::ReadOptions(ConfigParser& parser)
 {
 	static UINT id = 0;
 
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
 	if (m_Initialized)
 	{
@@ -87,7 +87,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		return;
 	}
 
-	const std::wstring& plugin = parser.ReadString(section, L"Plugin", L"");
+	const std::wstring& plugin = parser.ReadString<"Plugin">(m_ID, L"");
 	size_t pos = plugin.find_last_of(L"\\/");
 	std::wstring pluginName;
 	if (pos != std::wstring::npos)
@@ -169,7 +169,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, std::wstring_view section)
 	}
 	else
 	{
-		m_ID = id;
+		m_InstanceID = id;
 
 		if (!m_UpdateFunc)
 		{
@@ -179,11 +179,11 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 		if (initializeFunc)
 		{
-			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_Skin->GetFilePath().c_str(), GetName(), m_ID);
+			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_Skin->GetFilePath().c_str(), GetName(), m_InstanceID);
 		}
 	}
 
-	const std::wstring& szMaxValue = parser.ReadString(section, L"MaxValue", L"");
+	const std::wstring& szMaxValue = parser.ReadString<"MaxValue">(m_ID, L"");
 	if (szMaxValue.empty())
 	{
 		if (maxValue == 0.0)
@@ -216,7 +216,7 @@ const WCHAR* MeasurePlugin::GetStringValue()
 		}
 		else
 		{
-			ret = ((GETSTRING)m_GetStringFunc)(m_ID, 0);
+			ret = ((GETSTRING)m_GetStringFunc)(m_InstanceID, 0);
 		}
 
 		if (ret) return CheckSubstitute(ret);
@@ -236,7 +236,7 @@ void MeasurePlugin::Command(const std::wstring& command)
 		}
 		else
 		{
-			((EXECUTEBANG)m_ExecuteBangFunc)(str, m_ID);
+			((EXECUTEBANG)m_ExecuteBangFunc)(str, m_InstanceID);
 		}
 	}
 	else

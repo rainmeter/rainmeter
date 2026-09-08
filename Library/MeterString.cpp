@@ -24,20 +24,20 @@ MeterString::~MeterString()
 {
 }
 
-void MeterString::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeterString::ReadOptions(ConfigParser& parser)
 {
-	MeterStringBase::ReadOptions(parser, section);
+	MeterStringBase::ReadOptions(parser);
 
-	parser.ReadString(m_Prefix, section, L"Prefix", L"");
-	parser.ReadString(m_Postfix, section, L"Postfix", L"");
-	parser.ReadString(m_Text, section, L"Text", L"");
+	parser.ReadString<"Prefix">(m_Prefix, m_ID, L"");
+	parser.ReadString<"Postfix">(m_Postfix, m_ID, L"");
+	parser.ReadString<"Text">(m_Text, m_ID, L"");
 
-	m_Angle = (FLOAT)parser.ReadFloat(section, L"Angle", 0.0);
+	m_Angle = (FLOAT)parser.ReadFloat<"Angle">(m_ID, 0.0);
 
-	m_Percentual = parser.ReadBool(section, L"Percentual", false);
-	m_NumOfDecimals = parser.ReadInt(section, L"NumOfDecimals", -1);
+	m_Percentual = parser.ReadBool<"Percentual">(m_ID, false);
+	m_NumOfDecimals = parser.ReadInt<"NumOfDecimals">(m_ID, -1);
 
-	const std::wstring& autoscale = parser.ReadString(section, L"AutoScale", L"0");
+	const std::wstring& autoscale = parser.ReadString<"AutoScale">(m_ID, L"0");
 	int autoscaleValue = _wtoi(autoscale.c_str());
 	if (autoscaleValue == 0)
 	{
@@ -55,11 +55,11 @@ void MeterString::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		}
 	}
 
-	const std::wstring& scale = parser.ReadString(section, L"Scale", L"1");
+	const std::wstring& scale = parser.ReadString<"Scale">(m_ID, L"1");
 	m_NoDecimals = (scale.find(L'.') == std::wstring::npos);
 	m_Scale = parser.ParseDouble(scale.c_str(), 1);
 
-	m_TrailingSpaces = parser.ReadBool(section, L"TrailingSpaces", false);
+	m_TrailingSpaces = parser.ReadBool<"TrailingSpaces">(m_ID, false);
 }
 
 bool MeterString::Update()
@@ -159,10 +159,10 @@ bool MeterString::Draw(Gfx::Canvas& canvas)
 	return result;
 }
 
-void MeterString::BindMeasures(ConfigParser& parser, std::wstring_view section)
+void MeterString::BindMeasures(ConfigParser& parser)
 {
-	if (BindPrimaryMeasure(parser, section, true))
+	if (BindPrimaryMeasure(parser, true))
 	{
-		BindSecondaryMeasures(parser, section);
+		BindSecondaryMeasures(parser);
 	}
 }

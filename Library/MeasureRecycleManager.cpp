@@ -130,16 +130,16 @@ MeasureRecycleManager::~MeasureRecycleManager()
 	--g_InstanceCount;
 }
 
-void MeasureRecycleManager::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureRecycleManager::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
 	static constexpr ConfigParser::EnumOption<Type> s_Types[] =
 	{
 		{ L"COUNT", Type::Count },
 		{ L"SIZE", Type::Size },
 	};
-	m_Type = parser.ReadEnum(section, L"RecycleType", Type::Count, s_Types);
+	m_Type = parser.ReadEnum<"RecycleType">(m_ID, Type::Count, s_Types);
 }
 
 void MeasureRecycleManager::UpdateValue()

@@ -451,19 +451,19 @@ MeasureRunCommand::~MeasureRunCommand()
 	}
 }
 
-void MeasureRunCommand::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureRunCommand::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
-	parser.ReadString(m_Parameter, section, L"Parameter", L"");
-	parser.ReadString(m_FinishAction, section, L"FinishAction", L"", { .sectionVariables = false });
-	parser.ReadString(m_OutputFile, section, L"OutputFile", L"");
+	parser.ReadString<"Parameter">(m_Parameter, m_ID, L"");
+	parser.ReadString<"FinishAction">(m_FinishAction, m_ID, L"", { .sectionVariables = false });
+	parser.ReadString<"OutputFile">(m_OutputFile, m_ID, L"");
 	m_Skin->MakePathAbsolute(m_OutputFile);
 
-	parser.ReadString(m_Folder, section, L"StartInFolder", L" ");	// Space is intentional!
+	parser.ReadString<"StartInFolder">(m_Folder, m_ID, L" ");	// Space is intentional!
 	m_Skin->MakePathAbsolute(m_Folder);
 
-	m_Timeout = parser.ReadInt(section, L"Timeout", -1);
+	m_Timeout = parser.ReadInt<"Timeout">(m_ID, -1);
 
 	static constexpr ConfigParser::EnumOption<WORD> s_States[] =
 	{
@@ -472,10 +472,10 @@ void MeasureRunCommand::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		{ L"MAXIMIZE", SW_MAXIMIZE },
 		{ L"MINIMIZE", SW_MINIMIZE },
 	};
-	m_State = parser.ReadEnum(section, L"State", (WORD)SW_HIDE, s_States);
+	m_State = parser.ReadEnum<"State">(m_ID, (WORD)SW_HIDE, s_States);
 
 	// Grab "%COMSPEC% environment variable
-	parser.ReadString(m_Program, section, L"Program", L"\"%COMSPEC%\" /U /C");
+	parser.ReadString<"Program">(m_Program, m_ID, L"\"%COMSPEC%\" /U /C");
 	PathUtil::ExpandEnvironmentVariables(m_Program);
 	if (m_Program.empty())
 	{
@@ -489,7 +489,7 @@ void MeasureRunCommand::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		{ L"ANSI", OUTPUTTYPE_ANSI },
 		{ L"UTF8", OUTPUTTYPE_UTF8 },
 	};
-	m_OutputType = parser.ReadEnum(section, L"OutputType", OUTPUTTYPE_UTF16, s_OutputTypes);
+	m_OutputType = parser.ReadEnum<"OutputType">(m_ID, OUTPUTTYPE_UTF16, s_OutputTypes);
 }
 
 void MeasureRunCommand::UpdateValue()

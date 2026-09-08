@@ -167,7 +167,7 @@ Gfx::Bitmap* GeneralImage::GetImage()
 		(m_Bitmap ? m_Bitmap->GetBitmap() : nullptr);
 }
 
-void GeneralImage::ReadOptions(ConfigParser& parser, std::wstring_view section, const WCHAR* imagePath)
+void GeneralImage::ReadOptions(ConfigParser& parser, IniSectionID section, const WCHAR* imagePath)
 {
 	parser.ReadString(m_Path, section, m_OptionArray[OptionIndexImagePath], imagePath);
 	PathUtil::AppendBackslashIfMissing(m_Path);
@@ -211,14 +211,14 @@ void GeneralImage::ReadOptions(ConfigParser& parser, std::wstring_view section, 
 			else
 			{
 				LogErrorF(m_Skin, L"%s=%s is not valid in [%.*s]", m_OptionArray[OptionIndexImageCrop], crop.c_str(),
-					(int)section.length(), section.data());
+					(int)parser.GetSectionName(section).length(), parser.GetSectionName(section).data());
 			}
 
 			if (m_Options.m_CropMode < ImageOptions::CROPMODE_TL || m_Options.m_CropMode > ImageOptions::CROPMODE_C)
 			{
 				m_Options.m_CropMode = ImageOptions::CROPMODE_TL;
 				LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%.*s]", m_OptionArray[OptionIndexImageCrop], crop.c_str(),
-					(int)section.length(), section.data());
+					(int)parser.GetSectionName(section).length(), parser.GetSectionName(section).data());
 			}
 		}
 	}

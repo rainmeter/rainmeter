@@ -673,9 +673,9 @@ void MeasureUsageMonitor::FinalizeStatic()
 	GetCollectors().clear();
 }
 
-void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureUsageMonitor::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
 	static constexpr ConfigParser::EnumOption<Alias> s_Aliases[] =
 	{
@@ -692,7 +692,7 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 		{ L"NETUP", Alias::NetUp },
 		{ L"CUSTOM", Alias::Custom }
 	};
-	const Alias alias = parser.ReadEnum(section, L"Alias", Alias::Custom, s_Aliases);
+	const Alias alias = parser.ReadEnum<"Alias">(m_ID, Alias::Custom, s_Aliases);
 
 	CounterOptions options;
 	options.id = (size_t)this;
@@ -763,14 +763,14 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 
 	// An alias that has already filled these in is only overridden by an option that says something
 	std::wstring category;
-	parser.ReadString(category, section, L"Category", L"");
+	parser.ReadString<"Category">(category, m_ID, L"");
 	if (!category.empty())
 	{
 		options.category = std::move(category);
 	}
 
 	std::wstring counter;
-	parser.ReadString(counter, section, L"Counter", L"");
+	parser.ReadString<"Counter">(counter, m_ID, L"");
 	if (!counter.empty())
 	{
 		options.counter = std::move(counter);
@@ -781,7 +781,7 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 	m_IndexType = IndexType::Instance;
 	m_Index = 0;
 
-	const std::wstring& index = parser.ReadString(section, L"Index", L"");
+	const std::wstring& index = parser.ReadString<"Index">(m_ID, L"");
 	if (_wcsicmp(index.c_str(), L"SUM") == 0)
 	{
 		m_IndexType = IndexType::Sum;
@@ -801,12 +801,12 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 		else if (m_Index == -1) m_IndexType = IndexType::Average;
 	}
 
-	parser.ReadString(m_InstanceName, section, L"Name", L"");
+	parser.ReadString<"Name">(m_InstanceName, m_ID, L"");
 
-	m_RawValue = parser.ReadBool(section, L"RawValue", false);
-	options.rollup = parser.ReadBool(section, L"Rollup", true);
+	m_RawValue = parser.ReadBool<"RawValue">(m_ID, false);
+	options.rollup = parser.ReadBool<"Rollup">(m_ID, true);
 
-	const std::wstring& whitelist = parser.ReadString(section, L"Whitelist", L"");
+	const std::wstring& whitelist = parser.ReadString<"Whitelist">(m_ID, L"");
 	if (!whitelist.empty())
 	{
 		options.blockType = BlockType::Whitelist;
@@ -815,7 +815,7 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 	else
 	{
 		// NOTE: This reuses the buffer that |whitelist| points at
-		const std::wstring& blacklist = parser.ReadString(section, L"Blacklist", L"_Total|Idle");
+		const std::wstring& blacklist = parser.ReadString<"Blacklist">(m_ID, L"_Total|Idle");
 		if (!blacklist.empty())
 		{
 			options.blockType = BlockType::Blacklist;
@@ -828,7 +828,7 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 		}
 	}
 
-	m_Percent = parser.ReadBool(section, L"Percent", percent);
+	m_Percent = parser.ReadBool<"Percent">(m_ID, percent);
 
 	if (m_IndexType == IndexType::Count && m_InstanceName.empty())
 	{
@@ -841,7 +841,7 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 		maxValue = 100.0;
 	}
 
-	options.pidToName = parser.ReadBool(section, L"PIDToName", pidToName);
+	options.pidToName = parser.ReadBool<"PIDToName">(m_ID, pidToName);
 	options.blockKey = BuildBlockKey(options);
 
 	// Setting the options of a measure that uses dynamic variables can move it to another counter,
@@ -873,7 +873,7 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser& parser, std::wstring_view se
 		if (wait) m_UpdateDivider = 1;
 	}
 
-	if (!parser.IsValueDefined(section, L"MaxValue"))
+	if (!parser.IsValueDefined<"MaxValue">(m_ID))
 	{
 		if (maxValue == 0.0)
 		{

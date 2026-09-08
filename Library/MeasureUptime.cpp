@@ -16,15 +16,15 @@ MeasureUptime::~MeasureUptime()
 {
 }
 
-void MeasureUptime::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureUptime::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
-	parser.ReadString(m_Format, section, L"Format", L"%4!i!d %3!i!:%2!02i!");
+	parser.ReadString<"Format">(m_Format, m_ID, L"%4!i!d %3!i!:%2!02i!");
 
 	if (m_Format.find(L"%4") == std::wstring::npos)
 	{
-		m_AddDaysToHours = parser.ReadBool(section, L"AddDaysToHours", true);
+		m_AddDaysToHours = parser.ReadBool<"AddDaysToHours">(m_ID, true);
 	}
 	else
 	{
@@ -33,11 +33,11 @@ void MeasureUptime::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 	// Don't allow negative seconds
 	m_SecondsDefined = false;
-	std::wstring seconds = parser.ReadString(section, L"SecondsValue", L"");
+	std::wstring seconds = parser.ReadString<"SecondsValue">(m_ID, L"");
 	if (!seconds.empty())
 	{
 		m_SecondsDefined = true;
-		m_Seconds = (double)abs((__int64)parser.ReadFloat(section, L"SecondsValue", 0.0));
+		m_Seconds = (double)abs((__int64)parser.ReadFloat<"SecondsValue">(m_ID, 0.0));
 	}
 }
 

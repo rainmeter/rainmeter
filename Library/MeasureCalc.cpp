@@ -46,9 +46,9 @@ void MeasureCalc::UpdateValue()
 	}
 }
 
-void MeasureCalc::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureCalc::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
 	// Store the current values so we know if the value needs to be updated
 	int oldLowBound = m_LowBound;
@@ -57,14 +57,14 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, std::wstring_view section)
 	bool oldUniqueRandom = m_UniqueRandom;
 
 	std::wstring oldFormula = m_Formula;
-	parser.ReadString(m_Formula, section, L"Formula", L"");
+	parser.ReadString<"Formula">(m_Formula, m_ID, L"");
 
-	m_LowBound = parser.ReadInt(section, L"LowBound", DEFAULT_LOWER_BOUND);
-	m_HighBound = parser.ReadInt(section, L"HighBound", DEFAULT_UPPER_BOUND);
-	m_UpdateRandom = parser.ReadBool(section, L"UpdateRandom", false);
+	m_LowBound = parser.ReadInt<"LowBound">(m_ID, DEFAULT_LOWER_BOUND);
+	m_HighBound = parser.ReadInt<"HighBound">(m_ID, DEFAULT_UPPER_BOUND);
+	m_UpdateRandom = parser.ReadBool<"UpdateRandom">(m_ID, false);
 	const size_t range = (m_HighBound - m_LowBound) + 1;
 
-	m_UniqueRandom = (range <= DEFAULT_UNIQUELIMIT) && parser.ReadBool(section, L"UniqueRandom", false);
+	m_UniqueRandom = (range <= DEFAULT_UNIQUELIMIT) && parser.ReadBool<"UniqueRandom">(m_ID, false);
 	if (!m_UniqueRandom)
 	{
 		m_UniqueNumbers.clear();

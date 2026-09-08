@@ -22,8 +22,8 @@ int GetOption(lua_State* L, Section* section, bool allowMeterStyle)
 		options.sectionVariables = LuaHelper::ToBool(4);
 	}
 
-	ConfigParser::InheritChainScope inheritChain(parser, sectionName, allowMeterStyle);
-	const auto& value = parser.ReadString(sectionName, key.c_str(), defValue.c_str(), options);
+	ConfigParser::OptionReader optionReader(parser, sectionName, section->GetSectionID(), allowMeterStyle);
+	const auto& value = parser.ReadString(section->GetSectionID(), key.c_str(), defValue.c_str(), options);
 
 	LuaHelper::PushWide(value);
 

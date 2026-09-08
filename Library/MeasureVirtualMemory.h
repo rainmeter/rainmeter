@@ -16,7 +16,7 @@ public:
 	virtual UINT GetTypeID() { return TypeID<MeasureVirtualMemory>(); }
 
 protected:
-	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
+	void ReadOptions(ConfigParser& parser) override;
 	virtual void UpdateValue();
 
 private:

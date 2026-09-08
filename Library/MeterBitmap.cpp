@@ -155,28 +155,28 @@ bool MeterBitmap::HitTest(int x, int y)
 	}
 }
 
-void MeterBitmap::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeterBitmap::ReadOptions(ConfigParser& parser)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 
-	Meter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser);
 
-	parser.ReadString(m_ImageName, section, L"BitmapImage", L"");
+	parser.ReadString<"BitmapImage">(m_ImageName, m_ID, L"");
 	if (!m_ImageName.empty())
 	{
 		// Read tinting options
-		m_Image.ReadOptions(parser, section);
+		m_Image.ReadOptions(parser, m_ID);
 	}
 
-	m_FrameCount = parser.ReadInt(section, L"BitmapFrames", 1);
-	m_ZeroFrame = parser.ReadBool(section, L"BitmapZeroFrame", false);
+	m_FrameCount = parser.ReadInt<"BitmapFrames">(m_ID, 1);
+	m_ZeroFrame = parser.ReadBool<"BitmapZeroFrame">(m_ID, false);
 
-	m_Separation = parser.ReadInt(section, L"BitmapSeparation", 0);
-	m_Extend = parser.ReadBool(section, L"BitmapExtend", false);
-	m_Digits = parser.ReadInt(section, L"BitmapDigits", 0);
+	m_Separation = parser.ReadInt<"BitmapSeparation">(m_ID, 0);
+	m_Extend = parser.ReadBool<"BitmapExtend">(m_ID, false);
+	m_Digits = parser.ReadInt<"BitmapDigits">(m_ID, 0);
 
-	m_TransitionFrameCount = parser.ReadInt(section, L"BitmapTransitionFrames", 0);
+	m_TransitionFrameCount = parser.ReadInt<"BitmapTransitionFrames">(m_ID, 0);
 
 	static constexpr ConfigParser::EnumOption<METER_ALIGNMENT> s_Aligns[] =
 	{
@@ -184,7 +184,7 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		{ L"RIGHT", ALIGN_RIGHT },
 		{ L"CENTER", ALIGN_CENTER },
 	};
-	m_Align = parser.ReadEnum(section, L"BitmapAlign", ALIGN_LEFT, s_Aligns);
+	m_Align = parser.ReadEnum<"BitmapAlign">(m_ID, ALIGN_LEFT, s_Aligns);
 
 	if (m_Initialized)
 	{

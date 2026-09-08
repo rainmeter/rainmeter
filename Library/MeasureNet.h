@@ -35,7 +35,7 @@ protected:
 	MeasureNet(const MeasureNet& other) = delete;
 	MeasureNet& operator=(MeasureNet other) = delete;
 
-	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
+	void ReadOptions(ConfigParser& parser) override;
 	virtual void UpdateValue();
 
 private:

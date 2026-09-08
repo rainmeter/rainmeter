@@ -46,27 +46,27 @@ void MeterRotator::InvalidateDeviceResources()
 	m_Image.InvalidateDeviceResources();
 }
 
-void MeterRotator::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeterRotator::ReadOptions(ConfigParser& parser)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 
-	Meter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser);
 
-	parser.ReadString(m_ImageName, section, L"ImageName", L"");
+	parser.ReadString<"ImageName">(m_ImageName, m_ID, L"");
 	if (!m_ImageName.empty())
 	{
 		// Read tinting options
-		m_Image.ReadOptions(parser, section);
+		m_Image.ReadOptions(parser, m_ID);
 	}
 
-	m_OffsetX = parser.ReadFloat(section, L"OffsetX", 0.0);
-	m_OffsetY = parser.ReadFloat(section, L"OffsetY", 0.0);
-	m_StartAngle = parser.ReadFloat(section, L"StartAngle", 0.0);
-	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", PI * 2.0);
+	m_OffsetX = parser.ReadFloat<"OffsetX">(m_ID, 0.0);
+	m_OffsetY = parser.ReadFloat<"OffsetY">(m_ID, 0.0);
+	m_StartAngle = parser.ReadFloat<"StartAngle">(m_ID, 0.0);
+	m_RotationAngle = parser.ReadFloat<"RotationAngle">(m_ID, PI * 2.0);
 
-	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", 0);		// Typo
-	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", m_ValueRemainder);
+	m_ValueRemainder = parser.ReadInt<"ValueReminder">(m_ID, 0);		// Typo
+	m_ValueRemainder = parser.ReadInt<"ValueRemainder">(m_ID, m_ValueRemainder);
 
 	if (m_Initialized)
 	{

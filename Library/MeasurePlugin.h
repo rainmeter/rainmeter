@@ -45,7 +45,7 @@ public:
 	bool CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry = nullptr);
 
 protected:
-	void ReadOptions(ConfigParser& parser, std::wstring_view section) override;
+	void ReadOptions(ConfigParser& parser) override;
 	virtual void UpdateValue();
 
 private:
@@ -59,7 +59,7 @@ private:
 	{
 		struct
 		{
-			UINT m_ID;
+			UINT m_InstanceID;
 			bool m_Update2;
 		};
 

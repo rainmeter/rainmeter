@@ -16,9 +16,9 @@ MeasureResMon::~MeasureResMon()
 {
 }
 
-void MeasureResMon::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureResMon::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
 	static constexpr ConfigParser::EnumOption<Type> s_Types[] =
 	{
@@ -27,9 +27,9 @@ void MeasureResMon::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		{ L"HANDLE", Type::HANDLE },
 		{ L"WINDOW", Type::WINDOW },
 	};
-	m_Type = parser.ReadEnum(section, L"ResCountType", Type::GDI, s_Types);
+	m_Type = parser.ReadEnum<"ResCountType">(m_ID, Type::GDI, s_Types);
 
-	parser.ReadString(m_ProcessName, section, L"ProcessName", L"");
+	parser.ReadString<"ProcessName">(m_ProcessName, m_ID, L"");
 }
 
 void MeasureResMon::UpdateValue()

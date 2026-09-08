@@ -100,11 +100,11 @@ void Measure::Initialize()
 
 // Read the common options specified in the ini file. The inherited classes must
 // call this base implementation if they overwrite this method.
-void Measure::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void Measure::ReadOptions(ConfigParser& parser)
 {
 	bool oldOnChangeActionEmpty = m_OnChangeAction.empty();
 
-	Section::ReadOptions(parser, section);
+	Section::ReadOptions(parser);
 
 	// Clear substitutes to prevent from being added more than once.
 	if (!m_Substitute.empty())
@@ -112,26 +112,26 @@ void Measure::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		m_Substitute.clear();
 	}
 
-	m_Invert = parser.ReadBool(section, L"InvertMeasure", false);
+	m_Invert = parser.ReadBool<"InvertMeasure">(m_ID, false);
 
-	m_Disabled = parser.ReadBool(section, L"Disabled", false);
-	m_Paused = parser.ReadBool(section, L"Paused", false);
+	m_Disabled = parser.ReadBool<"Disabled">(m_ID, false);
+	m_Paused = parser.ReadBool<"Paused">(m_ID, false);
 
-	m_MinValue = parser.ReadFloat(section, L"MinValue", m_MinValue);
-	m_MaxValue = parser.ReadFloat(section, L"MaxValue", m_MaxValue);
+	m_MinValue = parser.ReadFloat<"MinValue">(m_ID, m_MinValue);
+	m_MaxValue = parser.ReadFloat<"MaxValue">(m_ID, m_MaxValue);
 
-	m_IfActions.ReadOptions(parser, section);
+	m_IfActions.ReadOptions(parser, m_ID);
 
 	// The first time around, we read the conditions here. Subsequent rereads will be done in
 	// Update() if needed.
 	if (!m_Initialized)
 	{
-		m_IfActions.ReadConditionOptions(parser, section);
+		m_IfActions.ReadConditionOptions(parser, m_ID);
 	}
 
-	parser.ReadString(m_OnChangeAction, section, L"OnChangeAction", L"", { .sectionVariables = false });
+	parser.ReadString<"OnChangeAction">(m_OnChangeAction, m_ID, L"", { .sectionVariables = false });
 
-	const UINT averageSize = parser.ReadUInt(section, L"AverageSize", 0);
+	const UINT averageSize = parser.ReadUInt<"AverageSize">(m_ID, 0);
 	if (averageSize == 0)
 	{
 		m_Average.reset();
@@ -142,8 +142,8 @@ void Measure::ReadOptions(ConfigParser& parser, std::wstring_view section)
 		m_Average->size = averageSize;
 	}
 
-	m_RegExpSubstitute = parser.ReadBool(section, L"RegExpSubstitute", false);
-	std::wstring subs = parser.ReadString(section, L"Substitute", L"");
+	m_RegExpSubstitute = parser.ReadBool<"RegExpSubstitute">(m_ID, false);
+	std::wstring subs = parser.ReadString<"Substitute">(m_ID, L"");
 	if (!subs.empty())
 	{
 		if ((subs[0] != L'"' || subs[subs.length() - 1] != L'\'') &&
@@ -168,9 +168,9 @@ void Measure::ReadOptions(ConfigParser& parser, std::wstring_view section)
 
 // "Locale" uses the separators of the user's current locale, "Default" those used by numbers in
 // skin files.
-LocaleUtil::NumberFormat Measure::ReadNumberFormatOption(ConfigParser& parser, std::wstring_view section)
+LocaleUtil::NumberFormat Measure::ReadNumberFormatOption(ConfigParser& parser)
 {
-	const std::wstring& option = parser.ReadString(section, L"NumberConversionFormat", L"");
+	const std::wstring& option = parser.ReadString<"NumberConversionFormat">(m_ID, L"");
 
 	if (_wcsicmp(option.c_str(), L"Locale") == 0) return LocaleUtil::NumberFormat::Locale;
 
@@ -180,12 +180,6 @@ LocaleUtil::NumberFormat Measure::ReadNumberFormatOption(ConfigParser& parser, s
 	}
 
 	return LocaleUtil::NumberFormat::Default;
-}
-
-void Measure::ReadOptions(ConfigParser& parser)
-{
-	ConfigParser::InheritChainScope inheritChain(parser, GetName());
-	ReadOptions(parser, GetName());
 }
 
 void Measure::Disable()
@@ -431,6 +425,7 @@ bool Measure::Update(bool rereadOptions)
 {
 	if (rereadOptions)
 	{
+		ConfigParser::OptionReader optionReader(m_Skin->GetParser(), m_Name, m_ID);
 		ReadOptions(m_Skin->GetParser());
 	}
 
@@ -484,7 +479,7 @@ bool Measure::Update(bool rereadOptions)
 		// [MeasureName], we need to read the options after m_Value has been changed.
 		if (rereadOptions)
 		{
-			m_IfActions.ReadConditionOptions(m_Skin->GetParser(), GetName());
+			m_IfActions.ReadConditionOptions(m_Skin->GetParser(), m_ID);
 		}
 
 		if (m_Skin)
@@ -880,4 +875,3 @@ void Measure::Command(const std::wstring& command)
 {
 	LogWarningF(this, L"!CommandMeasure: Not supported");
 }
-

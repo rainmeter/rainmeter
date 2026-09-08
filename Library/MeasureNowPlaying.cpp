@@ -147,16 +147,16 @@ MeasureNowPlaying::~MeasureNowPlaying()
 	}
 }
 
-void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view section)
+void MeasureNowPlaying::ReadOptions(ConfigParser& parser)
 {
-	Measure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser);
 
 	// Data is stored in two structs: Measure and ParentMeasure. ParentMeasure is created for measures
 	// with PlayerName=someplayer. Measure is created for all measures and points to ParentMeasure as
 	// referenced in PlayerName=[section].
 
 	// Read settings from the ini-file
-	const std::wstring_view playerName = parser.ReadString(section, L"PlayerName", L"", { .sectionVariables = false });
+	const std::wstring_view playerName = parser.ReadString<"PlayerName">(m_ID, L"", { .sectionVariables = false });
 	if (playerName.starts_with(L'['))
 	{
 		if (m_Parent)
@@ -263,9 +263,9 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		}
 
 		m_Parent->player->AddInstance();
-		parser.ReadString(m_Parent->playerPath, section, L"PlayerPath", L"");
-		parser.ReadString(m_Parent->trackChangeAction, section, L"TrackChangeAction", L"", { .sectionVariables = false });
-		m_Parent->disableLeadingZero = parser.ReadBool(section, L"DisableLeadingZero", false);
+		parser.ReadString<"PlayerPath">(m_Parent->playerPath, m_ID, L"");
+		parser.ReadString<"TrackChangeAction">(m_Parent->trackChangeAction, m_ID, L"", { .sectionVariables = false });
+		m_Parent->disableLeadingZero = parser.ReadBool<"DisableLeadingZero">(m_ID, false);
 
 		if (oldPlayer)
 		{
@@ -298,7 +298,7 @@ void MeasureNowPlaying::ReadOptions(ConfigParser& parser, std::wstring_view sect
 		{ L"YEAR", MEASURE_YEAR },
 		{ L"GENRE", MEASURE_GENRE },
 	};
-	m_Type = parser.ReadEnum(section, L"PlayerType", MEASURE_NONE, s_PlayerTypes);
+	m_Type = parser.ReadEnum<"PlayerType">(m_ID, MEASURE_NONE, s_PlayerTypes);
 
 	if (m_Type == MEASURE_PROGRESS || m_Type == MEASURE_VOLUME)
 	{
