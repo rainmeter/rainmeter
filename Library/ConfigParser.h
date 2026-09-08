@@ -6,6 +6,7 @@
 
 #include "../Common/Map.h"
 #include "../Common/ParseUtil.h"
+#include "IniNameRegistry.h"
 #include <windows.h>
 #include <optional>
 #include <string>

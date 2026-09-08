@@ -30,6 +30,7 @@
   <ItemGroup>
     <ClCompile Include="AsyncTask.cpp" />
     <ClCompile Include="CommandHandler.cpp" />
+    <ClCompile Include="IniNameRegistry.cpp" />
     <ClCompile Include="ConfigParser.cpp" />
     <ClCompile Include="ConfigParser_Test.cpp">
       <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
@@ -176,6 +177,7 @@
     <ClInclude Include="AspectRatioMode.h" />
     <ClInclude Include="AsyncTask.h" />
     <ClInclude Include="CommandHandler.h" />
+    <ClInclude Include="IniNameRegistry.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="ContextMenu.h" />
     <ClInclude Include="CoreTemp\CoreTempProxy.h" />
