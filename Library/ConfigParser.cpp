@@ -1672,7 +1672,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	std::wstring optionUpperCase;  // buffer
 
 	WCHAR sectionUpperCase[512];
-	size_t sectionLength = 0;
+	IniSectionID sectionID;
 
 	size_t sectionsSeen = 0;
 	size_t sectionIndex = 0;
@@ -1686,6 +1686,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 		{
 			readSection = false;
 			sectionOptions.clear();
+			sectionID = {};
 
 			// Grouped exactly as the pass above grouped them, so that the numbering matches.
 			if (!fileSections.insert(StrToUpper(name)).second) return;
@@ -1696,7 +1697,8 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 			if (!StringUtil::ToUpperCase(name, sectionUpperCase, _countof(sectionUpperCase))) return;
 
-			sectionLength = name.length();
+			sectionID = GetIniNameRegistry().InternSection(name);
+			if (!sectionID.IsValid()) return;
 
 			const bool isRainmeter = (wcscmp(sectionUpperCase, L"RAINMETER") == 0);
 			if (skinSection != nullptr)
@@ -1766,70 +1768,47 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 			if (isMetadata) return;
 
-			// Construct the map key manually instead of using SetValue() in order to:
-			// - move the key into the map without copying
-			// - ensure that duplicate option values aren't inserted
-			// - avoid uppercasing the same strings multiple times
-			std::wstring mapKey;
-			mapKey.reserve(sectionLength + 1 + optionUpperCase.length());
-			mapKey.append(sectionUpperCase, sectionLength);
-			mapKey += L'~';
-			mapKey += optionUpperCase;
-			m_Values.insert_or_assign(std::move(mapKey), std::wstring(value));
+			const auto optionID = GetIniNameRegistry().InternOption(option);
+			if (!optionID.IsValid()) return;
+
+			m_Values.insert_or_assign(MakeIniValueID(sectionID, optionID), std::wstring(value));
 
 			if (isVariables) m_ListVariables.emplace_back(option);
 		});
 }
 
-std::wstring_view BuildValuesMapKey(std::wstring_view section, std::wstring_view option, WCHAR* buffer, size_t bufferCount)
-{
-	auto bufferPos = buffer;
-
-	const auto keyLength = section.size() + 1 + option.size();
-	if (keyLength >= bufferCount) return {};
-
-	StringUtil::ToUpperCase(section, bufferPos, bufferCount);
-	bufferPos += section.length();
-
-	*bufferPos = L'~';
-	bufferPos += 1;
-
-	StringUtil::ToUpperCase(option, bufferPos, bufferCount - (bufferPos - buffer));
-	return std::wstring_view(buffer, keyLength);
-}
-
 const std::wstring* ConfigParser::GetValue(std::wstring_view section, std::wstring_view option)
 {
-	WCHAR buffer[256];
-	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
-	if (!key.empty())
-	{
-		auto iter = m_Values.find(key);
-		if (iter != m_Values.end()) return &iter->second;
-	}
-	return nullptr;
+	const auto sectionID = GetIniNameRegistry().FindSection(section);
+	if (!sectionID) return nullptr;
+
+	const auto optionID = GetIniNameRegistry().FindOption(option);
+	return optionID ? GetValue(*sectionID, *optionID) : nullptr;
+}
+
+const std::wstring* ConfigParser::GetValue(IniSectionID section, IniOptionID option) const
+{
+	auto iter = m_Values.find(MakeIniValueID(section, option));
+	return iter != m_Values.end() ? &iter->second : nullptr;
 }
 
 void ConfigParser::SetValue(std::wstring_view section, std::wstring_view option, std::wstring value)
 {
-	WCHAR buffer[256];
-	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
-	if (!key.empty())
-	{
-		m_Values[key] = std::move(value);
-	}
+	const auto sectionID = GetIniNameRegistry().InternSection(section);
+	const auto optionID = GetIniNameRegistry().InternOption(option);
+	if (!sectionID.IsValid() || !optionID.IsValid()) return;
+
+	m_Values[MakeIniValueID(sectionID, optionID)] = std::move(value);
 }
 
 void ConfigParser::DeleteValue(std::wstring_view section, std::wstring_view option)
 {
-	WCHAR buffer[256];
-	const auto key = BuildValuesMapKey(section, option, buffer, _countof(buffer));
-	if (!key.empty())
-	{
-		auto iter = m_Values.find(key);
-		if (iter != m_Values.end())
-		{
-			m_Values.erase(iter);
-		}
-	}
+	const auto sectionID = GetIniNameRegistry().FindSection(section);
+	if (!sectionID) return;
+
+	const auto optionID = GetIniNameRegistry().FindOption(option);
+	if (!optionID) return;
+
+	auto iter = m_Values.find(MakeIniValueID(*sectionID, *optionID));
+	if (iter != m_Values.end()) m_Values.erase(iter);
 }
