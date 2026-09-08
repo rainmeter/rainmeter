@@ -13,10 +13,21 @@
 
 #include "Map.h"
 
-// DecodedText reproduces the observable reading behavior of GetPrivateProfileString and its
-// relatives, including the ugly parts, because skins depend on them.
-//
-// Docs/ProfileApiBehavior.md is the specification and the evidence behind every rule here.
+// These helpers reproduce the Win32 private-profile behavior that skins depend on:
+// - ANSI input uses the process codepage. UTF-16LE is recognized with or without a BOM; UTF-16BE
+//   and odd-sized UTF-16LE input are rejected.
+// - CR, LF and CRLF end lines. Names and values are trimmed only while their characters are at or
+//   below U+0020. A section starts at the first non-whitespace '[' and ends at the first ']' or
+//   the end of the line. A key/value line splits at its first '='.
+// - Only ';' as the first non-whitespace character starts a comment. '#' and trailing ';' are
+//   ordinary text. Keys before the first section are unreachable. Values lose one matching pair
+//   of surrounding single or double quotes after trimming.
+// - Lookups are case-insensitive and use the first matching section and key. Enumeration keeps
+//   file order and original spelling.
+// - Writing preserves an existing file's ANSI or UTF-16LE encoding, updates only the first match,
+//   preserves untouched text, appends new keys and sections, and emits changed lines with CRLF.
+//   Replacing a value keeps the text before '=' and replaces everything after it. Deleting a key
+//   removes its line; deleting a section removes its header and contents.
 //
 // Decoding a file and walking it are separate steps, so that a caller needing more than one pass
 // -- ConfigParser needs the section names before it reads any keys -- pays for the decoding once.
@@ -171,8 +182,7 @@ std::wstring ReadKey(const std::wstring& path, std::wstring_view section, std::w
 // nonnumeric value in the file returns zero.
 int ReadIntKey(const std::wstring& path, std::wstring_view section, std::wstring_view key, int defaultValue);
 
-// Edits .ini files with the lexical, placement and encoding behavior measured in
-// Docs/ProfileApiBehavior.md.
+// Edits .ini files with the compatibility behavior summarized above.
 //
 // Changes stay in memory until Save is called. Destroying a Writer does not save it, because a
 // destructor could not report a write failure to the caller.
