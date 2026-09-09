@@ -2272,7 +2272,7 @@ void Skin::ReadOptions(ConfigParser& parser, IniSectionID section, bool isDefaul
 	m_WindowZPosition = (zPos >= ZPOSITION_ONDESKTOP && zPos <= ZPOSITION_ONTOPMOST) ? (ZPOSITION)zPos : ZPOSITION_NORMAL;
 
 	int hideMode = reader.ReadInt(makeKey(L"HideOnMouseOver"), HIDEMODE_NONE);  // Deprecated
-	const auto hideOnMouseOverDefined = parser.GetLastValueDefined();
+	const auto hideOnMouseOverDefined = reader.GetLastValueDefined();
 	hideMode = reader.ReadInt(makeKey(L"OnHover"), hideMode);
 	if (isDefault && (!reader.GetLastDefaultUsed() || hideOnMouseOverDefined))
 	{
