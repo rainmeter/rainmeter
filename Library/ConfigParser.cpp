@@ -91,10 +91,10 @@ ConfigParser::OptionReader::OptionReader(ConfigParser& parser, std::wstring_view
 
 	if (inheritMode != ReadOptionInheritMode::None)
 	{
-		std::wstring_view inherit = parser.ReadString<"@Inherit">(sectionID);
+		std::wstring_view inherit = parser.ReadString(sectionID, IniNameRegistry::InternOption<"@Inherit">());
 		if (inherit.empty() && inheritMode == ReadOptionInheritMode::InheritAndMeterStyle)
 		{
-			inherit = parser.ReadString<"MeterStyle">(sectionID);
+			inherit = parser.ReadString(sectionID, IniNameRegistry::InternOption<"MeterStyle">());
 		}
 
 		StringParser::ForEachToken(inherit, L'|', [&](std::wstring_view name)
