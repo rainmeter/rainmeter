@@ -70,13 +70,8 @@ public:
 
 		bool GetLastReplaced() { return m_Parser.GetLastReplaced(); }
 		bool GetLastDefaultUsed() { return m_Parser.GetLastDefaultUsed(); }
-		bool GetLastKeyDefined() { return m_Parser.GetLastKeyDefined(); }
 		bool GetLastValueDefined() { return m_Parser.GetLastValueDefined(); }
 		std::wstring_view FindSectionName() { return m_Parser.FindSectionName(m_SectionID); }
-
-		bool IsValueDefined(IniOptionID option) { return m_Parser.IsValueDefined(m_SectionID, option); }
-		bool IsValueDefined(std::wstring_view option) { return IsValueDefined(m_Parser.FindOptionID(option)); }
-		template <FixedWString Name> bool IsValueDefined() { return m_Parser.IsValueDefined<Name>(m_SectionID); }
 
 		void ReadString(std::wstring& result, IniOptionID option, std::wstring_view defValue, ReadOptions options = {}) { m_Parser.ReadString(result, m_SectionID, option, defValue, options); }
 		void ReadString(std::wstring& result, std::wstring_view option, std::wstring_view defValue, ReadOptions options = {}) { ReadString(result, m_Parser.FindOptionID(option), defValue, options); }
@@ -169,12 +164,7 @@ public:
 
 	bool GetLastReplaced() { return m_LastReplaced; }
 	bool GetLastDefaultUsed() { return m_LastDefaultUsed; }
-	bool GetLastKeyDefined() { return !m_LastDefaultUsed; }
 	bool GetLastValueDefined() { return m_LastValueDefined; }
-
-	bool IsValueDefined(std::wstring_view section, std::wstring_view key);
-	bool IsValueDefined(IniSectionID section, IniOptionID option);
-	template <FixedWString Name> bool IsValueDefined(IniSectionID section) { return IsValueDefined(section, GetStaticIniOptionID<Name>()); }
 
 private:
 	// Reads into |result|. Prefer this where the value is kept.
