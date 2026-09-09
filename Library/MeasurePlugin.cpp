@@ -7,11 +7,13 @@
 #include "Export.h"
 #include "System.h"
 #include "../Common/RawString.h"
+#include "../Common/ScopedFunction.h"
 #include "../Common/StringParser.h"
 
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
 	m_MonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL),
+	m_CurrentOptionReader(),
 	m_ReloadFunc(),
 	m_InstanceID(),
 	m_Update2(false),
@@ -72,6 +74,9 @@ void MeasurePlugin::UpdateValue()
 
 void MeasurePlugin::ReadOptions(ConfigParser::OptionReader& reader)
 {
+	m_CurrentOptionReader = &reader;
+	auto clearOptionReader = Scoped([&] { m_CurrentOptionReader = nullptr; });
+
 	Measure::ReadOptions(reader);
 
 	if (m_Initialized)
@@ -182,7 +187,6 @@ void MeasurePlugin::ReadOptions(ConfigParser::OptionReader& reader)
 			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_Skin->GetFilePath().c_str(), GetName(), m_InstanceID);
 		}
 	}
-
 	const std::wstring& szMaxValue = reader.ReadString<"MaxValue">(L"");
 	if (szMaxValue.empty())
 	{

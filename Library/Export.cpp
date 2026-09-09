@@ -144,24 +144,30 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
-	auto reader = parser.GetInheritableOptionReader(measure->GetName(), measure->GetSectionID());
-	if (ShouldScalePluginCoordinateOption(measure, option))
+	auto read = [&](ConfigParser::OptionReader& reader) -> LPCWSTR
 	{
-		static WCHAR buffer[32] = { 0 };
-		buffer[0] = L'\0';
+		if (ShouldScalePluginCoordinateOption(measure, option))
+		{
+			static WCHAR buffer[32] = { 0 };
+			buffer[0] = L'\0';
 
-		const auto defValueInt = parser.ParseInt(defValue, 0);
+			const auto defValueInt = parser.ParseInt(defValue, 0);
+			parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
+			const auto result = ReadScaledPluginCoordinateOption(measure, reader, option, defValueInt);
+			parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
+			_itow_s(result, buffer, 10);
+			return buffer;
+		}
+
 		parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
-		const auto result = ReadScaledPluginCoordinateOption(measure, reader, option, defValueInt);
+		LPCWSTR result = reader.ReadString(option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
 		parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
-		_itow_s(result, buffer, 10);
-		return buffer;
-	}
+		return result;
+	};
 
-	parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
-	LPCWSTR result = reader.ReadString(option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
-	parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
-	return result;
+	if (auto* reader = measure->GetCurrentOptionReader()) return read(*reader);
+	auto reader = parser.GetInheritableOptionReader(measure->GetName(), measure->GetSectionID());
+	return read(reader);
 }
 
 LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
@@ -188,21 +194,19 @@ double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
+	auto read = [&](ConfigParser::OptionReader& reader)
+	{
+		parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
+		const double result = ShouldScalePluginCoordinateOption(measure, option) ?
+			ReadScaledPluginCoordinateOption(measure, reader, option, (int)defValue) :
+			reader.ReadFloat(option, defValue);
+		parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
+		return result;
+	};
+
+	if (auto* reader = measure->GetCurrentOptionReader()) return read(*reader);
 	auto reader = parser.GetInheritableOptionReader(measure->GetName(), measure->GetSectionID());
-
-	parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
-	double result;
-	if (ShouldScalePluginCoordinateOption(measure, option))
-	{
-		result = ReadScaledPluginCoordinateOption(measure, reader, option, (int)defValue);
-	}
-	else
-	{
-		result = reader.ReadFloat(option, defValue);
-	}
-	parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
-
-	return result;
+	return read(reader);
 }
 
 double __stdcall RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR option, double defValue)
