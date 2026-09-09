@@ -72,6 +72,16 @@ static const double g_TblScale[2][4] = {
 	}
 };
 
+static int FormatValue(WCHAR* buffer, size_t size, double value, int decimals, std::wstring_view suffix = {})
+{
+	if (size == 0) return 0;
+
+	const auto result = fmt::format_to_n(buffer, size - 1, L"{:.{}f}{}", value, decimals, suffix);
+	const size_t length = std::min(result.size, size - 1);
+	buffer[length] = L'\0';
+	return (int)length;
+}
+
 Measure::Measure(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_Value(0.0),
 	m_Invert(false),
@@ -562,14 +572,10 @@ std::wstring_view Measure::GetStringOrFormattedValue(AUTOSCALE autoScale, double
 std::wstring_view Measure::GetFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	static WCHAR buffer[128];
-	WCHAR format[32];
 
 	if (percentual)
 	{
-		double val = 100.0 * GetRelativeValue();
-
-		_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
-		_snwprintf_s(buffer, _TRUNCATE, format, val);
+		FormatValue(buffer, _countof(buffer), 100.0 * GetRelativeValue(), decimals);
 	}
 	else if (autoScale != AUTOSCALE_OFF)
 	{
@@ -581,13 +587,12 @@ std::wstring_view Measure::GetFormattedValue(AUTOSCALE autoScale, double scale, 
 
 		if (decimals == -1)
 		{
-			int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", val);
+			const int len = FormatValue(buffer, _countof(buffer), val, 5);
 			RemoveTrailingZero(buffer, len);
 		}
 		else
 		{
-			_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
-			_snwprintf_s(buffer, _TRUNCATE, format, val);
+			FormatValue(buffer, _countof(buffer), val, decimals);
 		}
 	}
 
@@ -596,17 +601,8 @@ std::wstring_view Measure::GetFormattedValue(AUTOSCALE autoScale, double scale, 
 
 void Measure::GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords)
 {
-	WCHAR format[32] = { 0 };
 	double value = 0;
-
-	if (decimals == 0)
-	{
-		wcsncpy_s(format, L"%.0f", _TRUNCATE);
-	}
-	else
-	{
-		_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
-	}
+	std::wstring_view suffix;
 
 	const double* tblScale =
 		g_TblScale[(autoScale == AUTOSCALE_1000 || autoScale == AUTOSCALE_1000K) ? AUTOSCALE_INDEX_1000 : AUTOSCALE_INDEX_1024];
@@ -614,29 +610,29 @@ void Measure::GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue,
 	if (theValue >= tblScale[0])
 	{
 		value = theValue / tblScale[0];
-		wcsncat_s(format, L" T", _TRUNCATE);
+		suffix = L" T";
 	}
 	else if (theValue >= tblScale[1])
 	{
 		value = theValue / tblScale[1];
-		wcsncat_s(format, L" G", _TRUNCATE);
+		suffix = L" G";
 	}
 	else if (theValue >= tblScale[2])
 	{
 		value = theValue / tblScale[2];
-		wcsncat_s(format, L" M", _TRUNCATE);
+		suffix = L" M";
 	}
 	else if (autoScale == AUTOSCALE_1024K || autoScale == AUTOSCALE_1000K || theValue >= tblScale[3])
 	{
 		value = theValue / tblScale[3];
-		wcsncat_s(format, L" k", _TRUNCATE);
+		suffix = L" k";
 	}
 	else
 	{
 		value = theValue;
-		wcsncat_s(format, L" ", _TRUNCATE);
+		suffix = L" ";
 	}
-	_snwprintf_s(buffer, sizeInWords, _TRUNCATE, format, value);
+	FormatValue(buffer, sizeInWords, value, decimals, suffix);
 }
 
 void Measure::RemoveTrailingZero(WCHAR* str, int strLen)
