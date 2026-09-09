@@ -72,6 +72,16 @@ static const double g_TblScale[2][4] = {
 	}
 };
 
+Measure::Substitute::Substitute(std::wstring pattern, std::wstring replacement) :
+	pattern(std::move(pattern)),
+	replacement(std::move(replacement))
+{
+}
+
+Measure::Substitute::~Substitute() = default;
+Measure::Substitute::Substitute(Substitute&&) noexcept = default;
+Measure::Substitute& Measure::Substitute::operator=(Substitute&&) noexcept = default;
+
 static int FormatValue(WCHAR* buffer, size_t size, double value, int decimals, std::wstring_view suffix = {})
 {
 	if (size == 0) return 0;
@@ -225,23 +235,18 @@ void Measure::Unpause()
 	m_Skin->GetParser().SetValue(m_Name, L"Paused", L"0");
 }
 
-// Substitues text using a straight find and replace method
-bool Measure::MakePlainSubstitute(std::wstring& str, size_t index)
+// Substitutes text using a straight find and replace method
+void Measure::MakePlainSubstitute(std::wstring& str, const std::wstring& pattern, const std::wstring& replacement)
 {
-	size_t start = 0, pos;
-
-	do
+	size_t start = 0;
+	while (true)
 	{
-		pos = str.find(m_Substitute[index], start);
-		if (pos != std::wstring::npos)
-		{
-			str.replace(pos, m_Substitute[index].length(), m_Substitute[index + 1]);
-			start = pos + m_Substitute[index + 1].length();
-		}
-	}
-	while (pos != std::wstring::npos);
+		const size_t pos = str.find(pattern, start);
+		if (pos == std::wstring::npos) break;
 
-	return true;
+		str.replace(pos, pattern.length(), replacement);
+		start = pos + replacement.length();
+	}
 }
 
 // Substitutes part of the text
@@ -257,44 +262,43 @@ std::wstring_view Measure::CheckSubstitute(std::wstring_view buffer)
 	str = buffer;
 	if (!m_RegExpSubstitute)
 	{
-		for (size_t i = 0, isize = m_Substitute.size(); i < isize; i += 2)
+		for (const auto& substitute : m_Substitute)
 		{
-			if (!m_Substitute[i].empty())
+			if (!substitute.pattern.empty())
 			{
-				MakePlainSubstitute(str, i);
+				MakePlainSubstitute(str, substitute.pattern, substitute.replacement);
 			}
 			else if (str.empty())
 			{
 				// Empty result and empty substitute -> use second
-				str = m_Substitute[i + 1];
+				str = substitute.replacement;
 			}
 		}
 	}
 	else
 	{
 		int ovector[300];
-		for (size_t i = 0, isize = m_Substitute.size(); i < isize; i += 2)
+		for (const auto& substitute : m_Substitute)
 		{
-			const char* error;
-			Pcre re(m_Substitute[i].c_str(), &error);
-			if (!re)
+			if (!substitute.regexp)
 			{
-				MakePlainSubstitute(str, i);
-				LogNoticeF(this, L"Substitute: %S", error);
+				MakePlainSubstitute(str, substitute.pattern, substitute.replacement);
 			}
 			else
 			{
+				Pcre& regexp = *substitute.regexp;
+				regexp.SetOffset(0);
 				do
 				{
 					const int options = str.empty() ? 0 : PCRE_NOTEMPTY;
 					// Empty string is not a valid match.
-					const int rc = re.Execute(str, options, ovector, (int)_countof(ovector));
+					const int rc = regexp.Execute(str, options, ovector, (int)_countof(ovector));
 					if (rc <= 0)
 					{
 						break;
 					}
 
-					std::wstring result = m_Substitute[i + 1];
+					std::wstring result = substitute.replacement;
 
 					if (rc > 1)
 					{
@@ -325,7 +329,7 @@ std::wstring_view Measure::CheckSubstitute(std::wstring_view buffer)
 					const int start = ovector[0];
 					const int length = ovector[1] - ovector[0];
 					str.replace(start, length, result);
-					re.SetOffset(start + (int)result.length());
+					regexp.SetOffset(start + (int)result.length());
 				}
 				while (true);
 			}
@@ -355,8 +359,17 @@ bool Measure::ParseSubstitute(std::wstring buffer)
 				word1 = L"^$";
 			}
 
-			m_Substitute.push_back(word1);
-			m_Substitute.push_back(word2);
+			Substitute& substitute = m_Substitute.emplace_back(std::move(word1), std::move(word2));
+			if (m_RegExpSubstitute)
+			{
+				const char* error;
+				substitute.regexp = std::make_unique<Pcre>(substitute.pattern.c_str(), &error);
+				if (!*substitute.regexp)
+				{
+					substitute.regexp.reset();
+					LogNoticeF(this, L"Substitute: %S", error);
+				}
+			}
 		}
 
 		std::wstring sep2 = ExtractWord(buffer);

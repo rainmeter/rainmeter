@@ -39,6 +39,7 @@ private:
 class Meter;
 class Skin;
 class ConfigParser;
+class Pcre;
 
 class __declspec(novtable) Measure : public Section
 {
@@ -96,7 +97,7 @@ protected:
 	bool ParseSubstitute(std::wstring buffer);
 	std::wstring ExtractWord(std::wstring& buffer);
 	std::wstring_view CheckSubstitute(std::wstring_view buffer);
-	bool MakePlainSubstitute(std::wstring& str, size_t index);
+	void MakePlainSubstitute(std::wstring& str, const std::wstring& pattern, const std::wstring& replacement);
 
 	double m_Value;
 
@@ -106,7 +107,19 @@ protected:
 	double m_MinValue;
 	double m_MaxValue;
 
-	std::vector<std::wstring> m_Substitute;
+	struct Substitute
+	{
+		Substitute(std::wstring pattern, std::wstring replacement);
+		~Substitute();
+		Substitute(Substitute&&) noexcept;
+		Substitute& operator=(Substitute&&) noexcept;
+
+		std::wstring pattern;
+		std::wstring replacement;
+		std::unique_ptr<Pcre> regexp;
+	};
+
+	std::vector<Substitute> m_Substitute;
 	bool m_RegExpSubstitute;
 
 	struct AverageData
