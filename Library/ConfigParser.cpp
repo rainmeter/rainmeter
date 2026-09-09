@@ -1536,8 +1536,7 @@ std::wstring ConfigParser::ParseFormulaWithModifiers(const std::wstring& formula
 	if (pos != std::wstring::npos)
 	{
 		modifiers = formula.substr(pos + 1);  // can be empty!
-		const std::wstring newFormula(formula, 0, pos + 1);
-		if (ParseFormula(newFormula, &value))
+		if (ParseFormula(std::wstring_view(formula).substr(0, pos + 1), &value))
 		{
 			WCHAR buffer[128] = { 0 };
 			int bufferLen = _snwprintf_s(buffer, _TRUNCATE, L"%lf", value);
