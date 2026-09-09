@@ -58,9 +58,29 @@ function Invoke-NativeCommand {
 
 	Push-Location $WorkingDirectory
 	try {
-		& $FilePath @Arguments
-		if ($LASTEXITCODE -ne 0) {
-			Write-Error "ERROR ${LASTEXITCODE}: Failed to run $FilePath"
+		$errorLines = [System.Collections.Generic.List[string]]::new()
+		& $FilePath @Arguments 2>&1 | ForEach-Object {
+			$line = $_.ToString()
+			Write-Host $line
+			if ($line -match '(?i)(?:^|:\s)(?:fatal\s+)?error(?:\s+[A-Z]+\d+)?\s*:') {
+				$errorLines.Add($line)
+				if ($errorLines.Count -gt 10) {
+					$errorLines.RemoveAt(0)
+				}
+			}
+		}
+		$exitCode = $LASTEXITCODE
+		if ($exitCode -ne 0) {
+			if ($env:GITHUB_ACTIONS -eq 'true') {
+				if ($errorLines.Count -gt 0) {
+					$annotationMessage = [string]::Join("`n", $errorLines)
+				} else {
+					$annotationMessage = "$FilePath exited with code $exitCode"
+				}
+				$annotationMessage = $annotationMessage.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+				Write-Host "::error title=${ErrorMessage}::$annotationMessage"
+			}
+			Write-Error "ERROR ${exitCode}: $ErrorMessage"
 			exit 1
 		}
 	} finally {
@@ -181,17 +201,17 @@ if ($BuildType -ne 'test-64' -and $BuildType -ne 'languages' -and $BuildType -ne
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'rainmeter-32') {
 	Write-Host '* Building 32-bit projects'
-	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$MSBuildTarget", '/p:Platform=Win32', '/v:q', '/m', '..\Rainmeter.sln'))
+	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$MSBuildTarget", '/p:Platform=Win32', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '32-bit project build failed'
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'rainmeter-64') {
 	Write-Host '* Building 64-bit projects'
-	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$MSBuildTarget", '/p:Platform=x64', '/v:q', '/m', '..\Rainmeter.sln'))
+	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$MSBuildTarget", '/p:Platform=x64', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '64-bit project build failed'
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'test-64') {
 	Write-Host '* Testing 64-bit projects'
-	Invoke-NativeCommand 'vstest.console.exe' @('..\BuildOut\Release64\Obj\Common_Test\Common_Test.dll', '..\BuildOut\Release64\Rainmeter.dll', '/Platform:x64')
+	Invoke-NativeCommand 'vstest.console.exe' @('..\BuildOut\Release64\Obj\Common_Test\Common_Test.dll', '..\BuildOut\Release64\Rainmeter.dll', '/Platform:x64') -ErrorMessage '64-bit tests failed'
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'plugin-api') {
@@ -203,7 +223,7 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'plugin-api') {
 	# The import libraries come from the PluginAPI stub rather than from Exports.def directly,
 	# since lib.exe cannot tell how the __stdcall functions are decorated from a name alone.
 	foreach ($arch in ([ordered]@{ x32 = 'Win32'; x64 = 'x64' }).GetEnumerator()) {
-		Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @('/t:rebuild', "/p:Platform=$($arch.Value)", "/p:SolutionDir=$solutionDir", '/v:q', '..\PluginAPI\PluginAPI.vcxproj'))
+		Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @('/t:rebuild', "/p:Platform=$($arch.Value)", "/p:SolutionDir=$solutionDir", '/v:q', '..\PluginAPI\PluginAPI.vcxproj')) -ErrorMessage "$($arch.Key) Plugin API build failed"
 
 		$libDir = Join-Path $pluginApiDir $arch.Key
 		New-Item -ItemType Directory -Path $libDir -Force | Out-Null
@@ -216,7 +236,7 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'plugin-api') {
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'languages' -or $BuildType -eq 'installer') {
 	Write-Host '* Building languages'
-	Invoke-NativeCommand 'powershell.exe' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '.\GenerateLanguages.ps1')
+	Invoke-NativeCommand 'powershell.exe' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '.\GenerateLanguages.ps1') -ErrorMessage 'Language build failed'
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'installer') {
@@ -242,7 +262,7 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'installer') {
 		"/DBUILD_YEAR=$buildYear"
 	)
 
-	Invoke-NativeCommand $makeNsis ($installerDefines + @('/WX', '.\Installer\Installer.nsi'))
+	Invoke-NativeCommand $makeNsis ($installerDefines + @('/WX', '.\Installer\Installer.nsi')) -ErrorMessage 'Installer build failed'
 }
 
 Write-Host
