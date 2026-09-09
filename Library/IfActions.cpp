@@ -37,6 +37,27 @@ public:
 	bool fCommitted = false;
 };
 
+class IfMatchState : public IfState
+{
+public:
+	IfMatchState(std::wstring value, std::wstring trueAction, std::wstring falseAction) :
+		IfState(std::move(value), std::move(trueAction), std::move(falseAction))
+	{
+	}
+
+	void Set(std::wstring value, std::wstring trueAction, std::wstring falseAction)
+	{
+		if (this->value != value)
+		{
+			compiledMatch.reset();
+		}
+
+		IfState::Set(std::move(value), std::move(trueAction), std::move(falseAction));
+	}
+
+	std::unique_ptr<Pcre> compiledMatch;
+};
+
 }  // namespace
 
 struct IfActions::ValueActions
@@ -57,7 +78,7 @@ struct IfActions::ValueActions
 struct IfActions::ExpressionActions
 {
 	std::vector<IfState> conditions;
-	std::vector<IfState> matches;
+	std::vector<IfMatchState> matches;
 	bool conditionMode = false;
 	bool matchMode = false;
 };
@@ -330,18 +351,22 @@ void IfActions::DoIfActions(Measure& measure, double value)
 	}
 
 	// IfMatch
+	if (actions.matches.empty()) return;
+
 	i = 0;
+	const WCHAR* value = measure.GetStringValue();
+	const std::wstring_view str = value ? value : L"";
+	int ovector[300];
 	for (auto& item : actions.matches)
 	{
 		++i;
 		if (!item.value.empty() && (!item.tAction.empty() || !item.fAction.empty()))
 		{
-			const char* error;
-
-			Pcre re(item.value.c_str(), &error);
-			if (!re)
+			if (!item.compiledMatch)
 			{
-				if (!item.parseError)
+				const char* error;
+				item.compiledMatch = std::make_unique<Pcre>(item.value.c_str(), &error);
+				if (!*item.compiledMatch)
 				{
 					if (i == 1)
 					{
@@ -355,14 +380,12 @@ void IfActions::DoIfActions(Measure& measure, double value)
 					item.parseError = true;
 				}
 			}
-			else
+
+			if (*item.compiledMatch)
 			{
 				item.parseError = false;
 
-				const WCHAR* value = measure.GetStringValue();
-				std::wstring_view str = value ? value : L"";
-				int ovector[300];
-				int rc = re.Execute(str, 0, ovector, (int)_countof(ovector));
+				const int rc = item.compiledMatch->Execute(str, 0, ovector, (int)_countof(ovector));
 				if (rc > 0)		// Match
 				{
 					item.fCommitted = false;
