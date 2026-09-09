@@ -6,8 +6,8 @@
 
 MeasureString::MeasureString(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_NumberFormat(LocaleUtil::NumberFormat::Default),
-	m_String(),
-	m_StringValue()
+	m_CurrentString(),
+	m_PendingString()
 {
 }
 
@@ -21,24 +21,29 @@ void MeasureString::ReadOptions(ConfigParser::OptionReader& reader)
 
 	m_NumberFormat = ReadNumberFormatOption(reader);
 
-	reader.ReadString<"String">(m_String, L"");
+	reader.ReadString<"String">(m_PendingString.emplace(), L"");
 
+	// Publish the initial value so meters can use it before the first measure update. A measure
+	// that starts disabled or paused should keep it pending and return an empty string.
 	if (!m_Initialized && !m_Disabled && !m_Paused)
 	{
-		// This sets the "initial" value of the measure to be more consistent with how
-		// other measures work. A measure that is initially disabled/paused should
-		// return an empty string.
-		m_StringValue = m_String;
+		m_CurrentString = std::move(*m_PendingString);
+		m_PendingString.reset();
 	}
 }
 
 void MeasureString::UpdateValue()
 {
-	m_StringValue = m_String;
-	m_Value = LocaleUtil::StringToNumber(m_String.c_str(), m_NumberFormat);
+	if (m_PendingString)
+	{
+		m_CurrentString = std::move(*m_PendingString);
+		m_PendingString.reset();
+	}
+
+	m_Value = LocaleUtil::StringToNumber(m_CurrentString.c_str(), m_NumberFormat);
 }
 
 std::optional<std::wstring_view> MeasureString::GetStringValue()
 {
-	return CheckSubstitute(m_StringValue);
+	return CheckSubstitute(m_CurrentString);
 }
