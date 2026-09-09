@@ -7,6 +7,66 @@
 #include "../Common/MathParser.h"
 #include "Pcre.h"
 
+namespace {
+
+class IfState
+{
+public:
+	IfState(std::wstring value, std::wstring trueAction, std::wstring falseAction) :
+		value(),
+		tAction(),
+		fAction(),
+		parseError(false),
+		tCommitted(false),
+		fCommitted(false)
+	{
+		Set(value, trueAction, falseAction);
+	}
+
+	void Set(std::wstring value, std::wstring trueAction, std::wstring falseAction)
+	{
+		this->value = value;
+		this->tAction = trueAction;
+		this->fAction = falseAction;
+	}
+
+	std::wstring value;
+	std::wstring tAction;
+	std::wstring fAction;
+	bool parseError;
+	bool tCommitted;
+	bool fCommitted;
+};
+
+}  // namespace
+
+struct IfActions::ValueActions
+{
+	double aboveValue = 0.0;
+	double belowValue = 0.0;
+	int64_t equalValue = 0;
+
+	std::wstring aboveAction;
+	std::wstring belowAction;
+	std::wstring equalAction;
+
+	bool aboveCommitted = false;
+	bool belowCommitted = false;
+	bool equalCommitted = false;
+};
+
+struct IfActions::ExpressionActions
+{
+	std::vector<IfState> conditions;
+	std::vector<IfState> matches;
+	bool conditionMode = false;
+	bool matchMode = false;
+};
+
+IfActions::IfActions() = default;
+
+IfActions::~IfActions() = default;
+
 void IfActions::ReadOptions(ConfigParser::OptionReader& reader)
 {
 	std::wstring aboveAction, belowAction, equalAction;
