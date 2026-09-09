@@ -417,12 +417,9 @@ bool Measure::ParseSubstitute(std::wstring_view buffer)
 
 bool Measure::Update(bool rereadOptions)
 {
-	std::optional<ConfigParser::OptionReader> reader;
-
 	if (rereadOptions)
 	{
-		reader.emplace(m_Skin->GetParser().GetInheritableOptionReader(m_Name, m_ID));
-		Section::ReadOptions(*reader);
+		Section::ReadOptions(m_Skin->GetParser(), false);
 	}
 
 	// Don't do anything if paused
@@ -473,9 +470,10 @@ bool Measure::Update(bool rereadOptions)
 
 		// For the conditional options to work with the current measure value when using
 		// [MeasureName], we need to read the options after m_Value has been changed.
-		if (reader)
+		if (rereadOptions)
 		{
-			m_IfActions.ReadConditionOptions(*reader);
+			auto reader = m_Skin->GetParser().GetInheritableOptionReader(m_Name, m_ID);
+			m_IfActions.ReadConditionOptions(reader);
 		}
 
 		if (m_Skin)
