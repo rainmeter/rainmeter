@@ -413,8 +413,8 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 	m_MeterType = TRAY_METER_TYPE_NONE;
 
 	// Read tray settings
-	const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
-	const auto trayMeasureID = GetStaticIniSectionID<"TrayMeasure">();
+	const auto rainmeterID = IniNameRegistry::InternSection<"Rainmeter">();
+	const auto trayMeasureID = IniNameRegistry::InternSection<"TrayMeasure">();
 	auto rainmeterScope = parser.GetOptionReader(L"Rainmeter", rainmeterID);
 	m_IconEnabled = rainmeterScope.ReadBool<"TrayIcon">(true);
 	if (m_IconEnabled)

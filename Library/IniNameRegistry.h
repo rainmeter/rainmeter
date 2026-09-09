@@ -78,6 +78,14 @@ namespace IniNameRegistry {
 IniSectionID InternSection(std::wstring_view name);
 IniOptionID InternOption(std::wstring_view name);
 
+// These overloads cache the ID because the name is fixed at compile time.
+template<FixedWString Name>
+IniSectionID InternSection()
+{
+	static const IniSectionID id = InternSection(Name.View());
+	return id;
+}
+
 template<FixedWString Name>
 IniOptionID InternOption()
 {
@@ -90,10 +98,3 @@ std::optional<IniOptionID> FindOption(std::wstring_view name);
 const std::wstring& GetOptionName(IniOptionID id);
 
 }  // namespace IniNameRegistry
-
-template <FixedWString Name>
-IniSectionID GetStaticIniSectionID()
-{
-	static const IniSectionID id = IniNameRegistry::InternSection(Name.View());
-	return id;
-}

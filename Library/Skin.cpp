@@ -2532,7 +2532,7 @@ bool Skin::ReadSkin()
 
 	m_Parser.Initialize(iniFile, this, nullptr);
 
-	const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
+	const auto rainmeterID = IniNameRegistry::InternSection<"Rainmeter">();
 
 	// Read any default settings from the skin (ie. DefaultWindowX, DefaultWindowY, etc.)
 	if (m_IsFirstRun)
@@ -2969,7 +2969,7 @@ bool Skin::ResizeWindow(bool reset)
 	{
 		m_Background = new GeneralImage(L"Background", nullptr, false, this);
 
-		const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
+		const auto rainmeterID = IniNameRegistry::InternSection<"Rainmeter">();
 		auto reader = m_Parser.GetOptionReader(L"Rainmeter", rainmeterID);
 		m_Background->ReadOptions(m_Parser, reader);
 		m_Background->LoadImage(m_BackgroundName);
@@ -4261,7 +4261,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			std::wstring action;
 
-			const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
+			const auto rainmeterID = IniNameRegistry::InternSection<"Rainmeter">();
 			auto reader = m_Parser.GetOptionReader(L"Rainmeter", rainmeterID);
 
 			int position = (int)wParam - IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + 1;

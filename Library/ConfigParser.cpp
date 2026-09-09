@@ -160,7 +160,7 @@ void ConfigParser::ReadVariables()
 	std::list<std::wstring>::const_iterator iter = m_ListVariables.begin();
 	for ( ; iter != m_ListVariables.end(); ++iter)
 	{
-		SetVariable((*iter), ReadString(GetStaticIniSectionID<"Variables">(), FindOptionID(*iter), L"", { .sectionVariables = false }));
+		SetVariable((*iter), ReadString(IniNameRegistry::InternSection<"Variables">(), FindOptionID(*iter), L"", { .sectionVariables = false }));
 	}
 }
 
@@ -1297,7 +1297,7 @@ void ConfigParser::ReadStringInternal(std::wstring& result, IniSectionID section
 			if (result.find(L'#') != std::wstring::npos)
 			{
 				// Make sure new-style variables are processed for the [Variables] section
-				const auto variablesID = GetStaticIniSectionID<"Variables">();
+				const auto variablesID = IniNameRegistry::InternSection<"Variables">();
 				bool runNewStyle = section == variablesID;
 				if (ReplaceVariables(result, runNewStyle))
 				{
@@ -1737,9 +1737,9 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	ankerl::unordered_dense::set<IniSectionID> fileSections;
 	ankerl::unordered_dense::set<IniOptionID> sectionOptions;
 
-	const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
-	const auto variablesID = GetStaticIniSectionID<"Variables">();
-	const auto metadataID = GetStaticIniSectionID<"Metadata">();
+	const auto rainmeterID = IniNameRegistry::InternSection<"Rainmeter">();
+	const auto variablesID = IniNameRegistry::InternSection<"Variables">();
+	const auto metadataID = IniNameRegistry::InternSection<"Metadata">();
 	const auto skinID = skinSection ? IniNameRegistry::InternSection(skinSection) : IniSectionID{};
 
 	std::wstring sectionName;

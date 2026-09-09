@@ -717,7 +717,7 @@ void ContextMenu::AppendSkinCustomMenu(
 	Skin* skin, int index, HMENU menu, bool standaloneMenu)
 {
 	// Add custom actions to the context menu
-	const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
+	const auto rainmeterID = IniNameRegistry::InternSection<"Rainmeter">();
 	auto& parser = skin->GetParser();
 	auto reader = parser.GetOptionReader(L"Rainmeter", rainmeterID);
 	std::wstring contextTitle = reader.ReadString<"ContextTitle">(L"");
