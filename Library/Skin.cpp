@@ -2206,6 +2206,7 @@ void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)
 
 void Skin::ReadOptions(ConfigParser& parser, IniSectionID section, bool isDefault)
 {
+	auto reader = parser.GetOptionReader(parser.FindSectionName(section), section);
 	const WCHAR* iniFile = GetRainmeter().GetIniFile().c_str();
 	const WCHAR* config = m_FolderPath.c_str();
 
@@ -2221,7 +2222,7 @@ void Skin::ReadOptions(ConfigParser& parser, IniSectionID section, bool isDefaul
 
 	auto writeDefaultString = [&](LPCWSTR key, LPCWSTR value)
 	{
-		if (parser.GetLastValueDefined())
+		if (reader.GetLastValueDefined())
 		{
 			ini->WriteKey(config, key, value);
 		}
@@ -2229,7 +2230,7 @@ void Skin::ReadOptions(ConfigParser& parser, IniSectionID section, bool isDefaul
 
 	auto writeDefaultInt = [&](LPCWSTR key, int value)
 	{
-		if (parser.GetLastValueDefined())
+		if (reader.GetLastValueDefined())
 		{
 			_itow_s(value, buffer, 10);
 			ini->WriteKey(config, key, buffer);
@@ -2239,7 +2240,7 @@ void Skin::ReadOptions(ConfigParser& parser, IniSectionID section, bool isDefaul
 	INT writeFlags = 0;
 	auto addWriteFlag = [&](INT flag)
 	{
-		if (parser.GetLastDefaultUsed())
+		if (reader.GetLastDefaultUsed())
 		{
 			writeFlags |= flag;
 		}
@@ -2247,81 +2248,81 @@ void Skin::ReadOptions(ConfigParser& parser, IniSectionID section, bool isDefaul
 
 	// Check if the window position should be read as a formula
 	std::wstring windowX;
-	parser.ReadString(windowX, section, makeKey(L"WindowX"), L"0");
+	reader.ReadString(windowX, makeKey(L"WindowX"), L"0");
 	isDefault ? writeDefaultString(L"WindowX", windowX.c_str()) : addWriteFlag(OPTION_POSITION);
 	m_Position.GetX().SetAuthoredWindowOption(parser.ParseFormulaWithModifiers(windowX));
 
 	std::wstring windowY;
-	parser.ReadString(windowY, section, makeKey(L"WindowY"), L"0");
+	reader.ReadString(windowY, makeKey(L"WindowY"), L"0");
 	isDefault ? writeDefaultString(L"WindowY", windowY.c_str()) : addWriteFlag(OPTION_POSITION);
 	m_Position.GetY().SetAuthoredWindowOption(parser.ParseFormulaWithModifiers(windowY));
 
 	std::wstring anchorX;
-	parser.ReadString(anchorX, section, makeKey(L"AnchorX"), L"0");
+	reader.ReadString(anchorX, makeKey(L"AnchorX"), L"0");
 	if (isDefault) writeDefaultString(L"AnchorX", anchorX.c_str());
 	m_Position.GetX().SetAnchorOption(parser.ParseFormulaWithModifiers(anchorX));
 
 	std::wstring anchorY;
-	parser.ReadString(anchorY, section, makeKey(L"AnchorY"), L"0");
+	reader.ReadString(anchorY, makeKey(L"AnchorY"), L"0");
 	if (isDefault) writeDefaultString(L"AnchorY", anchorY.c_str());
 	m_Position.GetY().SetAnchorOption(parser.ParseFormulaWithModifiers(anchorY));
 
-	int zPos = parser.ReadInt(section, makeKey(L"AlwaysOnTop"), ZPOSITION_NORMAL);
+	int zPos = reader.ReadInt(makeKey(L"AlwaysOnTop"), ZPOSITION_NORMAL);
 	isDefault ? writeDefaultInt(L"AlwaysOnTop", zPos) : addWriteFlag(OPTION_ALWAYSONTOP);
 	m_WindowZPosition = (zPos >= ZPOSITION_ONDESKTOP && zPos <= ZPOSITION_ONTOPMOST) ? (ZPOSITION)zPos : ZPOSITION_NORMAL;
 
-	int hideMode = parser.ReadInt(section, makeKey(L"HideOnMouseOver"), HIDEMODE_NONE);  // Deprecated
-	hideMode = parser.ReadInt(section, makeKey(L"OnHover"), hideMode);
-	if (isDefault && (parser.GetLastKeyDefined() || parser.IsValueDefined(section, makeKey(L"HideOnMouseOver"))))
+	int hideMode = reader.ReadInt(makeKey(L"HideOnMouseOver"), HIDEMODE_NONE);  // Deprecated
+	hideMode = reader.ReadInt(makeKey(L"OnHover"), hideMode);
+	if (isDefault && (reader.GetLastKeyDefined() || reader.IsValueDefined(makeKey(L"HideOnMouseOver"))))
 	{
 		_itow_s(hideMode, buffer, 10);
 		ini->WriteKey(config, L"OnHover", buffer);
 	}
 	m_WindowHide = (hideMode >= HIDEMODE_NONE && hideMode <= HIDEMODE_FADEOUT) ? (HIDEMODE)hideMode : HIDEMODE_NONE;
 
-	m_WindowDraggable = parser.ReadBool(section, makeKey(L"Draggable"), true);
+	m_WindowDraggable = reader.ReadBool(makeKey(L"Draggable"), true);
 	isDefault ? writeDefaultString(L"Draggable", m_WindowDraggable ? L"1" : L"0") : addWriteFlag(OPTION_DRAGGABLE);
 
-	m_SnapEdges = parser.ReadBool(section, makeKey(L"SnapEdges"), true);
+	m_SnapEdges = reader.ReadBool(makeKey(L"SnapEdges"), true);
 	isDefault ? writeDefaultString(L"SnapEdges", m_SnapEdges ? L"1" : L"0") : addWriteFlag(OPTION_SNAPEDGES);
 
-	m_ClickThrough = parser.ReadBool(section, makeKey(L"ClickThrough"), false);
+	m_ClickThrough = reader.ReadBool(makeKey(L"ClickThrough"), false);
 	isDefault ? writeDefaultString(L"ClickThrough", m_ClickThrough ? L"1" : L"0") : addWriteFlag(OPTION_CLICKTHROUGH);
 
-	m_KeepOnScreen = parser.ReadBool(section, makeKey(L"KeepOnScreen"), true);
+	m_KeepOnScreen = reader.ReadBool(makeKey(L"KeepOnScreen"), true);
 	isDefault ? writeDefaultString(L"KeepOnScreen", m_KeepOnScreen ? L"1" : L"0") : addWriteFlag(OPTION_KEEPONSCREEN);
 
-	m_SavePosition = parser.ReadBool(section, makeKey(L"SavePosition"), true);
+	m_SavePosition = reader.ReadBool(makeKey(L"SavePosition"), true);
 	if (isDefault) writeDefaultString(L"SavePosition", m_SavePosition ? L"1" : L"0");
 
-	m_WindowStartHidden = parser.ReadBool(section, makeKey(L"StartHidden"), false);
+	m_WindowStartHidden = reader.ReadBool(makeKey(L"StartHidden"), false);
 	if (isDefault) writeDefaultString(L"StartHidden", m_WindowStartHidden ? L"1" : L"0");
 
-	m_AutoSelectScreen = parser.ReadBool(section, makeKey(L"AutoSelectScreen"), false);
+	m_AutoSelectScreen = reader.ReadBool(makeKey(L"AutoSelectScreen"), false);
 	if (isDefault) writeDefaultString(L"AutoSelectScreen", m_AutoSelectScreen ? L"1" : L"0");
 
 	if (!isDefault)
 	{
-		const int zoom = std::clamp(parser.ReadInt<"Zoom">(section, 100), 10, 500);
-		m_Zoom = parser.GetLastDefaultUsed() ? std::nullopt : std::optional<int>(zoom);
+		const int zoom = std::clamp(reader.ReadInt<"Zoom">(100), 10, 500);
+		m_Zoom = reader.GetLastDefaultUsed() ? std::nullopt : std::optional<int>(zoom);
 		UpdateZoom();
 	}
 
-	m_AlphaValue = parser.ReadInt(section, makeKey(L"AlphaValue"), 255);
+	m_AlphaValue = reader.ReadInt(makeKey(L"AlphaValue"), 255);
 	m_AlphaValue = std::max(m_AlphaValue, 0);
 	m_AlphaValue = std::min(m_AlphaValue, 255);
 	if (isDefault) writeDefaultInt(L"AlphaValue", m_AlphaValue);
 
-	m_FadeDuration = parser.ReadInt(section, makeKey(L"FadeDuration"), 250);
+	m_FadeDuration = reader.ReadInt(makeKey(L"FadeDuration"), 250);
 	m_FadeDuration = std::max(m_FadeDuration, 0);
 	if (isDefault) writeDefaultInt(L"FadeDuration", m_FadeDuration);
 	if (ini) ini->Save();
 
 	if (!isDefault)
 	{
-		parser.ReadString<"Group">(m_SkinGroup, section, L"");  // |DefaultGroup| not supported
+		reader.ReadString<"Group">(m_SkinGroup, L"");  // |DefaultGroup| not supported
 
-		const std::wstring dragGroup = parser.ReadString<"DragGroup">(section, L"");  // |DefaultDragGroup| not supported
+		const std::wstring dragGroup = reader.ReadString<"DragGroup">(L"");  // |DefaultDragGroup| not supported
 		m_DragGroup.InitializeGroup(dragGroup);
 
 		// Set screen position variables temporarily
@@ -2483,11 +2484,11 @@ void Skin::WriteDeferredOptions()
 	}
 }
 
-void Skin::ReadUpdateOption(IniSectionID section)
+void Skin::ReadUpdateOption(ConfigParser::OptionReader& reader)
 {
 	const auto skipWS = StringParser::SkipWhitespace;
 	const MathParser& mathParser = m_Parser.GetMathParser();
-	const std::wstring& update = m_Parser.ReadString<"Update">(section, L"");
+	const std::wstring& update = reader.ReadString<"Update">(L"");
 	StringParser updateParser(update);
 
 	m_WindowUpdate = updateParser.ConsumeIntOrFormula(mathParser, skipWS).value_or(INTERVAL_METER);
@@ -2546,14 +2547,15 @@ bool Skin::ReadSkin()
 
 		ReadOptions(parser, m_FolderPath.c_str(), false);
 	}
+	auto reader = m_Parser.GetOptionReader(L"Rainmeter", rainmeterID);
 
-	m_Canvas.SetAccurateText(m_Parser.ReadBool<"AccurateText">(rainmeterID, false));
+	m_Canvas.SetAccurateText(reader.ReadBool<"AccurateText">(false));
 
 	// Gotta have some kind of buffer during initialization
 	m_Canvas.Resize(1, 1);
 
 	// Check the version
-	UINT appVersion = m_Parser.ReadUInt<"AppVersion">(rainmeterID, 0);
+	UINT appVersion = reader.ReadUInt<"AppVersion">(0);
 	if (appVersion > RAINMETER_VERSION)
 	{
 		if (appVersion % 1000 != 0)
@@ -2570,14 +2572,14 @@ bool Skin::ReadSkin()
 		return false;
 	}
 
-	m_SkinW = m_Parser.ReadInt<"SkinWidth">(rainmeterID, 0);
-	m_SkinH = m_Parser.ReadInt<"SkinHeight">(rainmeterID, 0);
+	m_SkinW = reader.ReadInt<"SkinWidth">(0);
+	m_SkinH = reader.ReadInt<"SkinHeight">(0);
 
 	m_WindowW = m_SkinW;
 	m_WindowH = m_SkinH;
 
 	// Global settings
-	const std::wstring& group = m_Parser.ReadString<"Group">(rainmeterID, L"");
+	const std::wstring& group = reader.ReadString<"Group">(L"");
 	if (!group.empty())
 	{
 		m_SkinGroup += L'|';
@@ -2585,27 +2587,27 @@ bool Skin::ReadSkin()
 	}
 	InitializeGroup(m_SkinGroup);
 
-	const std::wstring dragGroup = m_Parser.ReadString<"DragGroup">(rainmeterID, L"");
+	const std::wstring dragGroup = reader.ReadString<"DragGroup">(L"");
 	m_DragGroup.AddToGroup(dragGroup);
 
 	static const RECT defMargins = { 0 };
-	m_BackgroundMargins = m_Parser.ReadRECT<"BackgroundMargins">(rainmeterID, defMargins);
-	m_DragMargins = m_Parser.ReadRECT<"DragMargins">(rainmeterID, defMargins);
+	m_BackgroundMargins = reader.ReadRECT<"BackgroundMargins">(defMargins);
+	m_DragMargins = reader.ReadRECT<"DragMargins">(defMargins);
 
-	m_BackgroundMode = (BGMODE)m_Parser.ReadInt<"BackgroundMode">(rainmeterID, BGMODE_IMAGE);
-	m_SolidBevel = (BEVELTYPE)m_Parser.ReadInt<"BevelType">(rainmeterID, BEVELTYPE_NONE);
-	m_BevelColor = m_Parser.ReadColor<"BevelColor">(rainmeterID, D2D1::ColorF(D2D1::ColorF::White));
-	m_BevelColor2 = m_Parser.ReadColor<"BevelColor2">(rainmeterID, D2D1::ColorF(D2D1::ColorF::Black));
+	m_BackgroundMode = (BGMODE)reader.ReadInt<"BackgroundMode">(BGMODE_IMAGE);
+	m_SolidBevel = (BEVELTYPE)reader.ReadInt<"BevelType">(BEVELTYPE_NONE);
+	m_BevelColor = reader.ReadColor<"BevelColor">(D2D1::ColorF(D2D1::ColorF::White));
+	m_BevelColor2 = reader.ReadColor<"BevelColor2">(D2D1::ColorF(D2D1::ColorF::Black));
 
-	m_SolidColor = m_Parser.ReadColor<"SolidColor">(rainmeterID, D2D1::ColorF(D2D1::ColorF::Gray));
-	m_SolidColor2 = m_Parser.ReadColor<"SolidColor2">(rainmeterID, m_SolidColor);
-	m_SolidAngle = (FLOAT)m_Parser.ReadFloat<"GradientAngle">(rainmeterID, 0.0);
+	m_SolidColor = reader.ReadColor<"SolidColor">(D2D1::ColorF(D2D1::ColorF::Gray));
+	m_SolidColor2 = reader.ReadColor<"SolidColor2">(m_SolidColor);
+	m_SolidAngle = (FLOAT)reader.ReadFloat<"GradientAngle">(0.0);
 
-	m_DynamicWindowSize = m_Parser.ReadBool<"DynamicWindowSize">(rainmeterID, false);
+	m_DynamicWindowSize = reader.ReadBool<"DynamicWindowSize">(false);
 
 	if (m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE)
 	{
-		m_Parser.ReadString<"Background">(m_BackgroundName, rainmeterID, L"");
+		reader.ReadString<"Background">(m_BackgroundName, L"");
 		if (!m_BackgroundName.empty())
 		{
 			MakePathAbsolute(m_BackgroundName);
@@ -2617,33 +2619,33 @@ bool Skin::ReadSkin()
 	}
 
 	auto& selectionColor = GetRainmeter().GetDefaultSelectionColor();
-	m_SelectedColor = m_Parser.ReadColor<"SelectedColor">(rainmeterID, selectionColor);
+	m_SelectedColor = reader.ReadColor<"SelectedColor">(selectionColor);
 
-	m_Mouse.ReadOptions(m_Parser, rainmeterID, true);
+	m_Mouse.ReadOptions(m_Parser, reader, true);
 
-	m_Parser.ReadString<"OnRefreshAction">(m_OnRefreshAction, rainmeterID, L"", { .sectionVariables = false });
-	m_Parser.ReadString<"OnCloseAction">(m_OnCloseAction, rainmeterID, L"", { .sectionVariables = false });
-	m_Parser.ReadString<"OnFocusAction">(m_OnFocusAction, rainmeterID, L"", { .sectionVariables = false });
-	m_Parser.ReadString<"OnUnfocusAction">(m_OnUnfocusAction, rainmeterID, L"", { .sectionVariables = false });
-	m_Parser.ReadString<"OnUpdateAction">(m_OnUpdateAction, rainmeterID, L"", { .sectionVariables = false });
-	m_Parser.ReadString<"OnWakeAction">(m_OnWakeAction, rainmeterID, L"", { .sectionVariables = false });
-	m_Parser.ReadString<"OnDisplayMetricsChange">(m_OnDisplayMetricsChangeAction, rainmeterID, L"", { .sectionVariables = false });
-	m_Parser.ReadString<"OnVisibilityChange">(m_OnVisibilityChangeAction, rainmeterID, L"", { .sectionVariables = false });
+	reader.ReadString<"OnRefreshAction">(m_OnRefreshAction, L"", { .sectionVariables = false });
+	reader.ReadString<"OnCloseAction">(m_OnCloseAction, L"", { .sectionVariables = false });
+	reader.ReadString<"OnFocusAction">(m_OnFocusAction, L"", { .sectionVariables = false });
+	reader.ReadString<"OnUnfocusAction">(m_OnUnfocusAction, L"", { .sectionVariables = false });
+	reader.ReadString<"OnUpdateAction">(m_OnUpdateAction, L"", { .sectionVariables = false });
+	reader.ReadString<"OnWakeAction">(m_OnWakeAction, L"", { .sectionVariables = false });
+	reader.ReadString<"OnDisplayMetricsChange">(m_OnDisplayMetricsChangeAction, L"", { .sectionVariables = false });
+	reader.ReadString<"OnVisibilityChange">(m_OnVisibilityChangeAction, L"", { .sectionVariables = false });
 
-	ReadUpdateOption(rainmeterID);
+	ReadUpdateOption(reader);
 
-	m_TransitionUpdate = m_Parser.ReadInt<"TransitionUpdate">(rainmeterID, INTERVAL_TRANSITION);
-	m_DefaultUpdateDivider = m_Parser.ReadInt<"DefaultUpdateDivider">(rainmeterID, 1);
-	m_ToolTipHidden = m_Parser.ReadBool<"ToolTipHidden">(rainmeterID, false);
+	m_TransitionUpdate = reader.ReadInt<"TransitionUpdate">(INTERVAL_TRANSITION);
+	m_DefaultUpdateDivider = reader.ReadInt<"DefaultUpdateDivider">(1);
+	m_ToolTipHidden = reader.ReadBool<"ToolTipHidden">(false);
 
-	if (m_Parser.IsKeyDefined<"UpdateMode">(rainmeterID))
+	if (reader.IsKeyDefined<"UpdateMode">())
 	{
 		LogWarningF(this, L"UpdateMode is no longer supported, see pre-release notes");
 	}
 
-	if (m_Parser.ReadBool<"Blur">(rainmeterID, false))
+	if (reader.ReadBool<"Blur">(false))
 	{
-		const WCHAR* blurRegion = m_Parser.ReadString<"BlurRegion">(rainmeterID, L"", { .sectionVariables = false }).c_str();
+		const WCHAR* blurRegion = reader.ReadString<"BlurRegion">(L"", { .sectionVariables = false }).c_str();
 
 		if (*blurRegion)
 		{
@@ -2657,7 +2659,7 @@ bool Skin::ReadSkin()
 
 				// Check for BlurRegion2, BlurRegion3, etc.
 				_snwprintf_s(buffer, _TRUNCATE, L"BlurRegion%i", ++i);
-				blurRegion = m_Parser.ReadString(rainmeterID, buffer, L"").c_str();
+				blurRegion = reader.ReadString(buffer, L"").c_str();
 			}
 			while (*blurRegion);
 		}
@@ -2714,7 +2716,7 @@ bool Skin::ReadSkin()
 
 	// Load local fonts
 	bool hasLocalFonts = false;
-	const WCHAR* localFont = m_Parser.ReadString<"LocalFont">(rainmeterID, L"").c_str();
+	const WCHAR* localFont = reader.ReadString<"LocalFont">(L"").c_str();
 	if (*localFont)
 	{
 		if (!m_FontCollection)
@@ -2744,7 +2746,7 @@ bool Skin::ReadSkin()
 
 			// Check for LocalFont2, LocalFont3, etc.
 			_snwprintf_s(buffer, _TRUNCATE, L"LocalFont%i", ++i);
-			localFont = m_Parser.ReadString(rainmeterID, buffer, L"").c_str();
+			localFont = reader.ReadString(buffer, L"").c_str();
 		}
 		while (*localFont);
 	}
@@ -2795,7 +2797,9 @@ bool Skin::ReadSkin()
 			_wcsicmp(L"Variables", section) != 0 &&
 			_wcsicmp(L"Metadata", section) != 0)
 		{
-			std::wstring measureName = m_Parser.ReadString(section, L"Measure", L"", { .sectionVariables = false });
+			const auto sectionID = IniNameRegistry::FindSection(section).value_or(IniSectionID{});
+			auto sectionScope = m_Parser.GetInheritableOptionReader(section, sectionID);
+			std::wstring measureName = sectionScope.ReadString(L"Measure", L"", { .sectionVariables = false });
 			if (!measureName.empty())
 			{
 				// In the past, Rainmeter included several default plugins. These plugins are now
@@ -2808,7 +2812,7 @@ bool Skin::ReadSkin()
 				//   Measure=Foo
 				if (_wcsicmp(measureName.c_str(), L"Plugin") == 0)
 				{
-					WCHAR* plugin = PathFindFileName(m_Parser.ReadString(section, L"Plugin", L"", { .sectionVariables = false }).c_str());
+					WCHAR* plugin = PathFindFileName(sectionScope.ReadString(L"Plugin", L"", { .sectionVariables = false }).c_str());
 					PathRemoveExtension(plugin);
 
 					for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
@@ -2847,7 +2851,7 @@ bool Skin::ReadSkin()
 				continue;
 			}
 
-			const std::wstring& meterName = m_Parser.ReadString(section, L"Meter", L"", { .sectionVariables = false });
+			const std::wstring& meterName = sectionScope.ReadString(L"Meter", L"", { .sectionVariables = false });
 			if (!meterName.empty())
 			{
 				// It's a meter
@@ -2886,7 +2890,8 @@ bool Skin::ReadSkin()
 	// First read the container option, then set the appropriate relative meter.
 	for (Meter* meter : m_Meters)
 	{
-		meter->ReadContainerOptions(m_Parser);
+		auto reader = m_Parser.GetInheritableOptionReader(meter->GetName(), meter->GetSectionID(), true);
+		meter->ReadContainerOptions(reader);
 	}
 	m_ResetRelativeMeters = true;
 	UpdateRelativeMeters();
@@ -2964,7 +2969,8 @@ bool Skin::ResizeWindow(bool reset)
 		m_Background = new GeneralImage(L"Background", nullptr, false, this);
 
 		const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
-		m_Background->ReadOptions(m_Parser, rainmeterID);
+		auto reader = m_Parser.GetOptionReader(L"Rainmeter", rainmeterID);
+		m_Background->ReadOptions(m_Parser, reader);
 		m_Background->LoadImage(m_BackgroundName);
 
 		auto bitmap = m_Background->GetImage();
@@ -4255,17 +4261,18 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			std::wstring action;
 
 			const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
+			auto reader = m_Parser.GetOptionReader(L"Rainmeter", rainmeterID);
 
 			int position = (int)wParam - IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + 1;
 			if (position == 1)
 			{
-				m_Parser.ReadString<"ContextAction">(action, rainmeterID, L"", { .sectionVariables = false });
+				reader.ReadString<"ContextAction">(action, L"", { .sectionVariables = false });
 			}
 			else
 			{
 				WCHAR buffer[128] = { 0 };
 				_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", position);
-				m_Parser.ReadString(action, rainmeterID, buffer, L"", { .sectionVariables = false });
+				reader.ReadString(action, buffer, L"", { .sectionVariables = false });
 			}
 
 			if (!action.empty())

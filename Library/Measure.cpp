@@ -102,7 +102,7 @@ void Measure::Initialize()
 // call this base implementation if they overwrite this method.
 void Measure::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
+	auto& parser = m_Skin->GetParser();
 	bool oldOnChangeActionEmpty = m_OnChangeAction.empty();
 
 	Section::ReadOptions(reader);
@@ -113,26 +113,26 @@ void Measure::ReadOptions(ConfigParser::OptionReader& reader)
 		m_Substitute.clear();
 	}
 
-	m_Invert = parser.ReadBool<"InvertMeasure">(m_ID, false);
+	m_Invert = reader.ReadBool<"InvertMeasure">(false);
 
-	m_Disabled = parser.ReadBool<"Disabled">(m_ID, false);
-	m_Paused = parser.ReadBool<"Paused">(m_ID, false);
+	m_Disabled = reader.ReadBool<"Disabled">(false);
+	m_Paused = reader.ReadBool<"Paused">(false);
 
-	m_MinValue = parser.ReadFloat<"MinValue">(m_ID, m_MinValue);
-	m_MaxValue = parser.ReadFloat<"MaxValue">(m_ID, m_MaxValue);
+	m_MinValue = reader.ReadFloat<"MinValue">(m_MinValue);
+	m_MaxValue = reader.ReadFloat<"MaxValue">(m_MaxValue);
 
-	m_IfActions.ReadOptions(parser, m_ID);
+	m_IfActions.ReadOptions(reader);
 
 	// The first time around, we read the conditions here. Subsequent rereads will be done in
 	// Update() if needed.
 	if (!m_Initialized)
 	{
-		m_IfActions.ReadConditionOptions(parser, m_ID);
+		m_IfActions.ReadConditionOptions(reader);
 	}
 
-	parser.ReadString<"OnChangeAction">(m_OnChangeAction, m_ID, L"", { .sectionVariables = false });
+	reader.ReadString<"OnChangeAction">(m_OnChangeAction, L"", { .sectionVariables = false });
 
-	const UINT averageSize = parser.ReadUInt<"AverageSize">(m_ID, 0);
+	const UINT averageSize = reader.ReadUInt<"AverageSize">(0);
 	if (averageSize == 0)
 	{
 		m_Average.reset();
@@ -143,8 +143,8 @@ void Measure::ReadOptions(ConfigParser::OptionReader& reader)
 		m_Average->size = averageSize;
 	}
 
-	m_RegExpSubstitute = parser.ReadBool<"RegExpSubstitute">(m_ID, false);
-	std::wstring subs = parser.ReadString<"Substitute">(m_ID, L"");
+	m_RegExpSubstitute = reader.ReadBool<"RegExpSubstitute">(false);
+	std::wstring subs = reader.ReadString<"Substitute">(L"");
 	if (!subs.empty())
 	{
 		if ((subs[0] != L'"' || subs[subs.length() - 1] != L'\'') &&
@@ -169,9 +169,9 @@ void Measure::ReadOptions(ConfigParser::OptionReader& reader)
 
 // "Locale" uses the separators of the user's current locale, "Default" those used by numbers in
 // skin files.
-LocaleUtil::NumberFormat Measure::ReadNumberFormatOption(ConfigParser& parser)
+LocaleUtil::NumberFormat Measure::ReadNumberFormatOption(ConfigParser::OptionReader& reader)
 {
-	const std::wstring& option = parser.ReadString<"NumberConversionFormat">(m_ID, L"");
+	const std::wstring& option = reader.ReadString<"NumberConversionFormat">(L"");
 
 	if (_wcsicmp(option.c_str(), L"Locale") == 0) return LocaleUtil::NumberFormat::Locale;
 
@@ -479,7 +479,8 @@ bool Measure::Update(bool rereadOptions)
 		// [MeasureName], we need to read the options after m_Value has been changed.
 		if (rereadOptions)
 		{
-			m_IfActions.ReadConditionOptions(m_Skin->GetParser(), m_ID);
+			auto reader = m_Skin->GetParser().GetInheritableOptionReader(m_Name, m_ID);
+			m_IfActions.ReadConditionOptions(reader);
 		}
 
 		if (m_Skin)

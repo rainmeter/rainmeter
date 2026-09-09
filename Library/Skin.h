@@ -402,7 +402,7 @@ private:
 	void ReadOptions(ConfigParser& parser, IniSectionID section, bool isDefault);
 	void WriteOptions(INT setting = OPTION_ALL);
 	void WriteDeferredOptions();
-	void ReadUpdateOption(IniSectionID section);
+	void ReadUpdateOption(ConfigParser::OptionReader& reader);
 	bool ReadSkin();
 	bool ShowWindowIfAppropriate();
 	HWND GetWindowFromPoint(POINT pos);

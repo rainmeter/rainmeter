@@ -99,7 +99,6 @@ MeasureWifiStatus::~MeasureWifiStatus()
 
 void MeasureWifiStatus::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
 	if (!s_Client) return;
@@ -107,7 +106,7 @@ void MeasureWifiStatus::ReadOptions(ConfigParser::OptionReader& reader)
 	bool changed = false;
 
 	WLAN_INTERFACE_INFO* newInterface = nullptr;
-	int value = parser.ReadInt<"WifiIntfID">(m_ID, 0);
+	int value = reader.ReadInt<"WifiIntfID">(0);
 	if (value >= (int)s_InterfaceList->dwNumberOfItems)
 	{
 		LogErrorF(this, L"WifiStatus: WifiIntfID=%i is not valid", value);
@@ -124,7 +123,7 @@ void MeasureWifiStatus::ReadOptions(ConfigParser::OptionReader& reader)
 		RefreshConnectionAttributes();
 	}
 
-	value = parser.ReadInt<"WifiListStyle">(m_ID, 0);
+	value = reader.ReadInt<"WifiListStyle">(0);
 	if (value < 0 || value > 7)
 	{
 		LogErrorF(this, L"WifiStatus: WifiListStyle=%i is not valid", value);
@@ -132,7 +131,7 @@ void MeasureWifiStatus::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 	m_ListStyle = value;
 
-	value = parser.ReadInt<"WifiListLimit">(m_ID, 5);
+	value = reader.ReadInt<"WifiListLimit">(5);
 	if (value <= 0)
 	{
 		LogErrorF(this, L"WifiStatus: WifiListLimit=%i is not valid", value);
@@ -151,7 +150,7 @@ void MeasureWifiStatus::ReadOptions(ConfigParser::OptionReader& reader)
 		{ L"TXRATE", MeasureType::TXRATE },
 		{ L"RXRATE", MeasureType::RXRATE },
 	};
-	const MeasureType infoType = parser.ReadEnum<"WifiInfoType">(m_ID, MeasureType::UNKNOWN, s_InfoTypes);
+	const MeasureType infoType = reader.ReadEnum<"WifiInfoType">(MeasureType::UNKNOWN, s_InfoTypes);
 
 	if (infoType != m_Type)
 	{

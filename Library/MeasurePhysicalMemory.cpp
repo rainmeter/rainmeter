@@ -31,12 +31,11 @@ void MeasurePhysicalMemory::UpdateValue()
 
 void MeasurePhysicalMemory::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	double oldMaxValue = m_MaxValue;
 	Measure::ReadOptions(reader);
 	m_MaxValue = oldMaxValue;
 
-	m_Total = parser.ReadBool<"Total">(m_ID, false);
+	m_Total = reader.ReadBool<"Total">(false);
 	if (m_Total)
 	{
 		m_Value = m_MaxValue;

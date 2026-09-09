@@ -217,23 +217,23 @@ MeasureMouse::~MeasureMouse()
 
 void MeasureMouse::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
+	auto& parser = m_Skin->GetParser();
 	const bool wasCapturing = WantsCapture();
 
 	Measure::ReadOptions(reader);
 
-	m_Mouse.ReadOptions(parser, m_ID);
+	m_Mouse.ReadOptions(parser, reader);
 
-	parser.ReadString<"MouseMoveAction">(m_MouseMoveAction, m_ID, L"", { .sectionVariables = false });
-	parser.ReadString<"LeftMouseDragAction">(m_LeftDragAction, m_ID, L"", { .sectionVariables = false });
-	parser.ReadString<"MiddleMouseDragAction">(m_MiddleDragAction, m_ID, L"", { .sectionVariables = false });
-	parser.ReadString<"RightMouseDragAction">(m_RightDragAction, m_ID, L"", { .sectionVariables = false });
-	parser.ReadString<"X1MouseDragAction">(m_X1DragAction, m_ID, L"", { .sectionVariables = false });
-	parser.ReadString<"X2MouseDragAction">(m_X2DragAction, m_ID, L"", { .sectionVariables = false });
+	reader.ReadString<"MouseMoveAction">(m_MouseMoveAction, L"", { .sectionVariables = false });
+	reader.ReadString<"LeftMouseDragAction">(m_LeftDragAction, L"", { .sectionVariables = false });
+	reader.ReadString<"MiddleMouseDragAction">(m_MiddleDragAction, L"", { .sectionVariables = false });
+	reader.ReadString<"RightMouseDragAction">(m_RightDragAction, L"", { .sectionVariables = false });
+	reader.ReadString<"X1MouseDragAction">(m_X1DragAction, L"", { .sectionVariables = false });
+	reader.ReadString<"X2MouseDragAction">(m_X2DragAction, L"", { .sectionVariables = false });
 
-	m_RelativeToSkin = parser.ReadBool<"RelativeToSkin">(m_ID, true);
-	m_RequireDragging = parser.ReadBool<"RequireDragging">(m_ID, false);
-	m_Delay = parser.ReadUInt<"Delay">(m_ID, 16);
+	m_RelativeToSkin = reader.ReadBool<"RelativeToSkin">(true);
+	m_RequireDragging = reader.ReadBool<"RequireDragging">(false);
+	m_Delay = reader.ReadUInt<"Delay">(16);
 
 	if (!m_RequireDragging)
 	{

@@ -247,16 +247,16 @@ void MeterTextEdit::UpdatePlaceholderFormat()
 
 void MeterTextEdit::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
+	auto& parser = m_Skin->GetParser();
 	MeterStringBase::ReadOptions(reader);
 
-	m_MaxLength = parser.ReadInt<"MaxLength">(m_ID, 0);
-	m_Multiline = parser.ReadBool<"Multiline">(m_ID, false);
-	m_ReadOnly = parser.ReadBool<"ReadOnly">(m_ID, false);
+	m_MaxLength = reader.ReadInt<"MaxLength">(0);
+	m_Multiline = reader.ReadBool<"Multiline">(false);
+	m_ReadOnly = reader.ReadBool<"ReadOnly">(false);
 
 	if (m_TrackInitialText)
 	{
-		parser.ReadString<"InitialText">(m_Text, m_ID, L"");
+		reader.ReadString<"InitialText">(m_Text, L"");
 
 		// The caret, the scroll and the undo history all point into the text this replaced. Put
 		// back to where a new field has them, rather than clamped: nothing here is the user's.
@@ -270,7 +270,7 @@ void MeterTextEdit::ReadOptions(ConfigParser::OptionReader& reader)
 	// holds - what the user typed included - rather than only to a freshly read option.
 	ApplyTextTransformations(m_Text);
 
-	const bool password = parser.ReadBool<"Password">(m_ID, false);
+	const bool password = reader.ReadBool<"Password">(false);
 	const bool passwordChanged = password != m_Password;
 	m_Password = password;
 
@@ -286,7 +286,7 @@ void MeterTextEdit::ReadOptions(ConfigParser::OptionReader& reader)
 	// [0-9] and not \d, which would also take the digits of other scripts, and those are not what
 	// a skin reading the field back as a number can parse. No pattern needs ^ or $, since
 	// AcceptsReplacement() anchors both ends itself.
-	const std::wstring& filterOption = parser.ReadString<"InputFilter">(m_ID, L"NONE");
+	const std::wstring& filterOption = reader.ReadString<"InputFilter">(L"NONE");
 	const WCHAR* filter = filterOption.c_str();
 	if (_wcsicmp(filter, L"NONE") == 0)
 	{
@@ -306,7 +306,7 @@ void MeterTextEdit::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 	else if (_wcsicmp(filter, L"REGEXP") == 0)
 	{
-		SetInputRegExp(parser.ReadString<"InputRegExp">(m_ID, L".*"));
+		SetInputRegExp(reader.ReadString<"InputRegExp">(L".*"));
 	}
 	else
 	{
@@ -317,26 +317,25 @@ void MeterTextEdit::ReadOptions(ConfigParser::OptionReader& reader)
 	// PROPER is not offered here: it is a property of whole words, and the text is converted a
 	// keystroke at a time, with no way to know whether more of the word is still coming. StringCase
 	// converts the whole text and does support it.
-	m_InputCase = ReadStringCase(parser, L"InputCase", TEXTCASE_NONE);
+	m_InputCase = ReadStringCase(reader, L"InputCase", TEXTCASE_NONE);
 	if (m_InputCase == TEXTCASE_PROPER)
 	{
 		LogErrorF(this, L"InputCase=PROPER is not valid");
 		m_InputCase = TEXTCASE_NONE;
 	}
 
-	m_SubmitOnEnter = parser.ReadBool<"SubmitOnEnter">(m_ID, !m_Multiline);
+	m_SubmitOnEnter = reader.ReadBool<"SubmitOnEnter">(!m_Multiline);
 
 	// Read without measure replacement so that it resolves when the action runs rather than when
 	// the option is read, which is what lets it reference [$Input].
-	parser.ReadString<"OnSubmitAction">(m_OnSubmitAction, m_ID, L"", { .sectionVariables = false });
-	parser.ReadString<"OnFocusAction">(m_OnFocusAction, m_ID, L"", { .sectionVariables = false });
-	parser.ReadString<"OnDismissAction">(m_OnDismissAction, m_ID, L"", { .sectionVariables = false });
+	reader.ReadString<"OnSubmitAction">(m_OnSubmitAction, L"", { .sectionVariables = false });
+	reader.ReadString<"OnFocusAction">(m_OnFocusAction, L"", { .sectionVariables = false });
+	reader.ReadString<"OnDismissAction">(m_OnDismissAction, L"", { .sectionVariables = false });
 
-	m_FocusBorderColor = parser.ReadColor<"FocusBorderColor">(m_ID,
-		D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
+	m_FocusBorderColor = reader.ReadColor<"FocusBorderColor">(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
 	if (m_FocusBorderColor.a > 0.0f)
 	{
-		m_FocusBorderWidth = (FLOAT)parser.ReadFloat<"FocusBorderWidth">(m_ID, 1.0);
+		m_FocusBorderWidth = (FLOAT)reader.ReadFloat<"FocusBorderWidth">(1.0);
 		if (m_FocusBorderWidth < 0.0f) m_FocusBorderWidth = 0.0f;
 	}
 
@@ -344,22 +343,22 @@ void MeterTextEdit::ReadOptions(ConfigParser::OptionReader& reader)
 	const FLOAT oldPlaceholderFontSize = m_PlaceholderFontSize;
 	const TEXTSTYLE oldPlaceholderStyle = m_PlaceholderStyle;
 
-	parser.ReadString<"PlaceholderText">(m_PlaceholderText, m_ID, L"");
+	reader.ReadString<"PlaceholderText">(m_PlaceholderText, L"");
 	if (!m_PlaceholderText.empty())
 	{
 		// Only read once there is a placeholder to draw, so a meter without one pays nothing here.
 		D2D1_COLOR_F dimmed = m_Color;
 		dimmed.a *= 0.4f;
-		m_PlaceholderColor = parser.ReadColor<"PlaceholderFontColor">(m_ID, dimmed);
+		m_PlaceholderColor = reader.ReadColor<"PlaceholderFontColor">(dimmed);
 
-		m_PlaceholderFontFace = parser.ReadString<"PlaceholderFontFace">(m_ID, m_FontFace.c_str());
+		m_PlaceholderFontFace = reader.ReadString<"PlaceholderFontFace">(m_FontFace.c_str());
 		if (m_PlaceholderFontFace.empty()) m_PlaceholderFontFace = m_FontFace;
 
-		m_PlaceholderFontSize = (FLOAT)parser.ReadFloat<"PlaceholderFontSize">(m_ID, m_FontSize);
+		m_PlaceholderFontSize = (FLOAT)reader.ReadFloat<"PlaceholderFontSize">(m_FontSize);
 		if (m_PlaceholderFontSize < 0.0f) m_PlaceholderFontSize = m_FontSize;
 
 		// Unset inherits the meter's own style.
-		m_PlaceholderStyle = ReadStringStyle(parser, L"PlaceholderStringStyle", m_Style);
+		m_PlaceholderStyle = ReadStringStyle(reader, L"PlaceholderStringStyle", m_Style);
 	}
 
 	if (m_PlaceholderFontFace != oldPlaceholderFontFace ||
@@ -384,12 +383,12 @@ void MeterTextEdit::ReadOptions(ConfigParser::OptionReader& reader)
 			UpdateAutoSizeForText();
 		}
 	}
-	m_CaretColor = parser.ReadColor<"CaretColor">(m_ID, m_Color);
+	m_CaretColor = reader.ReadColor<"CaretColor">(m_Color);
 
 	// The default is the system highlight at half alpha, since the highlight is drawn behind the
 	// text rather than under a recolored run of it.
 	const COLORREF highlight = GetSysColor(COLOR_HIGHLIGHT);
-	m_SelectionColor = parser.ReadColor<"SelectionColor">(m_ID, D2D1::ColorF(
+	m_SelectionColor = reader.ReadColor<"SelectionColor">(D2D1::ColorF(
 		GetRValue(highlight) / 255.0f,
 		GetGValue(highlight) / 255.0f,
 		GetBValue(highlight) / 255.0f,
@@ -411,7 +410,7 @@ void MeterTextEdit::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 }
 
-void MeterTextEdit::BindMeasures(ConfigParser& parser)
+void MeterTextEdit::BindMeasures(ConfigParser::OptionReader& reader)
 {
 	// The text is the user's, so there is no measure to bind.
 }
@@ -788,8 +787,8 @@ void MeterTextEdit::SetText(std::wstring_view text)
 void MeterTextEdit::Reset()
 {
 	ConfigParser& parser = m_Skin->GetParser();
-	ConfigParser::OptionReader optionReader(parser, m_Name, m_ID, true);
-	std::wstring text = parser.ReadString<"InitialText">(m_ID);
+	auto optionReader = parser.GetInheritableOptionReader(m_Name, m_ID, true);
+	std::wstring text = optionReader.ReadString<"InitialText">();
 
 	ApplyTextTransformations(text);
 

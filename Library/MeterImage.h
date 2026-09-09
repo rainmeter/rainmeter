@@ -24,7 +24,7 @@ public:
 
 protected:
 	void ReadOptions(ConfigParser::OptionReader& reader) override;
-	void BindMeasures(ConfigParser& parser) override;
+	void BindMeasures(ConfigParser::OptionReader& reader) override;
 
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite ? true : m_ImageName.empty(); }
 

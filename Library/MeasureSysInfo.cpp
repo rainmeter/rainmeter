@@ -50,7 +50,6 @@ MeasureSysInfo::~MeasureSysInfo()
 
 void MeasureSysInfo::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
 	SysInfoType oldType = m_Type;
@@ -58,7 +57,7 @@ void MeasureSysInfo::ReadOptions(ConfigParser::OptionReader& reader)
 
 	int defaultData = -1;
 
-	std::wstring typeStr = parser.ReadString<"SysInfoType">(m_ID, L"");
+	std::wstring typeStr = reader.ReadString<"SysInfoType">(L"");
 	LPCWSTR type = typeStr.c_str();
 	if (_wcsicmp(L"COMPUTER_NAME", type) == 0)					// BLOCK 1000
 	{
@@ -299,14 +298,14 @@ void MeasureSysInfo::ReadOptions(ConfigParser::OptionReader& reader)
 
 	if (m_Type >= SysInfoType::ADAPTER_DESCRIPTION && m_Type <= SysInfoType::GATEWAY_ADDRESS_V6) // BLOCK 3500
 	{
-		std::wstring siData = parser.ReadString<"SysInfoData">(m_ID, L"BEST");
+		std::wstring siData = reader.ReadString<"SysInfoData">(L"BEST");
 		if (!siData.empty() && !std::all_of(siData.begin(), siData.end(), iswdigit))
 		{
 			m_Data = NetworkUtil::FindBestInterface(siData.c_str());
 		}
 		else
 		{
-			m_Data = parser.ReadInt<"SysInfoData">(m_ID, defaultData);
+			m_Data = reader.ReadInt<"SysInfoData">(defaultData);
 			if (m_Data <= 0)
 			{
 				LogNoticeF(this,
@@ -318,7 +317,7 @@ void MeasureSysInfo::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 	else
 	{
-		m_Data = parser.ReadInt<"SysInfoData">(m_ID, defaultData);
+		m_Data = reader.ReadInt<"SysInfoData">(defaultData);
 	}
 
 	if (m_HasBeenUpdated)

@@ -119,11 +119,11 @@ MeasureActionTimer::~MeasureActionTimer()
 
 void MeasureActionTimer::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
+	auto& parser = m_Skin->GetParser();
 	Measure::ReadOptions(reader);
 
 	size_t index = 1;
-	std::wstring action = parser.ReadString<"ActionList1">(m_ID, L"", { .sectionVariables = false });
+	std::wstring action = reader.ReadString<"ActionList1">(L"", { .sectionVariables = false });
 	while (!action.empty())
 	{
 		std::vector<std::wstring> tokens;
@@ -145,7 +145,7 @@ void MeasureActionTimer::ReadOptions(ConfigParser::OptionReader& reader)
 					parser.ReplaceMeasures(waitTime);
 					parser.ReplaceMeasures(count);
 
-					const std::wstring repeatedAction = parser.ReadString(m_ID, name.c_str(), L"[]", { .sectionVariables = false });
+					const std::wstring repeatedAction = reader.ReadString(name.c_str(), L"[]", { .sectionVariables = false });
 					const std::wstring wait = L"Wait " + waitTime;
 					const int size = (_wtoi(count.c_str()) * 2) - 1;
 					if (size <= 0)
@@ -168,7 +168,7 @@ void MeasureActionTimer::ReadOptions(ConfigParser::OptionReader& reader)
 			}
 			else
 			{
-				tokens[i] = parser.ReadString(m_ID, tokens[i].c_str(), L"[]", { .sectionVariables = false });
+				tokens[i] = reader.ReadString(tokens[i].c_str(), L"[]", { .sectionVariables = false });
 			}
 		}
 
@@ -186,10 +186,10 @@ void MeasureActionTimer::ReadOptions(ConfigParser::OptionReader& reader)
 
 		WCHAR buffer[64];
 		_snwprintf_s(buffer, _TRUNCATE, L"ActionList%zu", ++index);
-		parser.ReadString(action, m_ID, buffer, L"", { .sectionVariables = false });
+		reader.ReadString(action, buffer, L"", { .sectionVariables = false });
 	}
 
-	m_IgnoreWarnings = parser.ReadInt<"IgnoreWarnings">(m_ID, 0) != 0;
+	m_IgnoreWarnings = reader.ReadInt<"IgnoreWarnings">(0) != 0;
 }
 
 void MeasureActionTimer::Command(const std::wstring& command)

@@ -320,7 +320,7 @@ const WCHAR* MeasureTime::GetStringValue()
 
 void MeasureTime::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
+	auto& parser = m_Skin->GetParser();
 	auto ParseYear = [&](std::wstring year, size_t pos) -> void
 	{
 		year = year.substr(pos);
@@ -329,9 +329,9 @@ void MeasureTime::ReadOptions(ConfigParser::OptionReader& reader)
 
 	Measure::ReadOptions(reader);
 
-	parser.ReadString<"Format">(m_Format, m_ID, L"");
+	reader.ReadString<"Format">(m_Format, L"");
 
-	std::wstring timeStamp = parser.ReadString<"TimeStamp">(m_ID, L"-1");
+	std::wstring timeStamp = reader.ReadString<"TimeStamp">(L"-1");
 	if (wcsncmp(timeStamp.c_str(), L"DSTStart", 8) == 0)
 	{
 		m_TimeStampType = DST_START;
@@ -354,7 +354,7 @@ void MeasureTime::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 	else
 	{
-		std::wstring tsformat = parser.ReadString<"TimeStampFormat">(m_ID, L"");
+		std::wstring tsformat = reader.ReadString<"TimeStampFormat">(L"");
 		if (tsformat.empty())
 		{
 			m_TimeStamp = parser.ParseDouble(timeStamp.c_str(), -1.0);
@@ -363,7 +363,7 @@ void MeasureTime::ReadOptions(ConfigParser::OptionReader& reader)
 				// |TimeStamp| is invalid, measure returns the current time
 				m_TimeStampType = INVALID;
 
-				const WCHAR* timezone = parser.ReadString<"TimeZone">(m_ID, L"local").c_str();
+				const WCHAR* timezone = reader.ReadString<"TimeZone">(L"local").c_str();
 				if (_wcsicmp(L"local", timezone) == 0)
 				{
 					m_TimeZone = LOCAL_TIMEZONE;
@@ -371,7 +371,7 @@ void MeasureTime::ReadOptions(ConfigParser::OptionReader& reader)
 				else
 				{
 					m_TimeZone = parser.ParseDouble(timezone, 0.0);
-					m_DaylightSavingTime = parser.ReadBool<"DaylightSavingTime">(m_ID, true);
+					m_DaylightSavingTime = reader.ReadBool<"DaylightSavingTime">(true);
 				}
 
 				UpdateDelta();
@@ -387,7 +387,7 @@ void MeasureTime::ReadOptions(ConfigParser::OptionReader& reader)
 			// The |TimeStamp| is formatted, parse it and convert to a Windows timestamp
 			m_TimeStampType = FIXED;
 
-			std::wstring localeStr = parser.ReadString<"TimeStampLocale">(m_ID, L"C");
+			std::wstring localeStr = reader.ReadString<"TimeStampLocale">(L"C");
 
 			// Because exceptions are disabled, constructing std::locale with an invalid locale will
 			// call abort(). To fail gracefully, we need to check if the locale exists first.
@@ -453,7 +453,7 @@ void MeasureTime::ReadOptions(ConfigParser::OptionReader& reader)
 
 	// Format locale
 	FreeLocale();
-	const WCHAR* formatLocale = parser.ReadString<"FormatLocale">(m_ID, L"").c_str();
+	const WCHAR* formatLocale = reader.ReadString<"FormatLocale">(L"").c_str();
 	if (*formatLocale)
 	{
 		if (_wcsicmp(formatLocale, L"local") == 0)

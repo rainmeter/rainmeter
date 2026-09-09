@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "IniNameRegistry.h"
+#include "ConfigParser.h"
 #include <string_view>
 
 enum MOUSEACTION : uint32_t
@@ -82,7 +82,7 @@ public:
 	Mouse(const Mouse& other) = delete;
 	Mouse& operator=(Mouse other) = delete;
 
-	void ReadOptions(ConfigParser& parser, IniSectionID section, bool isSkinLevel = false);
+	void ReadOptions(ConfigParser& parser, ConfigParser::OptionReader& reader, bool isSkinLevel = false);
 
 	MOUSECURSOR GetCursorType() const { return m_CursorType; }
 	HCURSOR GetCursor(bool isButton = false) const;

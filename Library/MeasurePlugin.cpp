@@ -72,7 +72,6 @@ void MeasurePlugin::UpdateValue()
 
 void MeasurePlugin::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
 	if (m_Initialized)
@@ -86,7 +85,7 @@ void MeasurePlugin::ReadOptions(ConfigParser::OptionReader& reader)
 		return;
 	}
 
-	const std::wstring& plugin = parser.ReadString<"Plugin">(m_ID, L"");
+	const std::wstring& plugin = reader.ReadString<"Plugin">(L"");
 	size_t pos = plugin.find_last_of(L"\\/");
 	std::wstring pluginName;
 	if (pos != std::wstring::npos)
@@ -184,7 +183,7 @@ void MeasurePlugin::ReadOptions(ConfigParser::OptionReader& reader)
 		}
 	}
 
-	const std::wstring& szMaxValue = parser.ReadString<"MaxValue">(m_ID, L"");
+	const std::wstring& szMaxValue = reader.ReadString<"MaxValue">(L"");
 	if (szMaxValue.empty())
 	{
 		if (maxValue == 0.0)

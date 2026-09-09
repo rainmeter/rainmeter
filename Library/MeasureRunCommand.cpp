@@ -453,18 +453,17 @@ MeasureRunCommand::~MeasureRunCommand()
 
 void MeasureRunCommand::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
-	parser.ReadString<"Parameter">(m_Parameter, m_ID, L"");
-	parser.ReadString<"FinishAction">(m_FinishAction, m_ID, L"", { .sectionVariables = false });
-	parser.ReadString<"OutputFile">(m_OutputFile, m_ID, L"");
+	reader.ReadString<"Parameter">(m_Parameter, L"");
+	reader.ReadString<"FinishAction">(m_FinishAction, L"", { .sectionVariables = false });
+	reader.ReadString<"OutputFile">(m_OutputFile, L"");
 	m_Skin->MakePathAbsolute(m_OutputFile);
 
-	parser.ReadString<"StartInFolder">(m_Folder, m_ID, L" ");	// Space is intentional!
+	reader.ReadString<"StartInFolder">(m_Folder, L" ");	// Space is intentional!
 	m_Skin->MakePathAbsolute(m_Folder);
 
-	m_Timeout = parser.ReadInt<"Timeout">(m_ID, -1);
+	m_Timeout = reader.ReadInt<"Timeout">(-1);
 
 	static constexpr ConfigParser::EnumOption<WORD> s_States[] =
 	{
@@ -473,10 +472,10 @@ void MeasureRunCommand::ReadOptions(ConfigParser::OptionReader& reader)
 		{ L"MAXIMIZE", SW_MAXIMIZE },
 		{ L"MINIMIZE", SW_MINIMIZE },
 	};
-	m_State = parser.ReadEnum<"State">(m_ID, (WORD)SW_HIDE, s_States);
+	m_State = reader.ReadEnum<"State">((WORD)SW_HIDE, s_States);
 
 	// Grab "%COMSPEC% environment variable
-	parser.ReadString<"Program">(m_Program, m_ID, L"\"%COMSPEC%\" /U /C");
+	reader.ReadString<"Program">(m_Program, L"\"%COMSPEC%\" /U /C");
 	PathUtil::ExpandEnvironmentVariables(m_Program);
 	if (m_Program.empty())
 	{
@@ -490,7 +489,7 @@ void MeasureRunCommand::ReadOptions(ConfigParser::OptionReader& reader)
 		{ L"ANSI", OUTPUTTYPE_ANSI },
 		{ L"UTF8", OUTPUTTYPE_UTF8 },
 	};
-	m_OutputType = parser.ReadEnum<"OutputType">(m_ID, OUTPUTTYPE_UTF16, s_OutputTypes);
+	m_OutputType = reader.ReadEnum<"OutputType">(OUTPUTTYPE_UTF16, s_OutputTypes);
 }
 
 void MeasureRunCommand::UpdateValue()

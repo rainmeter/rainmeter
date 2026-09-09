@@ -77,7 +77,7 @@ private:
 		NUM_FORMATS
 	};
 
-	void ResolveParent(ConfigParser& parser);
+	void ResolveParent(ConfigParser::OptionReader& reader);
 	void UpdateFilterConstants();
 	double UpdateAudioValue();
 	HRESULT DeviceInit();

@@ -167,9 +167,9 @@ Gfx::Bitmap* GeneralImage::GetImage()
 		(m_Bitmap ? m_Bitmap->GetBitmap() : nullptr);
 }
 
-void GeneralImage::ReadOptions(ConfigParser& parser, IniSectionID section, const WCHAR* imagePath)
+void GeneralImage::ReadOptions(ConfigParser& parser, ConfigParser::OptionReader& reader, const WCHAR* imagePath)
 {
-	parser.ReadString(m_Path, section, m_OptionArray[OptionIndexImagePath], imagePath);
+	reader.ReadString(m_Path, m_OptionArray[OptionIndexImagePath], imagePath);
 	PathUtil::AppendBackslashIfMissing(m_Path);
 
 	if (!m_DisableTransform)
@@ -177,7 +177,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, IniSectionID section, const
 		m_Options.m_Crop.left = m_Options.m_Crop.top = m_Options.m_Crop.right = m_Options.m_Crop.bottom = -1;
 		m_Options.m_CropMode = ImageOptions::CROPMODE_TL;
 
-		const std::wstring& crop = parser.ReadString(section, m_OptionArray[OptionIndexImageCrop], L"");
+		const std::wstring& crop = reader.ReadString(m_OptionArray[OptionIndexImageCrop], L"");
 		if (!crop.empty())
 		{
 			StringParser values(crop);
@@ -210,23 +210,25 @@ void GeneralImage::ReadOptions(ConfigParser& parser, IniSectionID section, const
 			}
 			else
 			{
+				const std::wstring_view sectionName = reader.FindSectionName();
 				LogErrorF(m_Skin, L"%s=%s is not valid in [%.*s]", m_OptionArray[OptionIndexImageCrop], crop.c_str(),
-					(int)parser.GetSectionName(section).length(), parser.GetSectionName(section).data());
+					(int)sectionName.length(), sectionName.data());
 			}
 
 			if (m_Options.m_CropMode < ImageOptions::CROPMODE_TL || m_Options.m_CropMode > ImageOptions::CROPMODE_C)
 			{
 				m_Options.m_CropMode = ImageOptions::CROPMODE_TL;
+				const std::wstring_view sectionName = reader.FindSectionName();
 				LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%.*s]", m_OptionArray[OptionIndexImageCrop], crop.c_str(),
-					(int)parser.GetSectionName(section).length(), parser.GetSectionName(section).data());
+					(int)sectionName.length(), sectionName.data());
 			}
 		}
 	}
 
-	m_Options.m_GreyScale = parser.ReadBool(section, m_OptionArray[OptionIndexGreyscale], false);
+	m_Options.m_GreyScale = reader.ReadBool(m_OptionArray[OptionIndexGreyscale], false);
 
-	D2D1_COLOR_F tint = parser.ReadColor(section, m_OptionArray[OptionIndexImageTint], D2D1::ColorF(D2D1::ColorF::White));
-	int alpha = parser.ReadInt(section, m_OptionArray[OptionIndexImageAlpha], (INT)(tint.a * 255));  // for backwards compatibility
+	D2D1_COLOR_F tint = reader.ReadColor(m_OptionArray[OptionIndexImageTint], D2D1::ColorF(D2D1::ColorF::White));
+	int alpha = reader.ReadInt(m_OptionArray[OptionIndexImageAlpha], (INT)(tint.a * 255));  // for backwards compatibility
 	alpha = std::min(255, alpha);
 	alpha = std::max(0, alpha);
 
@@ -239,7 +241,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, IniSectionID section, const
 	// Note: is this still relevant? Kept for BWC
 	auto readMatrixRow = [&](size_t optionIndex, int row) -> bool
 	{
-		StringParser values(parser.ReadString(section, m_OptionArray[optionIndex], L""));
+		StringParser values(reader.ReadString(m_OptionArray[optionIndex], L""));
 		FLOAT parsed[5] = { 0 };
 		for (auto& value : parsed)
 		{
@@ -270,14 +272,14 @@ void GeneralImage::ReadOptions(ConfigParser& parser, IniSectionID section, const
 		{ L"VERTICAL", Gfx::Util::FlipType::Vertical },
 		{ L"BOTH", Gfx::Util::FlipType::Both },
 	};
-	m_Options.m_Flip = parser.ReadEnum(section, m_OptionArray[OptionIndexImageFlip], Gfx::Util::FlipType::None, s_Flips);
+	m_Options.m_Flip = reader.ReadEnum(m_OptionArray[OptionIndexImageFlip], Gfx::Util::FlipType::None, s_Flips);
 
 	if (!m_DisableTransform)
 	{
-		m_Options.m_Rotate = (FLOAT)parser.ReadFloat(section, m_OptionArray[OptionIndexImageRotate], 0.0);
+		m_Options.m_Rotate = (FLOAT)reader.ReadFloat(m_OptionArray[OptionIndexImageRotate], 0.0);
 	}
 
-	m_Options.m_UseExifOrientation = parser.ReadBool(section, m_OptionArray[OptionIndexUseExifOrientation], false);
+	m_Options.m_UseExifOrientation = reader.ReadBool(m_OptionArray[OptionIndexUseExifOrientation], false);
 }
 
 bool GeneralImage::LoadImage(const std::wstring& imageName, bool createAlphaMask)

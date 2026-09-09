@@ -78,27 +78,31 @@ ConfigParser::~ConfigParser()
 {
 }
 
-ConfigParser::OptionReader::OptionReader(ConfigParser& parser, std::wstring_view sectionName, IniSectionID sectionID, bool allowMeterStyle) :
+ConfigParser::OptionReader::OptionReader(ConfigParser& parser, std::wstring_view sectionName, IniSectionID sectionID, ReadOptionInheritMode inheritMode) :
 	m_Parser(parser),
+	m_SectionID(sectionID),
 	m_PreviousChain(parser.m_InheritChain),
 	m_PreviousSection(parser.m_CurrentSection),
 	m_PreviousSectionID(parser.m_CurrentSectionID)
 {
 	parser.m_CurrentSection = sectionName;
 	parser.m_CurrentSectionID = sectionID;
-
-	std::wstring_view inherit = parser.ReadString<"@Inherit">(sectionID);
-	if (inherit.empty() && allowMeterStyle)
-	{
-		inherit = parser.ReadString<"MeterStyle">(sectionID);
-	}
-
 	parser.m_InheritChain.clear();
-	StringParser::ForEachToken(inherit, L'|', [&](std::wstring_view name)
+
+	if (inheritMode != ReadOptionInheritMode::None)
+	{
+		std::wstring_view inherit = parser.ReadString<"@Inherit">(sectionID);
+		if (inherit.empty() && inheritMode == ReadOptionInheritMode::InheritAndMeterStyle)
+		{
+			inherit = parser.ReadString<"MeterStyle">(sectionID);
+		}
+
+		StringParser::ForEachToken(inherit, L'|', [&](std::wstring_view name)
 		{
 			const auto id = IniNameRegistry::FindSection(name);
 			if (id) parser.m_InheritChain.push_back(*id);
 		});
+	}
 }
 
 ConfigParser::OptionReader::~OptionReader()
@@ -106,6 +110,17 @@ ConfigParser::OptionReader::~OptionReader()
 	m_Parser.m_InheritChain = std::move(m_PreviousChain);
 	m_Parser.m_CurrentSection = m_PreviousSection;
 	m_Parser.m_CurrentSectionID = m_PreviousSectionID;
+}
+
+ConfigParser::OptionReader ConfigParser::GetOptionReader(std::wstring_view sectionName, IniSectionID sectionID)
+{
+	return OptionReader(*this, sectionName, sectionID, ReadOptionInheritMode::None);
+}
+
+ConfigParser::OptionReader ConfigParser::GetInheritableOptionReader(std::wstring_view sectionName, IniSectionID sectionID, bool allowMeterStyle)
+{
+	const auto inheritMode = allowMeterStyle ? ReadOptionInheritMode::InheritAndMeterStyle : ReadOptionInheritMode::InheritOnly;
+	return OptionReader(*this, sectionName, sectionID, inheritMode);
 }
 
 void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR skinSection)
@@ -1244,7 +1259,7 @@ void ConfigParser::ReadString(std::wstring& result, std::wstring_view section, s
 
 void ConfigParser::ReadString(std::wstring& result, IniSectionID section, IniOptionID option, std::wstring_view defValue, ReadOptions options)
 {
-	const std::wstring_view sectionName = section == m_CurrentSectionID ? m_CurrentSection : GetSectionName(section);
+	const std::wstring_view sectionName = section == m_CurrentSectionID ? m_CurrentSection : FindSectionName(section);
 	ReadStringInternal(result, section, option, sectionName, defValue, options);
 }
 
@@ -1321,7 +1336,7 @@ const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wst
 
 const std::wstring& ConfigParser::ReadString(IniSectionID section, IniOptionID option, std::wstring_view defValue, ReadOptions options)
 {
-	const std::wstring_view sectionName = section == m_CurrentSectionID ? m_CurrentSection : GetSectionName(section);
+	const std::wstring_view sectionName = section == m_CurrentSectionID ? m_CurrentSection : FindSectionName(section);
 	return ReadStringInternal(section, option, sectionName, defValue, options);
 }
 
@@ -1420,7 +1435,7 @@ Section* ConfigParser::GetSection(IniSectionID id)
 	return nullptr;
 }
 
-std::wstring_view ConfigParser::GetSectionName(IniSectionID id) const
+std::wstring_view ConfigParser::FindSectionName(IniSectionID id) const
 {
 	for (const auto& section : m_Sections)
 	{
@@ -1468,7 +1483,7 @@ int ConfigParser::ReadInt(IniSectionID section, IniOptionID option, int defValue
 			}
 
 			const std::wstring& optionName = GetOptionName(option);
-			LogFormulaKeyError(m_Skin, errMsg, GetSectionName(section), optionName);
+			LogFormulaKeyError(m_Skin, errMsg, FindSectionName(section), optionName);
 		}
 		else if (*str)
 		{
@@ -1506,7 +1521,7 @@ uint32_t ConfigParser::ReadUInt(IniSectionID section, IniOptionID option, uint32
 			}
 
 			const std::wstring& optionName = GetOptionName(option);
-			LogFormulaKeyError(m_Skin, errMsg, GetSectionName(section), optionName);
+			LogFormulaKeyError(m_Skin, errMsg, FindSectionName(section), optionName);
 		}
 		else if (*str)
 		{
@@ -1544,7 +1559,7 @@ uint64_t ConfigParser::ReadUInt64(IniSectionID section, IniOptionID option, uint
 			}
 
 			const std::wstring& optionName = GetOptionName(option);
-			LogFormulaKeyError(m_Skin, errMsg, GetSectionName(section), optionName);
+			LogFormulaKeyError(m_Skin, errMsg, FindSectionName(section), optionName);
 		}
 		else if (*str)
 		{
@@ -1582,7 +1597,7 @@ double ConfigParser::ReadFloat(IniSectionID section, IniOptionID option, double 
 			}
 
 			const std::wstring& optionName = GetOptionName(option);
-			LogFormulaKeyError(m_Skin, errMsg, GetSectionName(section), optionName);
+			LogFormulaKeyError(m_Skin, errMsg, FindSectionName(section), optionName);
 		}
 		else if (*str)
 		{

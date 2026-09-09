@@ -40,8 +40,8 @@ static int GetNumberOption(lua_State* L)
 	const WCHAR* section = self->GetName();
 	const auto key = LuaHelper::ToWide(2);
 
-	ConfigParser::OptionReader optionReader(parser, section, self->GetSectionID());
-	const double value = parser.ReadFloat(self->GetSectionID(), key.c_str(), lua_tonumber(L, 3));
+	auto optionReader = parser.GetInheritableOptionReader(section, self->GetSectionID());
+	const double value = optionReader.ReadFloat(key.c_str(), lua_tonumber(L, 3));
 
 	lua_pushnumber(L, value);
 	return 1;

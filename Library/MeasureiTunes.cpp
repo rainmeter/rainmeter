@@ -529,18 +529,17 @@ MeasureiTunes::~MeasureiTunes()
 
 void MeasureiTunes::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
 	size_t pos = m_Skin->GetFilePath().find_last_of(L"\\/");
 	m_BaseDir = (pos != std::wstring::npos) ? m_Skin->GetFilePath().substr(0, pos + 1) : L"";
 
-	const std::wstring& command = parser.ReadString<"Command">(m_ID, L"");
+	const std::wstring& command = reader.ReadString<"Command">(L"");
 	m_Command = ParseCommand(command.c_str());
 
 	if (m_Command == COMMAND_GETCURRENTTRACK_ARTWORK)
 	{
-		parser.ReadString<"DefaultArtwork">(m_DefaultTrackArtworkPath, m_ID, L"");
+		reader.ReadString<"DefaultArtwork">(m_DefaultTrackArtworkPath, L"");
 		m_CurrentTrackArtworkPath = m_BaseDir + m_DefaultTrackArtworkPath;
 	}
 

@@ -202,7 +202,6 @@ void MeasureNet::UpdateValue()
 
 void MeasureNet::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
 	double value = 0.0;
@@ -224,10 +223,10 @@ void MeasureNet::ReadOptions(ConfigParser::OptionReader& reader)
 		value = GetRainmeter().GetGlobalOptions().netInSpeed + GetRainmeter().GetGlobalOptions().netOutSpeed;
 	}
 
-	double maxValue = parser.ReadFloat<"MaxValue">(m_ID, -1.0);
+	double maxValue = reader.ReadFloat<"MaxValue">(-1.0);
 	if (maxValue == -1.0)
 	{
-		maxValue = parser.ReadFloat(m_ID, netName, -1.0);
+		maxValue = reader.ReadFloat(netName, -1.0);
 		if (maxValue == -1.0)
 		{
 			maxValue = value;
@@ -237,23 +236,23 @@ void MeasureNet::ReadOptions(ConfigParser::OptionReader& reader)
 	// Option 'Interface' represents either the number of the interface in the 'iftable',
 	// or the name of the interface (ie. its Description). Optionally, if 'Interface=Best',
 	// there will be an attempt to find the best interface.
-	std::wstring iface = parser.ReadString<"Interface">(m_ID, L"BEST");
+	std::wstring iface = reader.ReadString<"Interface">(L"BEST");
 	if (!iface.empty() && !std::all_of(iface.begin(), iface.end(), iswdigit))
 	{
 		m_Interface = NetworkUtil::FindBestInterface(iface.c_str());
 	}
 	else
 	{
-		m_Interface = parser.ReadUInt<"Interface">(m_ID, 0);
+		m_Interface = reader.ReadUInt<"Interface">(0);
 	}
 
-	m_Cumulative = parser.ReadBool<"Cumulative">(m_ID, false);
+	m_Cumulative = reader.ReadBool<"Cumulative">(false);
 	if (m_Cumulative)
 	{
 		GetRainmeter().SetNetworkStatisticsTimer();
 	}
 
-	m_UseBits = parser.ReadBool<"UseBits">(m_ID, false);
+	m_UseBits = reader.ReadBool<"UseBits">(false);
 
 	if (maxValue == 0.0)
 	{
@@ -327,17 +326,18 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 	parser.Initialize(iniFile, nullptr, L"Statistics");
 
 	const auto statisticsID = GetStaticIniSectionID<"Statistics">();
+	auto reader = parser.GetOptionReader(L"Statistics", statisticsID);
 
-	const std::wstring& date = parser.ReadString<"Since">(statisticsID, L"", { .sectionVariables = false });
+	const std::wstring& date = reader.ReadString<"Since">(L"", { .sectionVariables = false });
 	if (!date.empty())
 	{
 		statsDate = date;
 	}
 
-	uint32_t count = parser.ReadUInt<"Count">(statisticsID, 0);
-	if (parser.GetLastDefaultUsed())
+	uint32_t count = reader.ReadUInt<"Count">(0);
+	if (reader.GetLastDefaultUsed())
 	{
-		count = parser.ReadUInt<"NetStatsCount">(statisticsID, 0);
+		count = reader.ReadUInt<"NetStatsCount">(0);
 	}
 
 	c_StatValues.clear();
@@ -348,26 +348,26 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 		ULARGE_INTEGER value = { 0 };
 
 		_snwprintf_s(buffer, _TRUNCATE, L"In%u", i);
-		value.QuadPart = parser.ReadUInt64(statisticsID, buffer, 0Ui64);
-		if (parser.GetLastDefaultUsed())
+		value.QuadPart = reader.ReadUInt64(buffer, 0Ui64);
+		if (reader.GetLastDefaultUsed())
 		{
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInHigh%u", i);
-			value.HighPart = parser.ReadUInt(statisticsID, buffer, 0);
+			value.HighPart = reader.ReadUInt(buffer, 0);
 
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInLow%u", i);
-			value.LowPart = parser.ReadUInt(statisticsID, buffer, 0);
+			value.LowPart = reader.ReadUInt(buffer, 0);
 		}
 		c_StatValues.push_back(value.QuadPart);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"Out%u", i);
-		value.QuadPart = parser.ReadUInt64(statisticsID, buffer, 0Ui64);
-		if (parser.GetLastDefaultUsed())
+		value.QuadPart = reader.ReadUInt64(buffer, 0Ui64);
+		if (reader.GetLastDefaultUsed())
 		{
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutHigh%u", i);
-			value.HighPart = parser.ReadUInt(statisticsID, buffer, 0);
+			value.HighPart = reader.ReadUInt(buffer, 0);
 
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutLow%u", i);
-			value.LowPart = parser.ReadUInt(statisticsID, buffer, 0);
+			value.LowPart = reader.ReadUInt(buffer, 0);
 		}
 		c_StatValues.push_back(value.QuadPart);
 	}

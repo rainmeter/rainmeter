@@ -56,10 +56,9 @@ MeasureCPU::~MeasureCPU()
 
 void MeasureCPU::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
-	int processor = parser.ReadInt<"Processor">(m_ID, 0);
+	int processor = reader.ReadInt<"Processor">(0);
 
 	if (processor < 0 || processor > c_NumOfProcessors)
 	{

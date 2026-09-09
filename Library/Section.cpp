@@ -21,7 +21,7 @@ Section::~Section()
 
 void Section::ReadOptions(ConfigParser& parser, bool allowMeterStyle)
 {
-	ConfigParser::OptionReader optionReader(parser, m_Name, m_ID, allowMeterStyle);
+	auto optionReader = parser.GetInheritableOptionReader(m_Name, m_ID, allowMeterStyle);
 	ReadOptions(optionReader);
 }
 
@@ -29,20 +29,19 @@ void Section::ReadOptions(ConfigParser& parser, bool allowMeterStyle)
 // call this base implementation if they overwrite this method.
 void Section::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	const int defaultUpdateDivider =
 		m_Skin ? m_Skin->GetDefaultUpdateDivider() : 1;
-	int updateDivider = parser.ReadInt<"UpdateDivider">(m_ID, defaultUpdateDivider);
+	int updateDivider = reader.ReadInt<"UpdateDivider">(defaultUpdateDivider);
 	if (updateDivider != m_UpdateDivider)
 	{
 		m_UpdateCounter = m_UpdateDivider = updateDivider;
 	}
 
-	m_DynamicVariables = parser.ReadBool<"DynamicVariables">(m_ID, false);
+	m_DynamicVariables = reader.ReadBool<"DynamicVariables">(false);
 
-	parser.ReadString<"OnUpdateAction">(m_OnUpdateAction, m_ID, L"", { .sectionVariables = false });
+	reader.ReadString<"OnUpdateAction">(m_OnUpdateAction, L"", { .sectionVariables = false });
 
-	const std::wstring& group = parser.ReadString<"Group">(m_ID, L"");
+	const std::wstring& group = reader.ReadString<"Group">(L"");
 	InitializeGroup(group);
 }
 

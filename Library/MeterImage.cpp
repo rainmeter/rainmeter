@@ -97,29 +97,29 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 
 void MeterImage::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
+	auto& parser = m_Skin->GetParser();
 	Meter::ReadOptions(reader);
 
-	parser.ReadString<"ImageName">(m_ImageName, m_ID, L"");
-	parser.ReadString<"MaskImageName">(m_MaskImageName, m_ID, L"");
+	reader.ReadString<"ImageName">(m_ImageName, L"");
+	reader.ReadString<"MaskImageName">(m_MaskImageName, L"");
 
-	m_Tile = parser.ReadBool<"Tile">(m_ID, false);
+	m_Tile = reader.ReadBool<"Tile">(false);
 	if (!m_Tile)
 	{
-		m_AspectRatioMode = ParseAspectRatioMode(parser.ReadInt<"PreserveAspectRatio">(m_ID, 0));
+		m_AspectRatioMode = ParseAspectRatioMode(reader.ReadInt<"PreserveAspectRatio">(0));
 	}
 
 	static const RECT defMargins = { 0 };
-	m_ScaleMargins = parser.ReadRECT<"ScaleMargins">(m_ID, defMargins);
+	m_ScaleMargins = reader.ReadRECT<"ScaleMargins">(defMargins);
 
 	// Deprecated!
-	std::wstring path = parser.ReadString<"Path">(m_ID, L"");
+	std::wstring path = reader.ReadString<"Path">(L"");
 	PathUtil::AppendBackslashIfMissing(path);
 
 	// Read tinting options
-	m_Image.ReadOptions(parser, m_ID, path.c_str());
+	m_Image.ReadOptions(parser, reader, path.c_str());
 
-	m_MaskImage.ReadOptions(parser, m_ID, L"");
+	m_MaskImage.ReadOptions(parser, reader, L"");
 
 	if (m_Initialized && m_Measures.empty() && !m_DynamicVariables)
 	{
@@ -326,10 +326,10 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterImage::BindMeasures(ConfigParser& parser)
+void MeterImage::BindMeasures(ConfigParser::OptionReader& reader)
 {
-	if (BindPrimaryMeasure(parser, true))
+	if (BindPrimaryMeasure(reader, true))
 	{
-		BindSecondaryMeasures(parser);
+		BindSecondaryMeasures(reader);
 	}
 }

@@ -26,11 +26,10 @@ MeasureCoreTemp::~MeasureCoreTemp()
 
 void MeasureCoreTemp::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
-	m_Type = ConvertType(parser.ReadString<"CoreTempType">(m_ID, L"Temperature").c_str());
-	m_Index = parser.ReadInt<"CoreTempIndex">(m_ID, 0);
+	m_Type = ConvertType(reader.ReadString<"CoreTempType">(L"Temperature").c_str());
+	m_Index = reader.ReadInt<"CoreTempIndex">(0);
 }
 
 void MeasureCoreTemp::UpdateValue()

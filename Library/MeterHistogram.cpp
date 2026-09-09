@@ -157,7 +157,7 @@ void MeterHistogram::InvalidateDeviceResources()
 
 void MeterHistogram::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
+	auto& parser = m_Skin->GetParser();
 	// Store the current values so we know if the image needs to be updated
 	int oldW = m_W;
 	int oldH = m_H;
@@ -165,47 +165,47 @@ void MeterHistogram::ReadOptions(ConfigParser::OptionReader& reader)
 
 	Meter::ReadOptions(reader);
 
-	m_PrimaryColor = parser.ReadColor<"PrimaryColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Green));
-	m_SecondaryColor = parser.ReadColor<"SecondaryColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Red));
-	m_OverlapColor = parser.ReadColor<"BothColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Yellow));
+	m_PrimaryColor = reader.ReadColor<"PrimaryColor">(D2D1::ColorF(D2D1::ColorF::Green));
+	m_SecondaryColor = reader.ReadColor<"SecondaryColor">(D2D1::ColorF(D2D1::ColorF::Red));
+	m_OverlapColor = reader.ReadColor<"BothColor">(D2D1::ColorF(D2D1::ColorF::Yellow));
 
-	parser.ReadString<"PrimaryImage">(m_PrimaryImageName, m_ID, L"");
+	reader.ReadString<"PrimaryImage">(m_PrimaryImageName, L"");
 	if (!m_PrimaryImageName.empty())
 	{
 		// Read tinting options
-		m_PrimaryImage.ReadOptions(parser, m_ID);
+		m_PrimaryImage.ReadOptions(parser, reader);
 	}
 
-	parser.ReadString<"SecondaryImage">(m_SecondaryImageName, m_ID, L"");
+	reader.ReadString<"SecondaryImage">(m_SecondaryImageName, L"");
 	if (!m_SecondaryImageName.empty())
 	{
 		// Read tinting options
-		m_SecondaryImage.ReadOptions(parser, m_ID);
+		m_SecondaryImage.ReadOptions(parser, reader);
 	}
 
-	parser.ReadString<"BothImage">(m_OverlapImageName, m_ID, L"");
+	reader.ReadString<"BothImage">(m_OverlapImageName, L"");
 	if (!m_OverlapImageName.empty())
 	{
 		// Read tinting options
-		m_OverlapImage.ReadOptions(parser, m_ID);
+		m_OverlapImage.ReadOptions(parser, reader);
 	}
 
-	m_Autoscale = parser.ReadBool<"AutoScale">(m_ID, false);
-	m_Flip = parser.ReadBool<"Flip">(m_ID, false);
+	m_Autoscale = reader.ReadBool<"AutoScale">(false);
+	m_Flip = reader.ReadBool<"Flip">(false);
 
 	static constexpr ConfigParser::EnumOption<bool> s_GraphStarts[] =
 	{
 		{ L"RIGHT", false },
 		{ L"LEFT", true },
 	};
-	m_GraphStartLeft = parser.ReadEnum<"GraphStart">(m_ID, false, s_GraphStarts);
+	m_GraphStartLeft = reader.ReadEnum<"GraphStart">(false, s_GraphStarts);
 
 	static constexpr ConfigParser::EnumOption<bool> s_GraphOrientations[] =
 	{
 		{ L"VERTICAL", false },
 		{ L"HORIZONTAL", true },
 	};
-	m_GraphHorizontalOrientation = parser.ReadEnum<"GraphOrientation">(m_ID, false, s_GraphOrientations);
+	m_GraphHorizontalOrientation = reader.ReadEnum<"GraphOrientation">(false, s_GraphOrientations);
 
 	if (m_Initialized)
 	{
@@ -522,18 +522,18 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterHistogram::BindMeasures(ConfigParser& parser)
+void MeterHistogram::BindMeasures(ConfigParser::OptionReader& reader)
 {
-	if (BindPrimaryMeasure(parser, false))
+	if (BindPrimaryMeasure(reader, false))
 	{
-		const std::wstring* secondaryMeasure = &parser.ReadString<"MeasureName2">(m_ID, L"");
+		const std::wstring* secondaryMeasure = &reader.ReadString<"MeasureName2">(L"");
 		if (secondaryMeasure->empty())
 		{
 			// For backwards compatibility.
-			secondaryMeasure = &parser.ReadString<"SecondaryMeasureName">(m_ID, L"");
+			secondaryMeasure = &reader.ReadString<"SecondaryMeasureName">(L"");
 		}
 
-		Measure* measure = parser.GetMeasure(*secondaryMeasure);
+		Measure* measure = m_Skin->GetParser().GetMeasure(*secondaryMeasure);
 		if (measure)
 		{
 			m_Measures.push_back(measure);

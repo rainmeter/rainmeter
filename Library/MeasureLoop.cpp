@@ -21,17 +21,16 @@ MeasureLoop::~MeasureLoop()
 
 void MeasureLoop::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	int oldStart = m_StartValue, oldEnd = m_EndValue, oldInc = m_Increment, oldCount = m_LoopCount;
 	bool oldInvert = m_Invert;
 
 	Measure::ReadOptions(reader);
 
-	m_StartValue = parser.ReadInt<"StartValue">(m_ID, 1);
-	m_EndValue = parser.ReadInt<"EndValue">(m_ID, 100);
-	m_Increment = parser.ReadInt<"Increment">(m_ID, 1);
+	m_StartValue = reader.ReadInt<"StartValue">(1);
+	m_EndValue = reader.ReadInt<"EndValue">(100);
+	m_Increment = reader.ReadInt<"Increment">(1);
 
-	m_LoopCount = parser.ReadInt<"LoopCount">(m_ID, 0);
+	m_LoopCount = reader.ReadInt<"LoopCount">(0);
 
 	if (!m_Initialized || oldStart != m_StartValue || oldEnd != m_EndValue ||
 		oldInc != m_Increment || oldCount != m_LoopCount || oldInvert != m_Invert)
