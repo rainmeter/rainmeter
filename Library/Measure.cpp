@@ -424,9 +424,12 @@ std::wstring Measure::ExtractWord(std::wstring& buffer)
 
 bool Measure::Update(bool rereadOptions)
 {
+	std::optional<ConfigParser::OptionReader> reader;
+
 	if (rereadOptions)
 	{
-		Section::ReadOptions(m_Skin->GetParser(), false);
+		reader.emplace(m_Skin->GetParser().GetInheritableOptionReader(m_Name, m_ID));
+		Section::ReadOptions(*reader);
 	}
 
 	// Don't do anything if paused
@@ -477,10 +480,9 @@ bool Measure::Update(bool rereadOptions)
 
 		// For the conditional options to work with the current measure value when using
 		// [MeasureName], we need to read the options after m_Value has been changed.
-		if (rereadOptions)
+		if (reader)
 		{
-			auto reader = m_Skin->GetParser().GetInheritableOptionReader(m_Name, m_ID);
-			m_IfActions.ReadConditionOptions(reader);
+			m_IfActions.ReadConditionOptions(*reader);
 		}
 
 		if (m_Skin)
