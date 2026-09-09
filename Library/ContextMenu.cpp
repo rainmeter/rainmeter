@@ -717,7 +717,8 @@ void ContextMenu::AppendSkinCustomMenu(
 	Skin* skin, int index, HMENU menu, bool standaloneMenu)
 {
 	// Add custom actions to the context menu
-	std::wstring contextTitle = skin->GetParser().ReadString(L"Rainmeter", L"ContextTitle", L"");
+	const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
+	std::wstring contextTitle = skin->GetParser().ReadString<"ContextTitle">(rainmeterID, L"");
 	if (contextTitle.empty())
 	{
 		return;
@@ -728,7 +729,7 @@ void ContextMenu::AppendSkinCustomMenu(
 		return title.find_first_not_of(L'-') == std::wstring::npos;
 	};
 
-	std::wstring contextAction = skin->GetParser().ReadString(L"Rainmeter", L"ContextAction", L"");
+	std::wstring contextAction = skin->GetParser().ReadString<"ContextAction">(rainmeterID, L"");
 	if (contextAction.empty() && !isTitleSeparator(contextTitle))
 	{
 		return;
@@ -745,9 +746,9 @@ void ContextMenu::AppendSkinCustomMenu(
 		cTitles.push_back(StringUtil::TruncateWithEllipsis(contextTitle, 30));
 
 		_snwprintf_s(buffer, _TRUNCATE, L"ContextTitle%i", ++i);
-		skin->GetParser().ReadString(contextTitle, L"Rainmeter", buffer, L"");
+		skin->GetParser().ReadString(contextTitle, rainmeterID, buffer, L"");
 		_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", i);
-		skin->GetParser().ReadString(contextAction, L"Rainmeter", buffer, L"");
+		skin->GetParser().ReadString(contextAction, rainmeterID, buffer, L"");
 	}
 
 	// Build a sub-menu if more than three items

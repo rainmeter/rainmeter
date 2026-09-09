@@ -1292,8 +1292,8 @@ void ConfigParser::ReadStringInternal(std::wstring& result, IniSectionID section
 			if (result.find(L'#') != std::wstring::npos)
 			{
 				// Make sure new-style variables are processed for the [Variables] section
-				static const auto variablesSectionID = IniNameRegistry::InternSection(L"Variables");
-				bool runNewStyle = section == variablesSectionID;
+				const auto variablesID = GetStaticIniSectionID<"Variables">();
+				bool runNewStyle = section == variablesID;
 				if (ReplaceVariables(result, runNewStyle))
 				{
 					m_LastReplaced = true;
@@ -1806,10 +1806,10 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	ankerl::unordered_dense::set<IniSectionID> fileSections;
 	ankerl::unordered_dense::set<IniOptionID> sectionOptions;
 
-	const auto rainmeterSectionID = IniNameRegistry::InternSection(L"Rainmeter");
-	const auto variablesSectionID = IniNameRegistry::InternSection(L"Variables");
-	const auto metadataSectionID = IniNameRegistry::InternSection(L"Metadata");
-	const auto skinSectionID = skinSection ? IniNameRegistry::InternSection(skinSection) : IniSectionID{};
+	const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
+	const auto variablesID = GetStaticIniSectionID<"Variables">();
+	const auto metadataID = GetStaticIniSectionID<"Metadata">();
+	const auto skinID = skinSection ? IniNameRegistry::InternSection(skinSection) : IniSectionID{};
 
 	std::wstring sectionName;
 	IniSectionID sectionID;
@@ -1839,17 +1839,17 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 			resetInsertPos = true;
 			sectionName = name;
 
-			const bool isRainmeter = sectionID == rainmeterSectionID;
+			const bool isRainmeter = sectionID == rainmeterID;
 			if (skinSection != nullptr)
 			{
-				if (!isRainmeter && sectionID != skinSectionID) return;
+				if (!isRainmeter && sectionID != skinID) return;
 
 				// Ordered as the special case above lists them, not as the file happens to.
 				sectionIndex = isRainmeter ? 0 : 1;
 			}
 
-			isVariables = sectionID == variablesSectionID;
-			isMetadata = skinSection == nullptr && !isVariables && sectionID == metadataSectionID;
+			isVariables = sectionID == variablesID;
+			isMetadata = skinSection == nullptr && !isVariables && sectionID == metadataID;
 			readSection = true;
 		},
 		[&](std::wstring_view option, std::wstring_view value)

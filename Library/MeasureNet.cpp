@@ -326,16 +326,18 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 	ConfigParser parser;
 	parser.Initialize(iniFile, nullptr, L"Statistics");
 
-	const std::wstring& date = parser.ReadString(L"Statistics", L"Since", L"", { .sectionVariables = false });
+	const auto statisticsID = GetStaticIniSectionID<"Statistics">();
+
+	const std::wstring& date = parser.ReadString<"Since">(statisticsID, L"", { .sectionVariables = false });
 	if (!date.empty())
 	{
 		statsDate = date;
 	}
 
-	uint32_t count = parser.ReadUInt(L"Statistics", L"Count", 0);
+	uint32_t count = parser.ReadUInt<"Count">(statisticsID, 0);
 	if (parser.GetLastDefaultUsed())
 	{
-		count = parser.ReadUInt(L"Statistics", L"NetStatsCount", 0);
+		count = parser.ReadUInt<"NetStatsCount">(statisticsID, 0);
 	}
 
 	c_StatValues.clear();
@@ -346,26 +348,26 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 		ULARGE_INTEGER value = { 0 };
 
 		_snwprintf_s(buffer, _TRUNCATE, L"In%u", i);
-		value.QuadPart = parser.ReadUInt64(L"Statistics", buffer, 0Ui64);
+		value.QuadPart = parser.ReadUInt64(statisticsID, buffer, 0Ui64);
 		if (parser.GetLastDefaultUsed())
 		{
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInHigh%u", i);
-			value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0);
+			value.HighPart = parser.ReadUInt(statisticsID, buffer, 0);
 
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInLow%u", i);
-			value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0);
+			value.LowPart = parser.ReadUInt(statisticsID, buffer, 0);
 		}
 		c_StatValues.push_back(value.QuadPart);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"Out%u", i);
-		value.QuadPart = parser.ReadUInt64(L"Statistics", buffer, 0Ui64);
+		value.QuadPart = parser.ReadUInt64(statisticsID, buffer, 0Ui64);
 		if (parser.GetLastDefaultUsed())
 		{
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutHigh%u", i);
-			value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0);
+			value.HighPart = parser.ReadUInt(statisticsID, buffer, 0);
 
 			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutLow%u", i);
-			value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0);
+			value.LowPart = parser.ReadUInt(statisticsID, buffer, 0);
 		}
 		c_StatValues.push_back(value.QuadPart);
 	}

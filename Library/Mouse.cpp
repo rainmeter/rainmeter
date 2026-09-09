@@ -96,7 +96,8 @@ void Mouse::ReadOptions(ConfigParser& parser, IniSectionID section, bool isSkinL
 		m_CursorType = m_Skin->GetMouse().GetCursorType();
 		if (m_CursorType == MOUSECURSOR_CUSTOM)
 		{
-			mouseCursor = m_Skin->GetParser().ReadString(L"Rainmeter", L"MouseActionCursorName", L"").c_str();
+			const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
+			mouseCursor = m_Skin->GetParser().ReadString<"MouseActionCursorName">(rainmeterID, L"").c_str();
 		}
 	};
 

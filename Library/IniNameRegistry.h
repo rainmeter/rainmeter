@@ -89,3 +89,10 @@ IniOptionID GetStaticIniOptionID()
 	static const IniOptionID optionID = IniNameRegistry::InternOption(Name.View());
 	return optionID;
 }
+
+template <FixedWString Name>
+IniSectionID GetStaticIniSectionID()
+{
+	static const IniSectionID id = IniNameRegistry::InternSection(Name.View());
+	return id;
+}
