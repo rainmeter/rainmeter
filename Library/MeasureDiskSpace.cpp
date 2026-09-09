@@ -133,9 +133,10 @@ void MeasureDiskSpace::UpdateValue()
 	}
 }
 
-const WCHAR* MeasureDiskSpace::GetStringValue()
+std::optional<std::wstring_view> MeasureDiskSpace::GetStringValue()
 {
-	return (m_Type || m_Label) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
+	if (m_Type || m_Label) return CheckSubstitute(m_StringValue);
+	return std::nullopt;
 }
 
 void MeasureDiskSpace::ReadOptions(ConfigParser::OptionReader& reader)

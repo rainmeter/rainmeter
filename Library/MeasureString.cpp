@@ -38,7 +38,7 @@ void MeasureString::UpdateValue()
 	m_Value = LocaleUtil::StringToNumber(m_String.c_str(), m_NumberFormat);
 }
 
-const WCHAR* MeasureString::GetStringValue()
+std::optional<std::wstring_view> MeasureString::GetStringValue()
 {
-	return CheckSubstitute(m_StringValue.c_str());
+	return CheckSubstitute(m_StringValue);
 }

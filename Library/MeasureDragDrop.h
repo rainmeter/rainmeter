@@ -17,7 +17,7 @@ public:
 
 	virtual UINT GetTypeID() { return TypeID<MeasureDragDrop>(); }
 
-	virtual const WCHAR* GetStringValue();
+	virtual std::optional<std::wstring_view> GetStringValue();
 
 	bool ContainsPoint(const POINTL& screenPoint) const;
 	DWORD GetDropEffect() const;

@@ -496,9 +496,9 @@ void MeasureRunCommand::UpdateValue()
 {
 }
 
-const WCHAR* MeasureRunCommand::GetStringValue()
+std::optional<std::wstring_view> MeasureRunCommand::GetStringValue()
 {
-	return CheckSubstitute(m_Result.c_str());
+	return CheckSubstitute(m_Result);
 }
 
 void MeasureRunCommand::Command(const std::wstring& command)

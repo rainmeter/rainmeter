@@ -131,7 +131,7 @@ void MeasureAudio::UpdateValue()
 	}
 }
 
-const WCHAR* MeasureAudio::GetStringValue()
+std::optional<std::wstring_view> MeasureAudio::GetStringValue()
 {
 	m_StringValue = L"ERROR";
 
@@ -139,7 +139,7 @@ const WCHAR* MeasureAudio::GetStringValue()
 	if (!CreateEnumerator(this, &enumerator))
 	{
 		m_StringValue = L"ERROR - Initializing COM";
-		return CheckSubstitute(m_StringValue.c_str());
+		return CheckSubstitute(m_StringValue);
 	}
 
 	IMMDevice* endpoint = nullptr;
@@ -174,7 +174,7 @@ const WCHAR* MeasureAudio::GetStringValue()
 
 	SafeRelease(endpoint);
 	SafeRelease(enumerator);
-	return CheckSubstitute(m_StringValue.c_str());
+	return CheckSubstitute(m_StringValue);
 }
 
 void MeasureAudio::Command(const std::wstring& command)

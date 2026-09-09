@@ -18,7 +18,7 @@ public:
 protected:
 	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	void UpdateValue() override;
-	const WCHAR* GetStringValue() override;
+	std::optional<std::wstring_view> GetStringValue() override;
 
 private:
 	enum class Type

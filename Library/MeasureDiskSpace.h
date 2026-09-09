@@ -15,7 +15,7 @@ public:
 
 	virtual UINT GetTypeID() { return TypeID<MeasureDiskSpace>(); }
 
-	virtual const WCHAR* GetStringValue();
+	virtual std::optional<std::wstring_view> GetStringValue();
 
 protected:
 	void ReadOptions(ConfigParser::OptionReader& reader) override;

@@ -321,9 +321,9 @@ void MeasureWifiStatus::UpdateValue()
 	}
 }
 
-const WCHAR* MeasureWifiStatus::GetStringValue()
+std::optional<std::wstring_view> MeasureWifiStatus::GetStringValue()
 {
-	if (!s_Interface) return nullptr;
+	if (!s_Interface) return std::nullopt;
 
 	switch (m_Type)
 	{
@@ -332,10 +332,11 @@ const WCHAR* MeasureWifiStatus::GetStringValue()
 	case MeasureType::PHY:
 	case MeasureType::ENCRYPTION:
 	case MeasureType::AUTH:
-		return !m_StatusString.empty() ? CheckSubstitute(m_StatusString.c_str()) : nullptr;
+		if (!m_StatusString.empty()) return CheckSubstitute(m_StatusString);
+		return std::nullopt;
 
 	default:
-		return nullptr;
+		return std::nullopt;
 	}
 }
 

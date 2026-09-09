@@ -113,7 +113,7 @@ static int GetStringValue(lua_State* L)
 	int decimals = (int)lua_tonumber(L, 4);
 	bool percentual = lua_toboolean(L, 5) != 0;
 
-	const WCHAR* val = self->GetStringOrFormattedValue(autoScale, scale, decimals, percentual);
+	const std::wstring_view val = self->GetStringOrFormattedValue(autoScale, scale, decimals, percentual);
 	LuaHelper::PushWide(val);
 
 	return 1;

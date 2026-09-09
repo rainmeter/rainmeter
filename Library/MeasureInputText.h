@@ -63,7 +63,7 @@ public:
 
 protected:
 	void UpdateValue() override {}
-	const WCHAR* GetStringValue() override;
+	std::optional<std::wstring_view> GetStringValue() override;
 	void Command(const std::wstring& command) override;
 
 private:

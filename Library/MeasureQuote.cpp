@@ -230,9 +230,9 @@ void MeasureQuote::UpdateValue()
 	}
 }
 
-const WCHAR* MeasureQuote::GetStringValue()
+std::optional<std::wstring_view> MeasureQuote::GetStringValue()
 {
-	return CheckSubstitute(m_StringValue.c_str());
+	return CheckSubstitute(m_StringValue);
 }
 
 void MeasureQuote::ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& filters, bool subfolders, const std::wstring& path)

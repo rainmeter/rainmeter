@@ -86,7 +86,7 @@ public:
 	MeasureSysInfo(const MeasureSysInfo& other) = delete;
 	MeasureSysInfo& operator=(MeasureSysInfo other) = delete;
 
-	virtual const WCHAR* GetStringValue();
+	virtual std::optional<std::wstring_view> GetStringValue();
 
 	virtual UINT GetTypeID() { return TypeID<MeasureSysInfo>(); }
 

@@ -1042,9 +1042,9 @@ void MeasureUsageMonitor::UpdateValue()
 	m_Value = value;
 }
 
-const WCHAR* MeasureUsageMonitor::GetStringValue()
+std::optional<std::wstring_view> MeasureUsageMonitor::GetStringValue()
 {
-	if (m_Options.category.empty() || m_Options.counter.empty()) return nullptr;
+	if (m_Options.category.empty() || m_Options.counter.empty()) return std::nullopt;
 
 	// Without a name to look up, the instance was picked by usage, so there is no instance worth
 	// naming when nothing is being used
@@ -1053,5 +1053,5 @@ const WCHAR* MeasureUsageMonitor::GetStringValue()
 		return CheckSubstitute(L"");
 	}
 
-	return CheckSubstitute(m_CurrentInstance.name.c_str());
+	return CheckSubstitute(m_CurrentInstance.name);
 }

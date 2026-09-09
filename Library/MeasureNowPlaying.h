@@ -19,7 +19,7 @@ public:
 
 	UINT GetTypeID() override { return TypeID<MeasureNowPlaying>(); }
 
-	const WCHAR* GetStringValue() override;
+	std::optional<std::wstring_view> GetStringValue() override;
 
 	void Command(const std::wstring& command) override;
 

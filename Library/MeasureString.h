@@ -13,7 +13,7 @@ public:
 	MeasureString(const MeasureString& other) = delete;
 	MeasureString& operator=(MeasureString other) = delete;
 
-	virtual const WCHAR* GetStringValue();
+	virtual std::optional<std::wstring_view> GetStringValue();
 
 	virtual UINT GetTypeID() { return TypeID<MeasureString>(); }
 

@@ -354,8 +354,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 	if (actions.matches.empty()) return;
 
 	i = 0;
-	const WCHAR* value = measure.GetStringValue();
-	const std::wstring_view str = value ? value : L"";
+	const std::wstring_view str = measure.GetStringValue().value_or(L"");
 	int ovector[300];
 	for (auto& item : actions.matches)
 	{

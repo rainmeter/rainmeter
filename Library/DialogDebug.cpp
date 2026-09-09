@@ -1425,7 +1425,7 @@ void DialogDebug::TabSkins::UpdateMeasureList(Skin* skin)
 		Measure::RemoveTrailingZero(buffer, bufferLen);
 		std::wstring numValue = buffer;
 
-		auto* strValue = (*j)->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+		const std::wstring_view strValue = (*j)->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
 		auto truncatedValue = StringUtil::TruncateWithEllipsis(strValue, 256);
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)numValue.c_str());
 		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)truncatedValue.c_str());
@@ -1771,7 +1771,7 @@ INT_PTR DialogDebug::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			Measure* measure = getMeasure();
 			if (measure)
 			{
-				std::wstring strValue = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+				const std::wstring strValue(measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false));
 				System::SetClipboardText(strValue);
 			}
 		}
@@ -1932,7 +1932,7 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 						Measure* measure = m_SkinWindow->GetMeasure(temp);
 						if (measure)
 						{
-							const std::wstring strValue = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+							const std::wstring strValue(measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false));
 							System::SetClipboardText(strValue);
 						}
 					}

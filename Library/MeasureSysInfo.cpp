@@ -816,13 +816,12 @@ void MeasureSysInfo::UpdateValue()
 	}
 }
 
-const WCHAR* MeasureSysInfo::GetStringValue()
+std::optional<std::wstring_view> MeasureSysInfo::GetStringValue()
 {
 	// Note: In the old plugin, |SysInfoType=IP_ADDRESS| would
 	// return an empty string, instead of |nullptr|.
-	return !m_StringValue.empty() || m_Type == SysInfoType::IP_ADDRESS
-		? CheckSubstitute(m_StringValue.c_str())
-		: nullptr;
+	if (!m_StringValue.empty() || m_Type == SysInfoType::IP_ADDRESS) return CheckSubstitute(m_StringValue);
+	return std::nullopt;
 }
 
 NLM_CONNECTIVITY MeasureSysInfo::GetNetworkConnectivity()

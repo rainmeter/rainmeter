@@ -68,9 +68,10 @@ void MeasureScript::UpdateValue()
 	}
 }
 
-const WCHAR* MeasureScript::GetStringValue()
+std::optional<std::wstring_view> MeasureScript::GetStringValue()
 {
-	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
+	if (m_ValueType == LUA_TSTRING) return CheckSubstitute(m_StringValue);
+	return std::nullopt;
 }
 
 void MeasureScript::ReadOptions(ConfigParser::OptionReader& reader)

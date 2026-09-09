@@ -815,7 +815,7 @@ double MeasureAudioLevel::UpdateAudioValue()
 }
 
 
-const WCHAR* MeasureAudioLevel::GetStringValue()
+std::optional<std::wstring_view> MeasureAudioLevel::GetStringValue()
 {
 	static WCHAR s_Buffer[1024];
 	s_Buffer[0] = L'\0';
@@ -832,8 +832,8 @@ const WCHAR* MeasureAudioLevel::GetStringValue()
 	switch (m_Type)
 	{
 	default:
-		// Return nullptr for numeric values, so Rainmeter can auto-convert them.
-		return nullptr;
+		// Return no string value for numeric values, so Rainmeter can auto-convert them.
+		return std::nullopt;
 
 	case MeasureAudioLevel::TYPE_FORMAT:
 		if (parent->m_Wfx)
@@ -843,7 +843,7 @@ const WCHAR* MeasureAudioLevel::GetStringValue()
 		break;
 
 	case MeasureAudioLevel::TYPE_DEV_NAME:
-		return CheckSubstitute(parent->m_DevName.c_str());
+		return CheckSubstitute(parent->m_DevName);
 
 	case MeasureAudioLevel::TYPE_DEV_ID:
 		if (parent->m_Dev)

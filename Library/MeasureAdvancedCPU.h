@@ -14,7 +14,7 @@ public:
 	MeasureAdvancedCPU& operator=(MeasureAdvancedCPU other) = delete;
 
 	UINT GetTypeID() override { return TypeID<MeasureAdvancedCPU>(); }
-	const WCHAR* GetStringValue() override;
+	std::optional<std::wstring_view> GetStringValue() override;
 
 protected:
 	void ReadOptions(ConfigParser::OptionReader& reader) override;

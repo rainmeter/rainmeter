@@ -377,9 +377,9 @@ void MeasureNowPlaying::UpdateValue()
 	}
 }
 
-const WCHAR* MeasureNowPlaying::GetStringValue()
+std::optional<std::wstring_view> MeasureNowPlaying::GetStringValue()
 {
-	if (!m_Parent) return nullptr;
+	if (!m_Parent) return std::nullopt;
 
 	const Player* player = m_Parent->player;
 	static WCHAR buffer[32];
@@ -425,7 +425,8 @@ const WCHAR* MeasureNowPlaying::GetStringValue()
 		break;
 	}
 
-	return str ? CheckSubstitute(str) : nullptr;
+	if (str) return CheckSubstitute(str);
+	return std::nullopt;
 }
 
 Player* MeasureNowPlaying::GetInitializedPlayer() const
