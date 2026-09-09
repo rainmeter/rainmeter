@@ -160,7 +160,7 @@ void ConfigParser::ReadVariables()
 	std::list<std::wstring>::const_iterator iter = m_ListVariables.begin();
 	for ( ; iter != m_ListVariables.end(); ++iter)
 	{
-		SetVariable((*iter), ReadString(L"Variables", (*iter).c_str(), L"", { .sectionVariables = false }));
+		SetVariable((*iter), ReadString(GetStaticIniSectionID<"Variables">(), FindOptionID(*iter), L"", { .sectionVariables = false }));
 	}
 }
 
@@ -1252,20 +1252,10 @@ std::wstring ConfigParser::GetDollarMouseVariable(std::wstring_view variable, Me
 	return result;
 }
 
-void ConfigParser::ReadString(std::wstring& result, std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options)
-{
-	ReadStringInternal(result, FindSectionID(section), FindOptionID(key), section, defValue, options);
-}
-
 void ConfigParser::ReadString(std::wstring& result, IniSectionID section, IniOptionID option, std::wstring_view defValue, ReadOptions options)
 {
 	const std::wstring_view sectionName = section == m_CurrentSectionID ? m_CurrentSection : FindSectionName(section);
 	ReadStringInternal(result, section, option, sectionName, defValue, options);
-}
-
-void ConfigParser::ReadString(std::wstring& result, IniSectionID section, std::wstring_view option, std::wstring_view defValue, ReadOptions options)
-{
-	ReadString(result, section, FindOptionID(option), defValue, options);
 }
 
 void ConfigParser::ReadStringInternal(std::wstring& result, IniSectionID section, IniOptionID option, std::wstring_view sectionName, std::wstring_view defValue, ReadOptions options)
@@ -1329,20 +1319,10 @@ void ConfigParser::ReadStringInternal(std::wstring& result, IniSectionID section
 	}
 }
 
-const std::wstring& ConfigParser::ReadString(std::wstring_view section, std::wstring_view key, std::wstring_view defValue, ReadOptions options)
-{
-	return ReadStringInternal(FindSectionID(section), FindOptionID(key), section, defValue, options);
-}
-
 const std::wstring& ConfigParser::ReadString(IniSectionID section, IniOptionID option, std::wstring_view defValue, ReadOptions options)
 {
 	const std::wstring_view sectionName = section == m_CurrentSectionID ? m_CurrentSection : FindSectionName(section);
 	return ReadStringInternal(section, option, sectionName, defValue, options);
-}
-
-const std::wstring& ConfigParser::ReadString(IniSectionID section, std::wstring_view option, std::wstring_view defValue, ReadOptions options)
-{
-	return ReadString(section, FindOptionID(option), defValue, options);
 }
 
 const std::wstring& ConfigParser::ReadStringInternal(IniSectionID section, IniOptionID option, std::wstring_view sectionName, std::wstring_view defValue, ReadOptions options)
@@ -1359,11 +1339,6 @@ const std::wstring& ConfigParser::ReadStringInternal(IniSectionID section, IniOp
 
 	ReadStringInternal(result, section, option, sectionName, defValue, options);
 	return result;
-}
-
-size_t ConfigParser::MatchEnumOption(std::wstring_view section, std::wstring_view key, const WCHAR* const* names, size_t count, size_t stride)
-{
-	return MatchEnumOption(FindSectionID(section), FindOptionID(key), names, count, stride);
 }
 
 size_t ConfigParser::MatchEnumOption(IniSectionID section, IniOptionID option, const WCHAR* const* names, size_t count, size_t stride)
@@ -1385,7 +1360,7 @@ size_t ConfigParser::MatchEnumOption(IniSectionID section, IniOptionID option, c
 
 bool ConfigParser::IsKeyDefined(std::wstring_view section, std::wstring_view key)
 {
-	ReadString(section, key, L"", { .sectionVariables = false });
+	ReadString(FindSectionID(section), FindOptionID(key), L"", { .sectionVariables = false });
 	return !m_LastDefaultUsed;
 }
 
@@ -1397,7 +1372,7 @@ bool ConfigParser::IsKeyDefined(IniSectionID section, IniOptionID option)
 
 bool ConfigParser::IsValueDefined(std::wstring_view section, std::wstring_view key)
 {
-	ReadString(section, key, L"", { .sectionVariables = false });
+	ReadString(FindSectionID(section), FindOptionID(key), L"", { .sectionVariables = false });
 	return m_LastValueDefined;
 }
 
@@ -1461,11 +1436,6 @@ Meter* ConfigParser::GetMeter(std::wstring_view name)
 	return (section && section->GetBaseTypeID() == TypeID<Meter>()) ? (Meter*)section : nullptr;
 }
 
-int ConfigParser::ReadInt(std::wstring_view section, std::wstring_view key, int defValue)
-{
-	return ReadInt(FindSectionID(section), FindOptionID(key), defValue);
-}
-
 int ConfigParser::ReadInt(IniSectionID section, IniOptionID option, int defValue)
 {
 	const std::wstring& result = ReadString(section, option, L"");
@@ -1497,11 +1467,6 @@ int ConfigParser::ReadInt(IniSectionID section, IniOptionID option, int defValue
 	}
 
 	return defValue;
-}
-
-uint32_t ConfigParser::ReadUInt(std::wstring_view section, std::wstring_view key, uint32_t defValue)
-{
-	return ReadUInt(FindSectionID(section), FindOptionID(key), defValue);
 }
 
 uint32_t ConfigParser::ReadUInt(IniSectionID section, IniOptionID option, uint32_t defValue)
@@ -1537,11 +1502,6 @@ uint32_t ConfigParser::ReadUInt(IniSectionID section, IniOptionID option, uint32
 	return defValue;
 }
 
-uint64_t ConfigParser::ReadUInt64(std::wstring_view section, std::wstring_view key, uint64_t defValue)
-{
-	return ReadUInt64(FindSectionID(section), FindOptionID(key), defValue);
-}
-
 uint64_t ConfigParser::ReadUInt64(IniSectionID section, IniOptionID option, uint64_t defValue)
 {
 	const std::wstring& result = ReadString(section, option, L"");
@@ -1573,11 +1533,6 @@ uint64_t ConfigParser::ReadUInt64(IniSectionID section, IniOptionID option, uint
 	}
 
 	return defValue;
-}
-
-double ConfigParser::ReadFloat(std::wstring_view section, std::wstring_view key, double defValue)
-{
-	return ReadFloat(FindSectionID(section), FindOptionID(key), defValue);
 }
 
 double ConfigParser::ReadFloat(IniSectionID section, IniOptionID option, double defValue)
@@ -1657,11 +1612,6 @@ std::wstring ConfigParser::ParseFormulaWithModifiers(const std::wstring& formula
 	return formula;
 }
 
-D2D1_COLOR_F ConfigParser::ReadColor(std::wstring_view section, std::wstring_view key, const D2D1_COLOR_F& defValue)
-{
-	return ReadColor(FindSectionID(section), FindOptionID(key), defValue);
-}
-
 D2D1_COLOR_F ConfigParser::ReadColor(IniSectionID section, IniOptionID option, const D2D1_COLOR_F& defValue)
 {
 	const std::wstring& result = ReadString(section, option, L"");
@@ -1669,21 +1619,11 @@ D2D1_COLOR_F ConfigParser::ReadColor(IniSectionID section, IniOptionID option, c
 	return (m_LastDefaultUsed || result.empty()) ? defValue : ParseColor(result.c_str());
 }
 
-D2D1_RECT_F ConfigParser::ReadRect(std::wstring_view section, std::wstring_view key, const D2D1_RECT_F& defValue)
-{
-	return ReadRect(FindSectionID(section), FindOptionID(key), defValue);
-}
-
 D2D1_RECT_F ConfigParser::ReadRect(IniSectionID section, IniOptionID option, const D2D1_RECT_F& defValue)
 {
 	const std::wstring& result = ReadString(section, option, L"");
 
 	return (m_LastDefaultUsed) ? defValue : ParseRect(result.c_str());
-}
-
-RECT ConfigParser::ReadRECT(std::wstring_view section, std::wstring_view key, const RECT& defValue)
-{
-	return ReadRECT(FindSectionID(section), FindOptionID(key), defValue);
 }
 
 RECT ConfigParser::ReadRECT(IniSectionID section, IniOptionID option, const RECT& defValue)
