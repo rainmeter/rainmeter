@@ -200,9 +200,10 @@ void MeasureNet::UpdateValue()
 	}
 }
 
-void MeasureNet::ReadOptions(ConfigParser& parser)
+void MeasureNet::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	double value = 0.0;
 	const WCHAR* netName = nullptr;

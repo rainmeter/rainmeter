@@ -21,7 +21,7 @@ public:
 	static void FinalizeStatic();
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	virtual void UpdateValue();
 
 private:

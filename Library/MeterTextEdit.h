@@ -90,7 +90,7 @@ protected:
 	virtual bool CanWrap() const override { return m_Multiline; }
 	virtual bool ShouldTrim() const override { return false; }
 
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	void BindMeasures(ConfigParser& parser) override;
 
 private:

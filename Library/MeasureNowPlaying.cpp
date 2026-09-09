@@ -147,9 +147,10 @@ MeasureNowPlaying::~MeasureNowPlaying()
 	}
 }
 
-void MeasureNowPlaying::ReadOptions(ConfigParser& parser)
+void MeasureNowPlaying::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	// Data is stored in two structs: Measure and ParentMeasure. ParentMeasure is created for measures
 	// with PlayerName=someplayer. Measure is created for all measures and points to ParentMeasure as

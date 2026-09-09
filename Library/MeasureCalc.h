@@ -17,7 +17,7 @@ public:
 	virtual UINT GetTypeID() { return TypeID<MeasureCalc>(); }
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	virtual void UpdateValue();
 
 private:

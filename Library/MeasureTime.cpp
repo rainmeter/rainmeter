@@ -318,15 +318,16 @@ const WCHAR* MeasureTime::GetStringValue()
 	return CheckSubstitute(tmpSz);
 }
 
-void MeasureTime::ReadOptions(ConfigParser& parser)
+void MeasureTime::ReadOptions(ConfigParser::OptionReader& reader)
 {
+	auto& parser = reader.GetParser();
 	auto ParseYear = [&](std::wstring year, size_t pos) -> void
 	{
 		year = year.substr(pos);
 		m_TimeStamp = parser.ParseDouble(year.c_str(), DBL_MIN);
 	};
 
-	Measure::ReadOptions(parser);
+	Measure::ReadOptions(reader);
 
 	parser.ReadString<"Format">(m_Format, m_ID, L"");
 

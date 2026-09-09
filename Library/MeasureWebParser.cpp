@@ -314,9 +314,10 @@ MeasureWebParser::~MeasureWebParser()
 	}
 }
 
-void MeasureWebParser::ReadOptions(ConfigParser& parser)
+void MeasureWebParser::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	m_NumberFormat = ReadNumberFormatOption(parser);
 

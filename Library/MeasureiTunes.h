@@ -21,7 +21,7 @@ public:
 	void Command(const std::wstring& command) override;
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	void UpdateValue() override;
 
 private:

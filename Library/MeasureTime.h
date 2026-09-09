@@ -22,7 +22,7 @@ public:
 	LARGE_INTEGER GetTimeStamp() { return m_Time; }
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	virtual void UpdateValue();
 
 private:

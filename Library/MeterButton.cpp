@@ -83,11 +83,12 @@ void MeterButton::InvalidateDeviceResources()
 	m_Image.InvalidateDeviceResources();
 }
 
-void MeterButton::ReadOptions(ConfigParser& parser)
+void MeterButton::ReadOptions(ConfigParser::OptionReader& reader)
 {
+	auto& parser = reader.GetParser();
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
-	Meter::ReadOptions(parser);
+	Meter::ReadOptions(reader);
 
 	parser.ReadString<"ButtonImage">(m_ImageName, m_ID, L"");
 	if (!m_ImageName.empty())

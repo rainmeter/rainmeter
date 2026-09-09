@@ -15,9 +15,10 @@ MeasureProcess::~MeasureProcess()
 {
 }
 
-void MeasureProcess::ReadOptions(ConfigParser& parser)
+void MeasureProcess::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	parser.ReadString<"ProcessName">(m_ProcessNameLowercase, m_ID, L"");
 	StringUtil::ToLowerCase(m_ProcessNameLowercase);

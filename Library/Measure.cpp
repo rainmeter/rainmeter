@@ -100,11 +100,12 @@ void Measure::Initialize()
 
 // Read the common options specified in the ini file. The inherited classes must
 // call this base implementation if they overwrite this method.
-void Measure::ReadOptions(ConfigParser& parser)
+void Measure::ReadOptions(ConfigParser::OptionReader& reader)
 {
+	auto& parser = reader.GetParser();
 	bool oldOnChangeActionEmpty = m_OnChangeAction.empty();
 
-	Section::ReadOptions(parser);
+	Section::ReadOptions(reader);
 
 	// Clear substitutes to prevent from being added more than once.
 	if (!m_Substitute.empty())
@@ -425,8 +426,7 @@ bool Measure::Update(bool rereadOptions)
 {
 	if (rereadOptions)
 	{
-		ConfigParser::OptionReader optionReader(m_Skin->GetParser(), m_Name, m_ID);
-		ReadOptions(m_Skin->GetParser());
+		Section::ReadOptions(m_Skin->GetParser(), false);
 	}
 
 	// Don't do anything if paused

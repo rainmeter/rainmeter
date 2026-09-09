@@ -50,6 +50,8 @@ public:
 		OptionReader(const OptionReader& other) = delete;
 		OptionReader& operator=(OptionReader other) = delete;
 
+		ConfigParser& GetParser() { return m_Parser; }
+
 	private:
 		ConfigParser& m_Parser;
 		std::vector<IniSectionID> m_PreviousChain;

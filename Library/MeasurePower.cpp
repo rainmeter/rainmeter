@@ -40,9 +40,10 @@ MeasurePower::~MeasurePower()
 {
 }
 
-void MeasurePower::ReadOptions(ConfigParser& parser)
+void MeasurePower::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	PowerState oldState = m_State;
 	std::wstring oldFormat = m_Format;

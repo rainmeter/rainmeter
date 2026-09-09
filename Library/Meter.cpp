@@ -272,9 +272,10 @@ void Meter::Hide()
 
 // Read the common options specified in the ini file. The inherited classes must
 // call this base implementation if they overwrite this method.
-void Meter::ReadOptions(ConfigParser& parser)
+void Meter::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Section::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Section::ReadOptions(reader);
 
 	BindMeasures(parser);
 
@@ -437,6 +438,7 @@ void Meter::ReadOptions(ConfigParser& parser)
 
 void Meter::ReadContainerOptions(ConfigParser& parser)
 {
+	ConfigParser::OptionReader optionReader(parser, m_Name, m_ID, true);
 	const std::wstring& container = parser.ReadString<"Container">(m_ID, L"");
 	if (StringUtil::EqualsIgnoreCase(m_Name, container))
 	{

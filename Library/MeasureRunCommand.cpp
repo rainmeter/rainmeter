@@ -451,9 +451,10 @@ MeasureRunCommand::~MeasureRunCommand()
 	}
 }
 
-void MeasureRunCommand::ReadOptions(ConfigParser& parser)
+void MeasureRunCommand::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	parser.ReadString<"Parameter">(m_Parameter, m_ID, L"");
 	parser.ReadString<"FinishAction">(m_FinishAction, m_ID, L"", { .sectionVariables = false });

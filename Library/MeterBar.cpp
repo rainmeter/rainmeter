@@ -52,12 +52,13 @@ void MeterBar::InvalidateDeviceResources()
 	m_Image.InvalidateDeviceResources();
 }
 
-void MeterBar::ReadOptions(ConfigParser& parser)
+void MeterBar::ReadOptions(ConfigParser::OptionReader& reader)
 {
+	auto& parser = reader.GetParser();
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 
-	Meter::ReadOptions(parser);
+	Meter::ReadOptions(reader);
 
 	m_Color = parser.ReadColor<"BarColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Green));
 

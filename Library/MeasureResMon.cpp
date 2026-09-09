@@ -16,9 +16,10 @@ MeasureResMon::~MeasureResMon()
 {
 }
 
-void MeasureResMon::ReadOptions(ConfigParser& parser)
+void MeasureResMon::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	static constexpr ConfigParser::EnumOption<Type> s_Types[] =
 	{

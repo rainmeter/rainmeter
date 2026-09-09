@@ -69,7 +69,7 @@ protected:
 
 	MeterStringBase(Skin* skin, const WCHAR* name);
 
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite; }
 

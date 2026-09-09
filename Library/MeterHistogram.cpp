@@ -155,14 +155,15 @@ void MeterHistogram::InvalidateDeviceResources()
 	m_OverlapImage.InvalidateDeviceResources();
 }
 
-void MeterHistogram::ReadOptions(ConfigParser& parser)
+void MeterHistogram::ReadOptions(ConfigParser::OptionReader& reader)
 {
+	auto& parser = reader.GetParser();
 	// Store the current values so we know if the image needs to be updated
 	int oldW = m_W;
 	int oldH = m_H;
 	bool oldGraphHorizontalOrientation = m_GraphHorizontalOrientation;
 
-	Meter::ReadOptions(parser);
+	Meter::ReadOptions(reader);
 
 	m_PrimaryColor = parser.ReadColor<"PrimaryColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Green));
 	m_SecondaryColor = parser.ReadColor<"SecondaryColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Red));

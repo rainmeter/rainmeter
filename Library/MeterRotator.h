@@ -22,7 +22,7 @@ public:
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 
 private:
 	GeneralImage m_Image;

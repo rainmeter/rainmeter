@@ -28,7 +28,7 @@ public:
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	void BindMeasures(ConfigParser& parser) override;
 	virtual bool IsFixedSize(bool overwrite = false)
 	{

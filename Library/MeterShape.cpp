@@ -121,9 +121,10 @@ void MeterShape::InvalidateDeviceResources()
 	}
 }
 
-void MeterShape::ReadOptions(ConfigParser& parser)
+void MeterShape::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Meter::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Meter::ReadOptions(reader);
 
 	bool shapeOptionsChanged = m_ShapeOptions.empty();
 	for (auto& option : m_ShapeOptions)

@@ -28,9 +28,10 @@ MeasureQuote::~MeasureQuote()
 {
 }
 
-void MeasureQuote::ReadOptions(ConfigParser& parser)
+void MeasureQuote::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	parser.ReadString<"PathName">(m_PathName, m_ID, L"");
 	m_Skin->MakePathAbsolute(m_PathName);

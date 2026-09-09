@@ -24,9 +24,10 @@ MeterString::~MeterString()
 {
 }
 
-void MeterString::ReadOptions(ConfigParser& parser)
+void MeterString::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	MeterStringBase::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	MeterStringBase::ReadOptions(reader);
 
 	parser.ReadString<"Prefix">(m_Prefix, m_ID, L"");
 	parser.ReadString<"Postfix">(m_Postfix, m_ID, L"");

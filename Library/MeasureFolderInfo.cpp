@@ -208,9 +208,10 @@ MeasureFolderInfo::~MeasureFolderInfo()
 	}
 }
 
-void MeasureFolderInfo::ReadOptions(ConfigParser& parser)
+void MeasureFolderInfo::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	static constexpr ConfigParser::EnumOption<Type> s_InfoTypes[] =
 	{

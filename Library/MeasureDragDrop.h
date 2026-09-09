@@ -28,7 +28,7 @@ public:
 	void HandleDrop(const std::vector<std::wstring>& files, const POINTL& screenPoint);
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	virtual void UpdateValue();
 
 private:

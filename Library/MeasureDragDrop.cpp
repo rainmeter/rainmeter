@@ -62,9 +62,10 @@ MeasureDragDrop::~MeasureDragDrop()
 {
 }
 
-void MeasureDragDrop::ReadOptions(ConfigParser& parser)
+void MeasureDragDrop::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	parser.ReadString<"Path">(m_Path, m_ID, L"");
 	m_Skin->MakePathAbsolute(m_Path);

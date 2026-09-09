@@ -15,8 +15,7 @@ public:
 
 	void Read(ConfigParser& parser)
 	{
-		ConfigParser::OptionReader optionReader(parser, m_Name, m_ID);
-		ReadOptions(parser);
+		Section::ReadOptions(parser, false);
 	}
 };
 
@@ -27,8 +26,7 @@ public:
 
 	void Read(ConfigParser& parser)
 	{
-		ConfigParser::OptionReader optionReader(parser, m_Name, m_ID);
-		ReadOptions(parser);
+		Section::ReadOptions(parser, false);
 	}
 
 	void SetTestValue(double value)

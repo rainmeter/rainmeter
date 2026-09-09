@@ -39,7 +39,7 @@ public:
 	void SetRepeat(const WCHAR* arg);
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	void UpdateValue() override;
 
 private:

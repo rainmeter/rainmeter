@@ -431,8 +431,9 @@ void MeterStringBase::Initialize()
 		m_Skin->GetFontCollection());
 }
 
-void MeterStringBase::ReadOptions(ConfigParser& parser)
+void MeterStringBase::ReadOptions(ConfigParser::OptionReader& reader)
 {
+	auto& parser = reader.GetParser();
 	// Store the current values so we know if the font needs to be updated, and whether the text
 	// has to be measured again. Everything the measurement depends on is compared here, bar what
 	// is set from outside the options, which reports itself instead.
@@ -452,7 +453,7 @@ void MeterStringBase::ReadOptions(ConfigParser& parser)
 	bool oldWDefined = m_WDefined;
 	bool oldHDefined = m_HDefined;
 
-	Meter::ReadOptions(parser);
+	Meter::ReadOptions(reader);
 
 	m_Color = parser.ReadColor<"FontColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Black));
 	m_EffectColor = parser.ReadColor<"FontEffectColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Black));

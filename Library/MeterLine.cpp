@@ -70,8 +70,9 @@ void MeterLine::Initialize()
 	}
 }
 
-void MeterLine::ReadOptions(ConfigParser& parser)
+void MeterLine::ReadOptions(ConfigParser::OptionReader& reader)
 {
+	auto& parser = reader.GetParser();
 	WCHAR tmpName[64] = { 0 };
 
 	// Store the current number of lines so we know if the buffer needs to be updated
@@ -79,7 +80,7 @@ void MeterLine::ReadOptions(ConfigParser& parser)
 	int oldSize = m_GraphHorizontalOrientation ? m_H : m_W;
 	bool oldGraphHorizontalOrientation = m_GraphHorizontalOrientation;
 
-	Meter::ReadOptions(parser);
+	Meter::ReadOptions(reader);
 
 	int lineCount = parser.ReadInt<"LineCount">(m_ID, 1);
 

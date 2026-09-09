@@ -16,9 +16,10 @@ MeasureUptime::~MeasureUptime()
 {
 }
 
-void MeasureUptime::ReadOptions(ConfigParser& parser)
+void MeasureUptime::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	parser.ReadString<"Format">(m_Format, m_ID, L"%4!i!d %3!i!:%2!02i!");
 

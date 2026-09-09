@@ -16,7 +16,7 @@ public:
 	UINT GetTypeID() override { return TypeID<MeasureSpeedFan>(); }
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	void UpdateValue() override;
 
 private:

@@ -117,9 +117,10 @@ MeasureActionTimer::~MeasureActionTimer()
 	}
 }
 
-void MeasureActionTimer::ReadOptions(ConfigParser& parser)
+void MeasureActionTimer::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	size_t index = 1;
 	std::wstring action = parser.ReadString<"ActionList1">(m_ID, L"", { .sectionVariables = false });
