@@ -1358,18 +1358,6 @@ size_t ConfigParser::MatchEnumOption(IniSectionID section, IniOptionID option, c
 	return count;
 }
 
-bool ConfigParser::IsValueDefined(std::wstring_view section, std::wstring_view key)
-{
-	ReadString(FindSectionID(section), FindOptionID(key), L"", { .sectionVariables = false });
-	return m_LastValueDefined;
-}
-
-bool ConfigParser::IsValueDefined(IniSectionID section, IniOptionID option)
-{
-	ReadString(section, option, L"", { .sectionVariables = false });
-	return m_LastValueDefined;
-}
-
 void ConfigParser::AddSection(Section* section)
 {
 	if (section)

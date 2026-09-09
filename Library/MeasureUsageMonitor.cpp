@@ -875,7 +875,9 @@ void MeasureUsageMonitor::ReadOptions(ConfigParser::OptionReader& reader)
 		if (wait) m_UpdateDivider = 1;
 	}
 
-	if (!reader.IsValueDefined<"MaxValue">())
+	// Note: ReadString instead of ReadFloat since we just want to check if the default was used.
+	reader.ReadString<"MaxValue">(L"");
+	if (reader.GetLastDefaultUsed())
 	{
 		if (maxValue == 0.0)
 		{

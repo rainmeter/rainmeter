@@ -161,6 +161,8 @@ MeasureAdvancedCPU::MeasureAdvancedCPU(Skin* skin, const WCHAR* name) : Measure(
 	m_TopProcess(-1),
 	m_TopProcessName()
 {
+	m_MaxValue = 10000000.0;
+
 	ProcessCollector::GetInstance().AddReference();
 }
 
@@ -188,12 +190,6 @@ void MeasureAdvancedCPU::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 
 	m_TopProcess = reader.ReadInt<"TopProcess">(0);
-
-	if (!reader.IsValueDefined<"MaxValue">())
-	{
-		m_MaxValue = 10000000.0;
-		m_LogMaxValue = false;
-	}
 }
 
 void MeasureAdvancedCPU::UpdateValue()
