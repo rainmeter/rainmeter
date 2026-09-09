@@ -81,6 +81,7 @@
     <ClCompile Include="LuaHelper.cpp" />
     <ClCompile Include="LuaScript.cpp" />
     <ClCompile Include="Measure.cpp" />
+    <ClCompile Include="Measure_Test.cpp" />
     <ClCompile Include="MeasureActionTimer.cpp" />
     <ClCompile Include="MeasureAdvancedCPU.cpp" />
     <ClCompile Include="MeasureAudioLevel.cpp" />

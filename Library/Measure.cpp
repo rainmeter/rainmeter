@@ -48,6 +48,7 @@
 #include "Rainmeter.h"
 #include "Util.h"
 #include "Pcre.h"
+#include "../Common/StringParser.h"
 
 #define OVECCOUNT 300	// Should be a multiple of 3
 
@@ -167,13 +168,6 @@ void Measure::ReadOptions(ConfigParser::OptionReader& reader)
 	std::wstring subs = reader.ReadString<"Substitute">(L"");
 	if (!subs.empty())
 	{
-		if ((subs[0] != L'"' || subs[subs.length() - 1] != L'\'') &&
-			(subs[0] != L'\'' || subs[subs.length() - 1] != L'"'))
-		{
-			// Add quotes since they are removed by the GetProfileString
-			subs.insert(0, 1, L'"');
-			subs += L'"';
-		}
 		if (!ParseSubstitute(subs))
 		{
 			LogErrorF(this, L"Measure: Invalid Substitute=%s", subs.c_str());
@@ -341,25 +335,68 @@ std::wstring_view Measure::CheckSubstitute(std::wstring_view buffer)
 
 // Reads the buffer for "Name":"Value"-pairs separated with comma and
 // fills the map with the parsed data.
-bool Measure::ParseSubstitute(std::wstring buffer)
+bool Measure::ParseSubstitute(std::wstring_view buffer)
 {
 	if (buffer.empty()) return true;
 
-	do
+	auto isQuote = [](WCHAR ch) { return ch == L'"' || ch == L'\''; };
+	auto unquote = [isQuote](std::wstring_view value, bool missingClosingQuote = false) -> std::optional<std::wstring_view>
 	{
-		std::wstring word1 = ExtractWord(buffer);
-		std::wstring sep = ExtractWord(buffer);
-		if (sep.size() != 1 || sep[0] != L':') return false;
-		std::wstring word2 = ExtractWord(buffer);
-
-		if (wcscmp(word1.c_str(), word2.c_str()) != 0)
+		if (missingClosingQuote)
 		{
-			if (m_RegExpSubstitute && word1.empty())
+			if (value.empty()) return value;
+			if (value.front() != L'"') return std::nullopt;
+			return value.substr(1);
+		}
+
+		if (value.empty()) return value;
+		if (!isQuote(value.front()))
+		{
+			if (isQuote(value.back())) return std::nullopt;
+			return value;
+		}
+		if (value.length() < 2 || value.back() != value.front()) return std::nullopt;
+		return value.substr(1, value.length() - 2);
+	};
+
+	const bool hasOuterQuotes =
+		(buffer.front() == L'"' && buffer.back() == L'\'') ||
+		(buffer.front() == L'\'' && buffer.back() == L'"');
+	const bool quotesStripped = !hasOuterQuotes;
+	std::optional<std::wstring_view> patternValue;
+	if (quotesStripped)
+	{
+		// The INI parser removed the opening quote. Find its closing quote and the pair separator.
+		const size_t closingQuote = buffer.find(L'"');
+		if (closingQuote == std::wstring_view::npos || closingQuote + 1 >= buffer.length() || buffer[closingQuote + 1] != L':') return false;
+		patternValue = buffer.substr(0, closingQuote);
+		buffer.remove_prefix(closingQuote + 2);
+	}
+
+	StringParser parser(buffer);
+	const auto options = StringParser::SkipWhitespace | StringParser::SkipQuoted;
+	while (patternValue || !parser.IsConsumed())
+	{
+		if (!patternValue)
+		{
+			const std::wstring_view patternToken = parser.ConsumeUntil(L':', options);
+			if (patternToken.empty()) return false;
+			patternValue = unquote(patternToken);
+		}
+
+		const std::wstring_view replacementToken = parser.ConsumeUntilOrRest(L',', options);
+		const auto replacementValue = unquote(replacementToken, quotesStripped && parser.IsConsumed());
+		if (!patternValue || !replacementValue) return false;
+
+		if (*patternValue != *replacementValue)
+		{
+			std::wstring pattern(*patternValue);
+			if (m_RegExpSubstitute && pattern.empty())
 			{
-				word1 = L"^$";
+				pattern = L"^$";
 			}
 
-			Substitute& substitute = m_Substitute.emplace_back(std::move(word1), std::move(word2));
+			Substitute& substitute = m_Substitute.emplace_back(std::move(pattern), std::wstring(*replacementValue));
 			if (m_RegExpSubstitute)
 			{
 				const char* error;
@@ -372,77 +409,10 @@ bool Measure::ParseSubstitute(std::wstring buffer)
 			}
 		}
 
-		std::wstring sep2 = ExtractWord(buffer);
-		if (!sep2.empty() && (sep2.size() != 1 || sep2[0] != L',')) return false;
+		patternValue.reset();
 	}
-	while (!buffer.empty());
 
 	return true;
-}
-
-// Returns the first word from the buffer. The word can be inside quotes.
-// If not, the separators are ' ', '\t', ',' and ':'. Whitespaces are removed
-// and buffer _will_ be modified.
-std::wstring Measure::ExtractWord(std::wstring& buffer)
-{
-	std::wstring::size_type end, len = buffer.size();
-	std::wstring ret;
-
-	if (len == 0) return ret;
-
-	// Remove whitespaces
-	end = 0;
-	while (end < len && (buffer[end] == L' ' || buffer[end] == L'\t' || buffer[end] == L'\n')) ++end;
-	if (end == len)
-	{
-		// End of line reached
-		end = std::wstring::npos;
-	}
-	else
-	{
-		buffer.erase(0, end);
-		len = buffer.size();
-
-		if (buffer[0] == L'"' || buffer[0] == L'\'')
-		{
-			WCHAR quote = buffer[0];
-
-			end = 1;	// Skip the '"'
-			// Quotes around the word
-			while (end < len && (buffer[end] != quote)) ++end;
-			if (end == len) end = std::wstring::npos;
-
-			if (end != std::wstring::npos)
-			{
-				ret.assign(buffer, 1, end - 1);
-				++end;
-			}
-			else
-			{
-				// End of string reached - discard result
-			}
-		}
-		else
-		{
-			end = 0;
-			while (end < len && (buffer[end] != L',' && buffer[end] != L':' && buffer[end] != L' ' && buffer[end] != L'\t')) ++end;
-			if (end == len) end = std::wstring::npos;
-
-			if (end == std::wstring::npos)
-			{
-				// End of line reached
-				ret = buffer;
-			}
-			else
-			{
-				ret.assign(buffer, 0, ++end);	// The separator is also returned!
-			}
-		}
-	}
-
-	buffer.erase(0, end);
-
-	return ret;
 }
 
 bool Measure::Update(bool rereadOptions)
