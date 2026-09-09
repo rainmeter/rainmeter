@@ -36,7 +36,7 @@ private:
 		INVALID
 	};
 
-	void TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const tm* time);
+	size_t TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const tm* time);
 	void FillCurrentTime();
 	void FreeLocale();
 

@@ -71,15 +71,16 @@ std::optional<std::wstring_view> MeasureUptime::GetStringValue()
 		time[2] %= 24;
 	}
 
+	DWORD length;
 	__try
 	{
-		FormatMessage(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, m_Format.c_str(), 0, 0, buffer, MAX_LINE_LENGTH, (char**)time);
+		length = FormatMessage(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, m_Format.c_str(), 0, 0, buffer, MAX_LINE_LENGTH, (char**)time);
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER)
 	{
 		LogErrorF(this, L"Uptime: \"Format=%s\" invalid", m_Format.c_str());
-		buffer[0] = 0;
+		length = 0;
 	}
 
-	return CheckSubstitute(buffer);
+	return CheckSubstitute(std::wstring_view(buffer, length));
 }

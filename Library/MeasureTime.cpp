@@ -90,10 +90,9 @@ void MeasureTime::FreeLocale()
 	}
 }
 
-// Converts given time to string.
-// This function is a wrapper function for _wcsftime_l.
-void MeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const struct tm* time)
+size_t MeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const struct tm* time)
 {
+	size_t length = 0;
 	if (bufLen > 0)
 	{
 		_invalid_parameter_handler oldHandler = _set_thread_local_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
@@ -102,20 +101,22 @@ void MeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, c
 		errno = 0;
 		if (m_FormatLocale)
 		{
-			_wcsftime_l(buf, bufLen, format, time, m_FormatLocale);
+			length = _wcsftime_l(buf, bufLen, format, time, m_FormatLocale);
 		}
 		else
 		{
-			wcsftime(buf, bufLen, format, time);
+			length = wcsftime(buf, bufLen, format, time);
 		}
 		if (errno == EINVAL)
 		{
 			LogErrorF(this, L"Time: \"Format=%s\" invalid", format);
 			buf[0] = 0;
+			length = 0;
 		}
 
 		_set_thread_local_invalid_parameter_handler(oldHandler);
 	}
+	return length;
 }
 
 void MeasureTime::FillCurrentTime()
@@ -273,8 +274,7 @@ std::optional<std::wstring_view> MeasureTime::GetStringValue()
 {
 	static WCHAR tmpSz[MAX_LINE_LENGTH];
 	struct tm today = { 0 };
-
-	tmpSz[0] = 0;
+	size_t length;
 
 	SYSTEMTIME sysToday = { 0 };
 	FILETIME ftToday = { 0 };
@@ -299,23 +299,25 @@ std::optional<std::wstring_view> MeasureTime::GetStringValue()
 		const WCHAR* format = m_Format.c_str();
 		if (_wcsicmp(L"locale-time", format) == 0)
 		{
-			GetTimeFormat(LOCALE_USER_DEFAULT, 0, &sysToday, nullptr, tmpSz, MAX_LINE_LENGTH);
+			const int result = GetTimeFormat(LOCALE_USER_DEFAULT, 0, &sysToday, nullptr, tmpSz, MAX_LINE_LENGTH);
+			length = result > 0 ? result - 1 : 0;
 		}
 		else if (_wcsicmp(L"locale-date", format) == 0)
 		{
-			GetDateFormat(LOCALE_USER_DEFAULT, 0, &sysToday, nullptr, tmpSz, MAX_LINE_LENGTH);
+			const int result = GetDateFormat(LOCALE_USER_DEFAULT, 0, &sysToday, nullptr, tmpSz, MAX_LINE_LENGTH);
+			length = result > 0 ? result - 1 : 0;
 		}
 		else
 		{
-			TimeToString(tmpSz, MAX_LINE_LENGTH, format, &today);
+			length = TimeToString(tmpSz, MAX_LINE_LENGTH, format, &today);
 		}
 	}
 	else
 	{
-		TimeToString(tmpSz, MAX_LINE_LENGTH, L"%H:%M:%S", &today);
+		length = TimeToString(tmpSz, MAX_LINE_LENGTH, L"%H:%M:%S", &today);
 	}
 
-	return CheckSubstitute(tmpSz);
+	return CheckSubstitute(std::wstring_view(tmpSz, length));
 }
 
 void MeasureTime::ReadOptions(ConfigParser::OptionReader& reader)
