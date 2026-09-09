@@ -76,7 +76,7 @@ private:
 	std::wstring m_DownloadedFile;
 	std::wstring m_DebugFileLocation;
 	std::wstring m_Headers;
-	ProxySetting m_Proxy;
+	std::unique_ptr<ProxySetting> m_Proxy;
 	ParseType m_ParseType;
 	int m_Codepage;
 	int m_StringIndex;
