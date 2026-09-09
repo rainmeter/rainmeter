@@ -12,30 +12,29 @@ namespace {
 class IfState
 {
 public:
-	IfState(std::wstring value, std::wstring trueAction, std::wstring falseAction) :
-		value(),
-		tAction(),
-		fAction(),
-		parseError(false),
-		tCommitted(false),
-		fCommitted(false)
+	IfState(std::wstring value, std::wstring trueAction, std::wstring falseAction)
 	{
-		Set(value, trueAction, falseAction);
+		Set(std::move(value), std::move(trueAction), std::move(falseAction));
 	}
 
 	void Set(std::wstring value, std::wstring trueAction, std::wstring falseAction)
 	{
-		this->value = value;
-		this->tAction = trueAction;
-		this->fAction = falseAction;
+		if (this->value != value)
+		{
+			this->value = std::move(value);
+			parseError = false;
+		}
+
+		this->tAction = std::move(trueAction);
+		this->fAction = std::move(falseAction);
 	}
 
 	std::wstring value;
 	std::wstring tAction;
 	std::wstring fAction;
-	bool parseError;
-	bool tCommitted;
-	bool fCommitted;
+	bool parseError = false;
+	bool tCommitted = false;
+	bool fCommitted = false;
 };
 
 }  // namespace
@@ -120,11 +119,11 @@ void IfActions::ReadConditionOptions(ConfigParser::OptionReader& reader)
 			{
 				if (actions.conditions.size() > (i - 1))
 				{
-					actions.conditions[i - 1].Set(condition, tAction, fAction);
+					actions.conditions[i - 1].Set(std::move(condition), std::move(tAction), std::move(fAction));
 				}
 				else
 				{
-					actions.conditions.emplace_back(condition, tAction, fAction);
+					actions.conditions.emplace_back(std::move(condition), std::move(tAction), std::move(fAction));
 				}
 
 				// Check for IfCondition2/IfTrueAction2/IfFalseAction2 ... etc.
@@ -140,6 +139,11 @@ void IfActions::ReadConditionOptions(ConfigParser::OptionReader& reader)
 				fAction = reader.ReadString(key.c_str(), L"", { .sectionVariables = false });
 			}
 			while (!tAction.empty() || !fAction.empty());
+
+			if (actions.conditions.size() > (i - 1))
+			{
+				actions.conditions.erase(actions.conditions.begin() + i - 1, actions.conditions.end());
+			}
 		}
 		else
 		{
@@ -165,11 +169,11 @@ void IfActions::ReadConditionOptions(ConfigParser::OptionReader& reader)
 			{
 				if (actions.matches.size() > (i - 1))
 				{
-					actions.matches[i - 1].Set(match, tAction, fAction);
+					actions.matches[i - 1].Set(std::move(match), std::move(tAction), std::move(fAction));
 				}
 				else
 				{
-					actions.matches.emplace_back(match, tAction, fAction);
+					actions.matches.emplace_back(std::move(match), std::move(tAction), std::move(fAction));
 				}
 
 				// Check for IfMatch2/IfMatchAction2/IfNotMatchAction2 ... etc.
@@ -184,6 +188,11 @@ void IfActions::ReadConditionOptions(ConfigParser::OptionReader& reader)
 				key = L"IfNotMatchAction" + num;
 				fAction = reader.ReadString(key.c_str(), L"", { .sectionVariables = false });
 			} while (!tAction.empty() || !fAction.empty());
+
+			if (actions.matches.size() > (i - 1))
+			{
+				actions.matches.erase(actions.matches.begin() + i - 1, actions.matches.end());
+			}
 		}
 		else
 		{
