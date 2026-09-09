@@ -415,10 +415,12 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 	// Read tray settings
 	const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
 	const auto trayMeasureID = GetStaticIniSectionID<"TrayMeasure">();
-	m_IconEnabled = parser.ReadBool<"TrayIcon">(rainmeterID, true);
+	auto rainmeterScope = parser.GetOptionReader(L"Rainmeter", rainmeterID);
+	m_IconEnabled = rainmeterScope.ReadBool<"TrayIcon">(true);
 	if (m_IconEnabled)
 	{
-		const std::wstring& measureName = parser.ReadString<"Measure">(trayMeasureID, L"");
+		auto trayMeasureScope = parser.GetOptionReader(L"TrayMeasure", trayMeasureID);
+		const std::wstring& measureName = trayMeasureScope.ReadString<"Measure">(L"");
 
 		if (!measureName.empty())
 		{
@@ -440,7 +442,7 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 			{ L"HISTOGRAM", TRAY_METER_TYPE_HISTOGRAM },
 			{ L"BITMAP", TRAY_METER_TYPE_BITMAP },
 		};
-		m_MeterType = parser.ReadEnum<"TrayMeter">(trayMeasureID,
+		m_MeterType = trayMeasureScope.ReadEnum<"TrayMeter">(
 			m_Measure ? TRAY_METER_TYPE_HISTOGRAM : TRAY_METER_TYPE_NONE, s_MeterTypes);
 
 		if (m_MeterType == TRAY_METER_TYPE_HISTOGRAM)
@@ -450,12 +452,12 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 				return Gdiplus::Color::MakeARGB((BYTE)(255 * color.a), (BYTE)(255 * color.r), (BYTE)(255 * color.g), (BYTE)(255 * color.b));
 			};
 
-			m_ImageData->color1 = toARGB(parser.ReadColor<"TrayColor1">(trayMeasureID, D2D1::ColorF(0.0f, 100.0f / 255.0f, 0.0f, 1.0f)));
-			m_ImageData->color2 = toARGB(parser.ReadColor<"TrayColor2">(trayMeasureID, D2D1::ColorF(0.0f, 1.0f, 0.0f, 1.0f) ));
+			m_ImageData->color1 = toARGB(trayMeasureScope.ReadColor<"TrayColor1">(D2D1::ColorF(0.0f, 100.0f / 255.0f, 0.0f, 1.0f)));
+			m_ImageData->color2 = toARGB(trayMeasureScope.ReadColor<"TrayColor2">(D2D1::ColorF(0.0f, 1.0f, 0.0f, 1.0f) ));
 		}
 		else if (m_MeterType == TRAY_METER_TYPE_BITMAP)
 		{
-			std::wstring imageName = parser.ReadString<"TrayBitmap">(trayMeasureID, L"");
+			std::wstring imageName = trayMeasureScope.ReadString<"TrayBitmap">(L"");
 
 			// Load the bitmaps if defined
 			if (!imageName.empty())

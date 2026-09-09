@@ -18,14 +18,13 @@ MeasureUptime::~MeasureUptime()
 
 void MeasureUptime::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
-	parser.ReadString<"Format">(m_Format, m_ID, L"%4!i!d %3!i!:%2!02i!");
+	reader.ReadString<"Format">(m_Format, L"%4!i!d %3!i!:%2!02i!");
 
 	if (m_Format.find(L"%4") == std::wstring::npos)
 	{
-		m_AddDaysToHours = parser.ReadBool<"AddDaysToHours">(m_ID, true);
+		m_AddDaysToHours = reader.ReadBool<"AddDaysToHours">(true);
 	}
 	else
 	{
@@ -34,11 +33,11 @@ void MeasureUptime::ReadOptions(ConfigParser::OptionReader& reader)
 
 	// Don't allow negative seconds
 	m_SecondsDefined = false;
-	std::wstring seconds = parser.ReadString<"SecondsValue">(m_ID, L"");
+	std::wstring seconds = reader.ReadString<"SecondsValue">(L"");
 	if (!seconds.empty())
 	{
 		m_SecondsDefined = true;
-		m_Seconds = (double)abs((__int64)parser.ReadFloat<"SecondsValue">(m_ID, 0.0));
+		m_Seconds = (double)abs((__int64)reader.ReadFloat<"SecondsValue">(0.0));
 	}
 }
 

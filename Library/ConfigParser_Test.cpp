@@ -105,22 +105,24 @@ public:
 		parser.Initialize(L"");  // TODO: Better way to initialize without file.
 
 		parser.SetValue(L"A", L"String", L"abc");
-		Assert::AreEqual(parser.ReadString(L"A", L"String", L"").c_str(), L"abc");
-		Assert::AreEqual(parser.ReadString(L"A", L"StringNA", L"def").c_str(), L"def");
+		const auto sectionID = IniNameRegistry::FindSection(L"A").value_or(IniSectionID{});
+		auto reader = parser.GetOptionReader(L"A", sectionID);
+		Assert::AreEqual(reader.ReadString(L"String", L"").c_str(), L"abc");
+		Assert::AreEqual(reader.ReadString(L"StringNA", L"def").c_str(), L"def");
 
 		parser.SetValue(L"A", L"Number", L"2");
-		Assert::AreEqual(parser.ReadInt(L"A", L"Number", 0), 2);
+		Assert::AreEqual(reader.ReadInt(L"Number", 0), 2);
 
 		parser.SetValue(L"A", L"NumberFloat", L"1.23");
-		Assert::AreEqual(parser.ReadFloat(L"A", L"NumberFloat", 0.0), 1.23);
+		Assert::AreEqual(reader.ReadFloat(L"NumberFloat", 0.0), 1.23);
 
 		parser.SetValue(L"A", L"NumberU64", L"18446744073709551615");
-		Assert::AreEqual(parser.ReadUInt64(L"A", L"NumberU64", 0Ui64), 18446744073709551615);
+		Assert::AreEqual(reader.ReadUInt64(L"NumberU64", 0Ui64), 18446744073709551615);
 
 		parser.SetValue(L"A", L"Formula", L"(1 + 2)");
-		Assert::AreEqual(parser.ReadInt(L"A", L"Formula", 0), 3);
-		Assert::AreEqual(parser.ReadUInt(L"A", L"Formula", 0), 3U);
-		Assert::AreEqual(parser.ReadFloat(L"A", L"Formula", 0.0), 3.0);
+		Assert::AreEqual(reader.ReadInt(L"Formula", 0), 3);
+		Assert::AreEqual(reader.ReadUInt(L"Formula", 0), 3U);
+		Assert::AreEqual(reader.ReadFloat(L"Formula", 0.0), 3.0);
 
 		parser.SetValue(L"A", L"Color1", L"AABBCCDD");
 		parser.SetValue(L"A", L"Color2", L"170,187,204,221");
@@ -130,19 +132,37 @@ public:
 		const D2D1_COLOR_F& transparent = Gfx::Util::c_Transparent_Color_F;
 		const UINT32 abc = 0xAABBCC;
 
-		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color1", transparent), D2D1::ColorF(abc, 221.0f / 255.0f)));
-		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color2", transparent), D2D1::ColorF(abc, 221.0f / 255.0f)));
-		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color3", transparent), D2D1::ColorF(abc, 1.0f)));
-		Assert::IsTrue(Gfx::Util::ColorFEquals(parser.ReadColor(L"A", L"Color4", transparent), D2D1::ColorF(abc, 1.0f)));
+		Assert::IsTrue(Gfx::Util::ColorFEquals(reader.ReadColor(L"Color1", transparent), D2D1::ColorF(abc, 221.0f / 255.0f)));
+		Assert::IsTrue(Gfx::Util::ColorFEquals(reader.ReadColor(L"Color2", transparent), D2D1::ColorF(abc, 221.0f / 255.0f)));
+		Assert::IsTrue(Gfx::Util::ColorFEquals(reader.ReadColor(L"Color3", transparent), D2D1::ColorF(abc, 1.0f)));
+		Assert::IsTrue(Gfx::Util::ColorFEquals(reader.ReadColor(L"Color4", transparent), D2D1::ColorF(abc, 1.0f)));
 
 		parser.SetValue(L"A", L"Rect", L"1,2,11,22");
 		const RECT defRect = {};
 		const RECT expRect = {1, 2, 11, 22};
-		const RECT readRect = parser.ReadRECT(L"A", L"Rect", defRect);
+		const RECT readRect = reader.ReadRECT(L"Rect", defRect);
 		Assert::AreEqual(readRect.left, expRect.left);
 		Assert::AreEqual(readRect.top, expRect.top);
 		Assert::AreEqual(readRect.right, expRect.right);
 		Assert::AreEqual(readRect.bottom, expRect.bottom);
+	}
+
+	TEST_METHOD(TestOptionReaderInheritance)
+	{
+		ConfigParser parser;
+		parser.Initialize(L"");
+		parser.SetValue(L"Parent", L"Value", L"1");
+		parser.SetValue(L"Child", L"@Inherit", L"Parent");
+
+		const auto childID = IniNameRegistry::FindSection(L"Child").value_or(IniSectionID{});
+		{
+			auto reader = parser.GetOptionReader(L"Child", childID);
+			Assert::AreEqual(reader.ReadInt(L"Value", 0), 0);
+		}
+		{
+			auto reader = parser.GetInheritableOptionReader(L"Child", childID);
+			Assert::AreEqual(reader.ReadInt(L"Value", 0), 1);
+		}
 	}
 
 	TEST_METHOD(TestVariables)
@@ -172,13 +192,15 @@ public:
 		Assert::AreEqual(string4.c_str(), L"abcabc #CCC# def#A#");
 
 		parser.SetValue(L"A", L"String", L"#A#");
-		Assert::AreEqual(parser.ReadString(L"A", L"String", L"").c_str(), L"abc");
+		const auto sectionID = IniNameRegistry::FindSection(L"A").value_or(IniSectionID{});
+		auto reader = parser.GetOptionReader(L"A", sectionID);
+		Assert::AreEqual(reader.ReadString(L"String", L"").c_str(), L"abc");
 
 		parser.SetValue(L"A", L"String", L"%WINDIR%");
-		Assert::AreNotEqual(parser.ReadString(L"A", L"String", L"").c_str(), L"%WINDIR%");
+		Assert::AreNotEqual(reader.ReadString(L"String", L"").c_str(), L"%WINDIR%");
 
 		parser.SetValue(L"A", L"String", L"#Var#");
-		Assert::AreNotEqual(parser.ReadString(L"A", L"String", L"").c_str(), L"BuiltIn");
+		Assert::AreNotEqual(reader.ReadString(L"String", L"").c_str(), L"BuiltIn");
 	}
 
 	TEST_METHOD(TestNestedVariables)

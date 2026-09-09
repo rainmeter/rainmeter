@@ -91,7 +91,7 @@ protected:
 	virtual bool ShouldTrim() const override { return false; }
 
 	void ReadOptions(ConfigParser::OptionReader& reader) override;
-	void BindMeasures(ConfigParser& parser) override;
+	void BindMeasures(ConfigParser::OptionReader& reader) override;
 
 private:
 	// What the last edit was, so that a run of the same kind collapses into one undo step instead

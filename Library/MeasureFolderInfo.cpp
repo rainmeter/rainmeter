@@ -210,7 +210,6 @@ MeasureFolderInfo::~MeasureFolderInfo()
 
 void MeasureFolderInfo::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
 	static constexpr ConfigParser::EnumOption<Type> s_InfoTypes[] =
@@ -222,9 +221,9 @@ void MeasureFolderInfo::ReadOptions(ConfigParser::OptionReader& reader)
 		{ L"FileCount", Type::FileCount },
 		{ L"FileCountStr", Type::FileCount },
 	};
-	m_Type = parser.ReadEnum<"InfoType">(m_ID, Type::FileCount, s_InfoTypes);
+	m_Type = reader.ReadEnum<"InfoType">(Type::FileCount, s_InfoTypes);
 
-	const std::wstring_view folder = parser.ReadString<"Folder">(m_ID, L"", { .sectionVariables = false });
+	const std::wstring_view folder = reader.ReadString<"Folder">(L"", { .sectionVariables = false });
 	if (folder.starts_with(L'['))
 	{
 		if (m_Parent)
@@ -265,16 +264,16 @@ void MeasureFolderInfo::ReadOptions(ConfigParser::OptionReader& reader)
 		m_Parent = new FolderInfoParentMeasure(this);
 	}
 
-	std::wstring path = parser.ReadString<"Folder">(m_ID, L"");
+	std::wstring path = reader.ReadString<"Folder">(L"");
 	GetSkin()->MakePathAbsolute(path);
 	m_Parent->folder.SetPath(path.c_str());
 
-	const WCHAR* filter = parser.ReadString<"RegExpFilter">(m_ID, L"").c_str();
+	const WCHAR* filter = reader.ReadString<"RegExpFilter">(L"").c_str();
 	m_Parent->folder.SetRegExpFilter(filter);
 
-	m_Parent->folder.SetSubFolders(parser.ReadBool<"IncludeSubFolders">(m_ID, false));
-	m_Parent->folder.SetHiddenFiles(parser.ReadBool<"IncludeHiddenFiles">(m_ID, false));
-	m_Parent->folder.SetSystemFiles(parser.ReadBool<"IncludeSystemFiles">(m_ID, false));
+	m_Parent->folder.SetSubFolders(reader.ReadBool<"IncludeSubFolders">(false));
+	m_Parent->folder.SetHiddenFiles(reader.ReadBool<"IncludeHiddenFiles">(false));
+	m_Parent->folder.SetSystemFiles(reader.ReadBool<"IncludeSystemFiles">(false));
 }
 
 void MeasureFolderInfo::UpdateValue()

@@ -42,13 +42,12 @@ MeasurePower::~MeasurePower()
 
 void MeasurePower::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
 	PowerState oldState = m_State;
 	std::wstring oldFormat = m_Format;
 
-	std::wstring value = parser.ReadString<"PowerState">(m_ID, L"");
+	std::wstring value = reader.ReadString<"PowerState">(L"");
 	LPCWSTR state = value.c_str();
 	if (_wcsicmp(L"ACLINE", state) == 0)
 	{
@@ -68,7 +67,7 @@ void MeasurePower::ReadOptions(ConfigParser::OptionReader& reader)
 	else if (_wcsicmp(L"LIFETIME", state) == 0)
 	{
 		m_State = PowerState::LIFETIME;
-		parser.ReadString<"Format">(m_Format, m_ID, L"%H:%M");
+		reader.ReadString<"Format">(m_Format, L"%H:%M");
 
 		SYSTEM_POWER_STATUS sps;
 		if (GetSystemPowerStatus(&sps))

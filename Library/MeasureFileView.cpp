@@ -338,7 +338,6 @@ MeasureFileView::~MeasureFileView()
 
 void MeasureFileView::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
 	static constexpr ConfigParser::EnumOption<DateType> s_DateTypes[] =
@@ -348,7 +347,7 @@ void MeasureFileView::ReadOptions(ConfigParser::OptionReader& reader)
 		{ L"ACCESSED", DTYPE_ACCESSED },
 	};
 
-	const std::wstring_view path = parser.ReadString<"Path">(m_ID, L"", { .sectionVariables = false });
+	const std::wstring_view path = reader.ReadString<"Path">(L"", { .sectionVariables = false });
 	if (path.starts_with(L'[') && path.ends_with(L']'))
 	{
 		// Path is a reference to another FileView measure, so share its parent data
@@ -398,17 +397,17 @@ void MeasureFileView::ReadOptions(ConfigParser::OptionReader& reader)
 			{ L"TYPE", STYPE_TYPE },
 			{ L"DATE", STYPE_DATE },
 		};
-		m_Parent->sortType = parser.ReadEnum<"SortType">(m_ID, STYPE_NAME, s_SortTypes);
+		m_Parent->sortType = reader.ReadEnum<"SortType">(STYPE_NAME, s_SortTypes);
 
 		if (m_Parent->sortType == STYPE_DATE)
 		{
-			m_Parent->sortDateType = parser.ReadEnum<"SortDateType">(m_ID, DTYPE_MODIFIED, s_DateTypes);
+			m_Parent->sortDateType = reader.ReadEnum<"SortDateType">(DTYPE_MODIFIED, s_DateTypes);
 		}
 
-		int count = parser.ReadInt<"Count">(m_ID, 1);
+		int count = reader.ReadInt<"Count">(1);
 		m_Parent->count = count > 0 ? count : 1;
 
-		int recursive = parser.ReadInt<"Recursive">(m_ID, 0);
+		int recursive = reader.ReadInt<"Recursive">(0);
 		switch (recursive)
 		{
 		default:
@@ -427,38 +426,38 @@ void MeasureFileView::ReadOptions(ConfigParser::OptionReader& reader)
 			break;
 		}
 
-		m_Parent->sortAscending = parser.ReadBool<"SortAscending">(m_ID, true);
-		m_Parent->showDotDot = parser.ReadBool<"ShowDotDot">(m_ID, true);
-		m_Parent->showFile = parser.ReadBool<"ShowFile">(m_ID, true);
-		m_Parent->showFolder = parser.ReadBool<"ShowFolder">(m_ID, true);
-		m_Parent->showHidden = parser.ReadBool<"ShowHidden">(m_ID, true);
-		m_Parent->showSystem = parser.ReadBool<"ShowSystem">(m_ID, false);
-		m_Parent->hideExtension = parser.ReadBool<"HideExtensions">(m_ID, false);
-		const std::wstring* extensions = &parser.ReadString<"Extensions">(m_ID, L"");
-		if (!parser.GetLastDefaultUsed())
+		m_Parent->sortAscending = reader.ReadBool<"SortAscending">(true);
+		m_Parent->showDotDot = reader.ReadBool<"ShowDotDot">(true);
+		m_Parent->showFile = reader.ReadBool<"ShowFile">(true);
+		m_Parent->showFolder = reader.ReadBool<"ShowFolder">(true);
+		m_Parent->showHidden = reader.ReadBool<"ShowHidden">(true);
+		m_Parent->showSystem = reader.ReadBool<"ShowSystem">(false);
+		m_Parent->hideExtension = reader.ReadBool<"HideExtensions">(false);
+		const std::wstring* extensions = &reader.ReadString<"Extensions">(L"");
+		if (!reader.GetLastDefaultUsed())
 		{
 			m_Parent->extensionsFilter = ExtensionsFilter::Include;
 		}
 		else
 		{
-			extensions = &parser.ReadString<"ExcludeExtensions">(m_ID, L"");
+			extensions = &reader.ReadString<"ExcludeExtensions">(L"");
 			m_Parent->extensionsFilter = ExtensionsFilter::Exclude;
 		}
 		StringParser::Split(*extensions, L';', m_Parent->extensions);
 
 		extensions = nullptr;
 
-		parser.ReadString<"WildcardSearch">(m_Parent->wildcardSearch, m_ID, L"*");
+		reader.ReadString<"WildcardSearch">(m_Parent->wildcardSearch, L"*");
 
-		parser.ReadString<"FinishAction">(m_Parent->finishAction, m_ID, L"", { .sectionVariables = false });
+		reader.ReadString<"FinishAction">(m_Parent->finishAction, L"", { .sectionVariables = false });
 	}
 
 	SetParent(m_Parent);
 
-	int index = parser.ReadInt<"Index">(m_ID, 1) - 1;
+	int index = reader.ReadInt<"Index">(1) - 1;
 	m_Index = index >= 0 ? index : 1;
 
-	m_IgnoreCount = parser.ReadBool<"IgnoreCount">(m_ID, false);
+	m_IgnoreCount = reader.ReadBool<"IgnoreCount">(false);
 
 	const MeasureType previousType = m_Type;
 
@@ -476,11 +475,11 @@ void MeasureFileView::ReadOptions(ConfigParser::OptionReader& reader)
 		{ L"PATHTOFILE", TYPE_PATHTOFILE },
 		{ L"ICON", TYPE_ICON },
 	};
-	m_Type = parser.ReadEnum<"Type">(m_ID, TYPE_FOLDERPATH, s_Types);
+	m_Type = reader.ReadEnum<"Type">(TYPE_FOLDERPATH, s_Types);
 
 	if (m_Type == TYPE_FILEDATE)
 	{
-		m_DateType = parser.ReadEnum<"DateType">(m_ID, DTYPE_MODIFIED, s_DateTypes);
+		m_DateType = reader.ReadEnum<"DateType">(DTYPE_MODIFIED, s_DateTypes);
 	}
 	else if (m_Type == TYPE_ICON)
 	{
@@ -488,7 +487,7 @@ void MeasureFileView::ReadOptions(ConfigParser::OptionReader& reader)
 		{
 			// Remove icons written by versions that predate SystemImage support.
 			const std::wstring defaultValue = fmt::format(L"icon{}.ico", m_Index + 1);
-			std::wstring iconPath = parser.ReadString<"IconPath">(m_ID, defaultValue.c_str());
+			std::wstring iconPath = reader.ReadString<"IconPath">(defaultValue.c_str());
 			GetSkin()->MakePathAbsolute(iconPath);
 			DeleteFile(iconPath.c_str());
 		}
@@ -500,7 +499,7 @@ void MeasureFileView::ReadOptions(ConfigParser::OptionReader& reader)
 			{ L"LARGE", SHIL_EXTRALARGE },
 			{ L"EXTRALARGE", SHIL_JUMBO },
 		};
-		m_IconSize = parser.ReadEnum<"IconSize">(m_ID, (int)SHIL_LARGE, s_IconSizes);
+		m_IconSize = reader.ReadEnum<"IconSize">((int)SHIL_LARGE, s_IconSizes);
 	}
 }
 

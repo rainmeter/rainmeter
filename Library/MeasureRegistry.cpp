@@ -185,10 +185,9 @@ void MeasureRegistry::UpdateValue()
 
 void MeasureRegistry::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
-	m_NumberFormat = ReadNumberFormatOption(parser);
+	m_NumberFormat = ReadNumberFormatOption(reader);
 
 	// Not constexpr: the HKEY_* macros cast an integer to a pointer.
 	static const ConfigParser::EnumOption<HKEY> s_HKeys[] =
@@ -200,7 +199,7 @@ void MeasureRegistry::ReadOptions(ConfigParser::OptionReader& reader)
 		{ L"HKEY_PERFORMANCE_DATA", HKEY_PERFORMANCE_DATA },
 		{ L"HKEY_DYN_DATA", HKEY_DYN_DATA },
 	};
-	m_HKey = parser.ReadEnum<"RegHKey">(m_ID, HKEY_CURRENT_USER, s_HKeys);
+	m_HKey = reader.ReadEnum<"RegHKey">(HKEY_CURRENT_USER, s_HKeys);
 
 	static constexpr ConfigParser::EnumOption<OutputType> s_OutputTypes[] =
 	{
@@ -208,12 +207,12 @@ void MeasureRegistry::ReadOptions(ConfigParser::OptionReader& reader)
 		{ L"SubKeyList", OutputType::SubKeyList },
 		{ L"ValueList", OutputType::ValueList },
 	};
-	m_OutputType = parser.ReadEnum<"OutputType">(m_ID, OutputType::Value, s_OutputTypes);
+	m_OutputType = reader.ReadEnum<"OutputType">(OutputType::Value, s_OutputTypes);
 
-	parser.ReadString<"OutputDelimiter">(m_OutputDelimiter, m_ID, L"\n");
+	reader.ReadString<"OutputDelimiter">(m_OutputDelimiter, L"\n");
 
-	parser.ReadString<"RegKey">(m_RegKeyName, m_ID, L"");
-	parser.ReadString<"RegValue">(m_RegValueName, m_ID, L"");
+	reader.ReadString<"RegKey">(m_RegKeyName, L"");
+	reader.ReadString<"RegValue">(m_RegValueName, L"");
 
 	if (m_MaxValue == 0.0)
 	{

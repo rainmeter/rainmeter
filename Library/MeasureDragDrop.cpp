@@ -64,29 +64,29 @@ MeasureDragDrop::~MeasureDragDrop()
 
 void MeasureDragDrop::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
+	auto& parser = m_Skin->GetParser();
 	Measure::ReadOptions(reader);
 
-	parser.ReadString<"Path">(m_Path, m_ID, L"");
+	reader.ReadString<"Path">(m_Path, L"");
 	m_Skin->MakePathAbsolute(m_Path);
 
-	parser.ReadString<"OnDropAction">(m_OnDropAction, m_ID, L"");
+	reader.ReadString<"OnDropAction">(m_OnDropAction, L"");
 	if (m_OnDropAction.empty())
 	{
 		// For backwards compatibility.
-		parser.ReadString<"OnDroppedAction">(m_OnDropAction, m_ID, L"");
+		reader.ReadString<"OnDroppedAction">(m_OnDropAction, L"");
 	}
 
-	parser.ReadString<"OnEnterAction">(m_OnEnterAction, m_ID, L"");
-	parser.ReadString<"OnOverAction">(m_OnOverAction, m_ID, L"");
-	parser.ReadString<"OnLeaveAction">(m_OnLeaveAction, m_ID, L"");
+	reader.ReadString<"OnEnterAction">(m_OnEnterAction, L"");
+	reader.ReadString<"OnOverAction">(m_OnOverAction, L"");
+	reader.ReadString<"OnLeaveAction">(m_OnLeaveAction, L"");
 
-	m_ProcessAllFiles = parser.ReadBool<"ProcessAllFiles">(m_ID, false);
-	m_OverrideExisting = parser.ReadBool<"OverrideExisting">(m_ID, false);
-	m_Silent = parser.ReadBool<"Silent">(m_ID, false);
+	m_ProcessAllFiles = reader.ReadBool<"ProcessAllFiles">(false);
+	m_OverrideExisting = reader.ReadBool<"OverrideExisting">(false);
+	m_Silent = reader.ReadBool<"Silent">(false);
 
 	m_Action = DropAction::None;
-	const auto* action = parser.ReadString<"Action">(m_ID, L"").c_str();
+	const auto* action = reader.ReadString<"Action">(L"").c_str();
 	if (_wcsicmp(action, L"Move") == 0)
 	{
 		m_Action = DropAction::Move;
@@ -107,7 +107,7 @@ void MeasureDragDrop::ReadOptions(ConfigParser::OptionReader& reader)
 	{
 		m_Action = DropAction::Path;
 	}
-	else if (!parser.GetLastDefaultUsed() && _wcsicmp(action, L"None") != 0)
+	else if (!reader.GetLastDefaultUsed() && _wcsicmp(action, L"None") != 0)
 	{
 		LogErrorF(this, L"Invalid Action=%s", action);
 		m_Disabled = true;
@@ -123,7 +123,7 @@ void MeasureDragDrop::ReadOptions(ConfigParser::OptionReader& reader)
 	m_BoundsMeter.clear();
 	m_BoundsFormulas.fill(L"");
 
-	const std::wstring& bounds = parser.ReadString<"Bounds">(m_ID, L"", { .sectionVariables = false });
+	const std::wstring& bounds = reader.ReadString<"Bounds">(L"", { .sectionVariables = false });
 	if (!bounds.empty())
 	{
 		std::vector<std::wstring_view> tokens;

@@ -734,19 +734,24 @@ void MeasureInputText::Command(const std::wstring& command)
 	m_StepIndex = 0;
 
 	auto& parser = m_Skin->GetParser();
-	m_Options = InputTextOptions();
-	for (const OptionName& entry : c_Options)
+	bool hasSteps;
 	{
-		const std::wstring value = parser.ReadString(m_ID, entry.name, L"");
-		if (!value.empty()) ApplyOption(m_Options, parser, entry.option, value);
+		auto reader = parser.GetInheritableOptionReader(m_Name, m_ID);
+		m_Options = InputTextOptions();
+		for (const OptionName& entry : c_Options)
+		{
+			const std::wstring value = reader.ReadString(entry.name, L"");
+			if (!value.empty()) ApplyOption(m_Options, parser, entry.option, value);
+		}
+
+		reader.ReadString<"OnDismissAction">(m_DismissAction, L"", { .sectionVariables = false });
+		hasSteps = ReadSteps(reader, command);
 	}
 
-	parser.ReadString<"OnDismissAction">(m_DismissAction, m_ID, L"", { .sectionVariables = false });
-
-	if (ReadSteps(command)) RunSteps();
+	if (hasSteps) RunSteps();
 }
 
-bool MeasureInputText::ReadSteps(const std::wstring& command)
+bool MeasureInputText::ReadSteps(ConfigParser::OptionReader& reader, const std::wstring& command)
 {
 	ConfigParser& parser = m_Skin->GetParser();
 	const std::wstring args = Trim(command);
@@ -795,7 +800,7 @@ bool MeasureInputText::ReadSteps(const std::wstring& command)
 	{
 		std::wstring name = L"Command";
 		name += std::to_wstring(i);
-		const auto& line = parser.ReadString(m_ID, name, L"", { .sectionVariables = false });
+		const auto& line = reader.ReadString(name, L"", { .sectionVariables = false });
 		if (line.empty()) break;
 
 		Step& step = m_Steps.emplace_back();

@@ -20,7 +20,7 @@ public:
 
 protected:
 	void ReadOptions(ConfigParser::OptionReader& reader) override;
-	void BindMeasures(ConfigParser& parser) override;
+	void BindMeasures(ConfigParser::OptionReader& reader) override;
 
 private:
 	std::wstring m_Prefix;

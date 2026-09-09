@@ -89,7 +89,7 @@ protected:
 
 	// Reads NumberConversionFormat, which selects the separators used by the measures that convert
 	// a string into their number value.
-	LocaleUtil::NumberFormat ReadNumberFormatOption(ConfigParser& parser);
+	LocaleUtil::NumberFormat ReadNumberFormatOption(ConfigParser::OptionReader& reader);
 
 	bool ParseSubstitute(std::wstring buffer);
 	std::wstring ExtractWord(std::wstring& buffer);

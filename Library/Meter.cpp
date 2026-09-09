@@ -274,13 +274,13 @@ void Meter::Hide()
 // call this base implementation if they overwrite this method.
 void Meter::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
+	auto& parser = m_Skin->GetParser();
 	Section::ReadOptions(reader);
 
-	BindMeasures(parser);
+	BindMeasures(reader);
 
 	int oldX = m_X;
-	std::wstring& x = (std::wstring&)parser.ReadString<"X">(m_ID, L"0");
+	std::wstring& x = (std::wstring&)reader.ReadString<"X">(L"0");
 	if (!x.empty())
 	{
 		WCHAR lastChar = x[x.size() - 1];
@@ -308,7 +308,7 @@ void Meter::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 
 	int oldY = m_Y;
-	std::wstring& y = (std::wstring&)parser.ReadString<"Y">(m_ID, L"0");
+	std::wstring& y = (std::wstring&)reader.ReadString<"Y">(L"0");
 	if (!y.empty())
 	{
 		WCHAR lastChar = y[y.size() - 1];
@@ -341,12 +341,12 @@ void Meter::ReadOptions(ConfigParser::OptionReader& reader)
 	const int oldHeightPadding = GetHeightPadding();
 
 	static const D2D1_RECT_F defPadding = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
-	m_Padding = parser.ReadRect<"Padding">(m_ID, defPadding);
+	m_Padding = reader.ReadRect<"Padding">(defPadding);
 
 	const bool oldWDefined = m_WDefined;
 
-	const int w = parser.ReadInt<"W">(m_ID, m_W - oldWidthPadding);
-	m_WDefined = parser.GetLastValueDefined();
+	const int w = reader.ReadInt<"W">(m_W - oldWidthPadding);
+	m_WDefined = reader.GetLastValueDefined();
 
 	// Meters that size themselves to their content add the padding when they do so, so only the
 	// size that comes from the option is padded here.
@@ -358,8 +358,8 @@ void Meter::ReadOptions(ConfigParser::OptionReader& reader)
 
 	const bool oldHDefined = m_HDefined;
 
-	const int h = parser.ReadInt<"H">(m_ID, m_H - oldHeightPadding);
-	m_HDefined = parser.GetLastValueDefined();
+	const int h = reader.ReadInt<"H">(m_H - oldHeightPadding);
+	m_HDefined = reader.GetLastValueDefined();
 
 	if (IsFixedSize(true)) m_H = h + GetHeightPadding();
 	if (!m_HDefined && oldHDefined && IsFixedSize())
@@ -368,25 +368,25 @@ void Meter::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 
 	bool oldHidden = m_Hidden;
-	m_Hidden = parser.ReadBool<"Hidden">(m_ID, false);
+	m_Hidden = reader.ReadBool<"Hidden">(false);
 
 	if (oldX != m_X || oldY != m_Y || oldHidden != m_Hidden)
 	{
 		m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
 	}
 
-	m_SolidBevel = (BEVELTYPE)parser.ReadInt<"BevelType">(m_ID, BEVELTYPE_NONE);
-	m_BevelColor = parser.ReadColor<"BevelColor">(m_ID, D2D1::ColorF(D2D1::ColorF::White));
-	m_BevelColor2 = parser.ReadColor<"BevelColor2">(m_ID, D2D1::ColorF(D2D1::ColorF::Black));
+	m_SolidBevel = (BEVELTYPE)reader.ReadInt<"BevelType">(BEVELTYPE_NONE);
+	m_BevelColor = reader.ReadColor<"BevelColor">(D2D1::ColorF(D2D1::ColorF::White));
+	m_BevelColor2 = reader.ReadColor<"BevelColor2">(D2D1::ColorF(D2D1::ColorF::Black));
 
-	m_SolidColor = parser.ReadColor<"SolidColor">(m_ID, Gfx::Util::c_Transparent_Color_F);
-	m_SolidColor2 = parser.ReadColor<"SolidColor2">(m_ID, m_SolidColor);
-	m_SolidAngle = (FLOAT)parser.ReadFloat<"GradientAngle">(m_ID, 0.0);
+	m_SolidColor = reader.ReadColor<"SolidColor">(Gfx::Util::c_Transparent_Color_F);
+	m_SolidColor2 = reader.ReadColor<"SolidColor2">(m_SolidColor);
+	m_SolidAngle = (FLOAT)reader.ReadFloat<"GradientAngle">(0.0);
 
-	m_Mouse.ReadOptions(parser, m_ID);
+	m_Mouse.ReadOptions(parser, reader);
 
 	std::wstring toolTipText;
-	parser.ReadString<"ToolTipText">(toolTipText, m_ID, L"");
+	reader.ReadString<"ToolTipText">(toolTipText, L"");
 	if (toolTipText.empty())
 	{
 		m_ToolTip.reset();
@@ -396,17 +396,17 @@ void Meter::ReadOptions(ConfigParser::OptionReader& reader)
 		if (!m_ToolTip) m_ToolTip = std::make_unique<ToolTipData>();
 
 		m_ToolTip->text = std::move(toolTipText);
-		parser.ReadString<"ToolTipTitle">(m_ToolTip->title, m_ID, L"");
-		parser.ReadString<"ToolTipIcon">(m_ToolTip->icon, m_ID, L"");
-		m_ToolTip->width = parser.ReadInt<"ToolTipWidth">(m_ID, 1000);
-		m_ToolTip->type = parser.ReadBool<"ToolTipType">(m_ID, false);
-		m_ToolTip->hidden = parser.ReadBool<"ToolTipHidden">(m_ID, m_Skin->GetMeterToolTipHidden());
+		reader.ReadString<"ToolTipTitle">(m_ToolTip->title, L"");
+		reader.ReadString<"ToolTipIcon">(m_ToolTip->icon, L"");
+		m_ToolTip->width = reader.ReadInt<"ToolTipWidth">(1000);
+		m_ToolTip->type = reader.ReadBool<"ToolTipType">(false);
+		m_ToolTip->hidden = reader.ReadBool<"ToolTipHidden">(m_Skin->GetMeterToolTipHidden());
 	}
 
-	m_AntiAlias = parser.ReadBool<"AntiAlias">(m_ID, false);
+	m_AntiAlias = reader.ReadBool<"AntiAlias">(false);
 
 	m_Transformation = D2D1::Matrix3x2F::Identity();
-	const std::wstring& transformation = parser.ReadString<"TransformationMatrix">(m_ID, L"");
+	const std::wstring& transformation = reader.ReadString<"TransformationMatrix">(L"");
 	if (!transformation.empty())
 	{
 		StringParser values(transformation);
@@ -433,13 +433,12 @@ void Meter::ReadOptions(ConfigParser::OptionReader& reader)
 		}
 	}
 
-	ReadContainerOptions(parser);
+	ReadContainerOptions(reader);
 }
 
-void Meter::ReadContainerOptions(ConfigParser& parser)
+void Meter::ReadContainerOptions(ConfigParser::OptionReader& reader)
 {
-	ConfigParser::OptionReader optionReader(parser, m_Name, m_ID, true);
-	const std::wstring& container = parser.ReadString<"Container">(m_ID, L"");
+	const std::wstring& container = reader.ReadString<"Container">(L"");
 	if (StringUtil::EqualsIgnoreCase(m_Name, container))
 	{
 		LogErrorF(this, L"Container cannot self-reference: %s", container.c_str());
@@ -480,9 +479,9 @@ void Meter::ReadContainerOptions(ConfigParser& parser)
 
 // Binds this meter to the given measure. The same measure can be bound to
 // several meters but one meter and only be bound to one measure.
-void Meter::BindMeasures(ConfigParser& parser)
+void Meter::BindMeasures(ConfigParser::OptionReader& reader)
 {
-	BindPrimaryMeasure(parser, false);
+	BindPrimaryMeasure(reader, false);
 }
 
 // Creates the given meter. This is the factory method for the meters.
@@ -553,13 +552,13 @@ bool Meter::Update()
 
 // Reads and binds the primary MeasureName. This must always be called in overridden
 // BindMeasures() implementations.
-bool Meter::BindPrimaryMeasure(ConfigParser& parser, bool optional)
+bool Meter::BindPrimaryMeasure(ConfigParser::OptionReader& reader, bool optional)
 {
 	m_Measures.clear();
 
-	const std::wstring& measureName = parser.ReadString<"MeasureName">(m_ID, L"");
+	const std::wstring& measureName = reader.ReadString<"MeasureName">(L"");
 
-	Measure* measure = parser.GetMeasure(measureName);
+	Measure* measure = m_Skin->GetParser().GetMeasure(measureName);
 	if (measure)
 	{
 		m_Measures.push_back(measure);
@@ -574,8 +573,9 @@ bool Meter::BindPrimaryMeasure(ConfigParser& parser, bool optional)
 }
 
 // Reads and binds secondary measures (MeasureName2 - MeasureNameN).
-void Meter::BindSecondaryMeasures(ConfigParser& parser)
+void Meter::BindSecondaryMeasures(ConfigParser::OptionReader& reader)
 {
+	auto& parser = m_Skin->GetParser();
 	if (!m_Measures.empty())
 	{
 		WCHAR tmpName[64];
@@ -584,7 +584,7 @@ void Meter::BindSecondaryMeasures(ConfigParser& parser)
 		do
 		{
 			_snwprintf_s(tmpName, _TRUNCATE, L"MeasureName%i", i);
-			const std::wstring& measureName = parser.ReadString(m_ID, tmpName, L"");
+			const std::wstring& measureName = reader.ReadString(tmpName, L"");
 			Measure* measure = parser.GetMeasure(measureName);
 			if (measure)
 			{

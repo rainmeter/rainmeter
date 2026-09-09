@@ -26,19 +26,19 @@ MeterString::~MeterString()
 
 void MeterString::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
+	auto& parser = m_Skin->GetParser();
 	MeterStringBase::ReadOptions(reader);
 
-	parser.ReadString<"Prefix">(m_Prefix, m_ID, L"");
-	parser.ReadString<"Postfix">(m_Postfix, m_ID, L"");
-	parser.ReadString<"Text">(m_Text, m_ID, L"");
+	reader.ReadString<"Prefix">(m_Prefix, L"");
+	reader.ReadString<"Postfix">(m_Postfix, L"");
+	reader.ReadString<"Text">(m_Text, L"");
 
-	m_Angle = (FLOAT)parser.ReadFloat<"Angle">(m_ID, 0.0);
+	m_Angle = (FLOAT)reader.ReadFloat<"Angle">(0.0);
 
-	m_Percentual = parser.ReadBool<"Percentual">(m_ID, false);
-	m_NumOfDecimals = parser.ReadInt<"NumOfDecimals">(m_ID, -1);
+	m_Percentual = reader.ReadBool<"Percentual">(false);
+	m_NumOfDecimals = reader.ReadInt<"NumOfDecimals">(-1);
 
-	const std::wstring& autoscale = parser.ReadString<"AutoScale">(m_ID, L"0");
+	const std::wstring& autoscale = reader.ReadString<"AutoScale">(L"0");
 	int autoscaleValue = _wtoi(autoscale.c_str());
 	if (autoscaleValue == 0)
 	{
@@ -56,11 +56,11 @@ void MeterString::ReadOptions(ConfigParser::OptionReader& reader)
 		}
 	}
 
-	const std::wstring& scale = parser.ReadString<"Scale">(m_ID, L"1");
+	const std::wstring& scale = reader.ReadString<"Scale">(L"1");
 	m_NoDecimals = (scale.find(L'.') == std::wstring::npos);
 	m_Scale = parser.ParseDouble(scale.c_str(), 1);
 
-	m_TrailingSpaces = parser.ReadBool<"TrailingSpaces">(m_ID, false);
+	m_TrailingSpaces = reader.ReadBool<"TrailingSpaces">(false);
 }
 
 bool MeterString::Update()
@@ -160,10 +160,10 @@ bool MeterString::Draw(Gfx::Canvas& canvas)
 	return result;
 }
 
-void MeterString::BindMeasures(ConfigParser& parser)
+void MeterString::BindMeasures(ConfigParser::OptionReader& reader)
 {
-	if (BindPrimaryMeasure(parser, true))
+	if (BindPrimaryMeasure(reader, true))
 	{
-		BindSecondaryMeasures(parser);
+		BindSecondaryMeasures(reader);
 	}
 }

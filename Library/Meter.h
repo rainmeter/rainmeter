@@ -28,7 +28,7 @@ public:
 
 	using Section::ReadOptions;
 	void ReadOptions(ConfigParser::OptionReader& reader) override;
-	void ReadContainerOptions(ConfigParser& parser);
+	void ReadContainerOptions(ConfigParser::OptionReader& reader);
 
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
@@ -129,12 +129,12 @@ protected:
 
 	Meter(Skin* skin, const WCHAR* name);
 
-	virtual void BindMeasures(ConfigParser& parser);
+	virtual void BindMeasures(ConfigParser::OptionReader& reader);
 
 	virtual bool IsFixedSize(bool overwrite = false) { return true; }
 
-	bool BindPrimaryMeasure(ConfigParser& parser, bool optional);
-	void BindSecondaryMeasures(ConfigParser& parser);
+	bool BindPrimaryMeasure(ConfigParser::OptionReader& reader, bool optional);
+	void BindSecondaryMeasures(ConfigParser::OptionReader& reader);
 
 	HWND GetToolTipWindow() { return m_ToolTip ? m_ToolTip->handle : nullptr; }
 	void CreateToolTip();

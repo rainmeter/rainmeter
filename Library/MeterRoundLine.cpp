@@ -40,23 +40,22 @@ MeterRoundLine::~MeterRoundLine()
 
 void MeterRoundLine::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Meter::ReadOptions(reader);
 
-	m_LineWidth = parser.ReadFloat<"LineWidth">(m_ID, 1.0);
-	m_LineLength = parser.ReadFloat<"LineLength">(m_ID, 20.0);
-	m_LineStart = parser.ReadFloat<"LineStart">(m_ID, -1.0);
-	m_StartAngle = parser.ReadFloat<"StartAngle">(m_ID, 0.0);
-	m_RotationAngle = parser.ReadFloat<"RotationAngle">(m_ID, 6.2832);
-	m_ValueRemainder = parser.ReadUInt<"ValueReminder">(m_ID, 0);		// Typo
-	m_ValueRemainder = parser.ReadUInt<"ValueRemainder">(m_ID, m_ValueRemainder);
-	m_LineColor = parser.ReadColor<"LineColor">(m_ID, D2D1::ColorF(D2D1::ColorF::Black));
-	m_Solid = parser.ReadBool<"Solid">(m_ID, false);
-	m_CntrlAngle = parser.ReadBool<"ControlAngle">(m_ID, true);
-	m_CntrlLineStart = parser.ReadBool<"ControlStart">(m_ID, false);
-	m_CntrlLineLength = parser.ReadBool<"ControlLength">(m_ID, false);
-	m_LineStartShift = parser.ReadFloat<"StartShift">(m_ID, 0.0);
-	m_LineLengthShift = parser.ReadFloat<"LengthShift">(m_ID, 0.0);
+	m_LineWidth = reader.ReadFloat<"LineWidth">(1.0);
+	m_LineLength = reader.ReadFloat<"LineLength">(20.0);
+	m_LineStart = reader.ReadFloat<"LineStart">(-1.0);
+	m_StartAngle = reader.ReadFloat<"StartAngle">(0.0);
+	m_RotationAngle = reader.ReadFloat<"RotationAngle">(6.2832);
+	m_ValueRemainder = reader.ReadUInt<"ValueReminder">(0);		// Typo
+	m_ValueRemainder = reader.ReadUInt<"ValueRemainder">(m_ValueRemainder);
+	m_LineColor = reader.ReadColor<"LineColor">(D2D1::ColorF(D2D1::ColorF::Black));
+	m_Solid = reader.ReadBool<"Solid">(false);
+	m_CntrlAngle = reader.ReadBool<"ControlAngle">(true);
+	m_CntrlLineStart = reader.ReadBool<"ControlStart">(false);
+	m_CntrlLineLength = reader.ReadBool<"ControlLength">(false);
+	m_LineStartShift = reader.ReadFloat<"StartShift">(0.0);
+	m_LineLengthShift = reader.ReadFloat<"LengthShift">(0.0);
 }
 
 bool MeterRoundLine::Update()
@@ -174,7 +173,7 @@ bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterRoundLine::BindMeasures(ConfigParser& parser)
+void MeterRoundLine::BindMeasures(ConfigParser::OptionReader& reader)
 {
-	BindPrimaryMeasure(parser, true);
+	BindPrimaryMeasure(reader, true);
 }

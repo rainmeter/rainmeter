@@ -17,12 +17,11 @@ MeasureString::~MeasureString()
 
 void MeasureString::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
-	m_NumberFormat = ReadNumberFormatOption(parser);
+	m_NumberFormat = ReadNumberFormatOption(reader);
 
-	parser.ReadString<"String">(m_String, m_ID, L"");
+	reader.ReadString<"String">(m_String, L"");
 
 	if (!m_Initialized && !m_Disabled && !m_Paused)
 	{

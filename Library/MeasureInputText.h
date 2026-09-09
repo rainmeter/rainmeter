@@ -77,7 +77,7 @@ private:
 
 	class InputBox;
 
-	bool ReadSteps(const std::wstring& command);
+	bool ReadSteps(ConfigParser::OptionReader& reader, const std::wstring& command);
 	void RunSteps();
 	void HandleInput(const std::optional<std::wstring>& input);
 	void EndRun(bool dismissed);

@@ -34,15 +34,14 @@ MeasureSpeedFan::~MeasureSpeedFan()
 
 void MeasureSpeedFan::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
-	const std::wstring type = parser.ReadString<"SpeedFanType">(m_ID, L"TEMPERATURE");
+	const std::wstring type = reader.ReadString<"SpeedFanType">(L"TEMPERATURE");
 	if (_wcsicmp(L"TEMPERATURE", type.c_str()) == 0)
 	{
 		m_Type = SensorType::Temperature;
 
-		const std::wstring scale = parser.ReadString<"SpeedFanScale">(m_ID, L"C");
+		const std::wstring scale = reader.ReadString<"SpeedFanScale">(L"C");
 		if (_wcsicmp(L"C", scale.c_str()) == 0)
 		{
 			m_Scale = ScaleType::Celsius;
@@ -73,7 +72,7 @@ void MeasureSpeedFan::ReadOptions(ConfigParser::OptionReader& reader)
 		LogErrorF(this, L"SpeedFan: SpeedFanType=%s is not valid", type.c_str());
 	}
 
-	m_Number = parser.ReadUInt<"SpeedFanNumber">(m_ID, 0);
+	m_Number = reader.ReadUInt<"SpeedFanNumber">(0);
 }
 
 void MeasureSpeedFan::UpdateValue()

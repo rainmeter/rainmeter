@@ -217,14 +217,13 @@ MeasurePing::~MeasurePing()
 
 void MeasurePing::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
-	parser.ReadString<"DestAddress">(m_Destination, m_ID, L"");
-	m_UpdateRate = parser.ReadUInt<"UpdateRate">(m_ID, 32);
-	m_Timeout = parser.ReadUInt<"Timeout">(m_ID, 30000);
-	m_TimeoutValue = parser.ReadFloat<"TimeoutValue">(m_ID, 30000.0);
-	parser.ReadString<"FinishAction">(m_FinishAction, m_ID, L"", { .sectionVariables = false });
+	reader.ReadString<"DestAddress">(m_Destination, L"");
+	m_UpdateRate = reader.ReadUInt<"UpdateRate">(32);
+	m_Timeout = reader.ReadUInt<"Timeout">(30000);
+	m_TimeoutValue = reader.ReadFloat<"TimeoutValue">(30000.0);
+	reader.ReadString<"FinishAction">(m_FinishAction, L"", { .sectionVariables = false });
 }
 
 void MeasurePing::UpdateValue()

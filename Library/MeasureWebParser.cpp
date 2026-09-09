@@ -273,10 +273,12 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 	}
 
 	// No DynamicVariables support for ProxyServer or UserAgent
+	auto& parser = GetSkin()->GetParser();
+	auto reader = parser.GetInheritableOptionReader(name, m_ID);
 	SetupProxySetting(
 		m_Proxy,
-		GetSkin()->GetParser().ReadString(name, L"ProxyServer", L""),
-		GetSkin()->GetParser().ReadString(name, L"UserAgent", L""));
+		reader.ReadString<"ProxyServer">(L""),
+		reader.ReadString<"UserAgent">(L""));
 
 	++g_InstanceCount;
 }
@@ -316,12 +318,12 @@ MeasureWebParser::~MeasureWebParser()
 
 void MeasureWebParser::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
+	auto& parser = m_Skin->GetParser();
 	Measure::ReadOptions(reader);
 
-	m_NumberFormat = ReadNumberFormatOption(parser);
+	m_NumberFormat = ReadNumberFormatOption(reader);
 
-	std::wstring url = parser.ReadString<"Url">(m_ID, L"", { .sectionVariables = false });
+	std::wstring url = reader.ReadString<"Url">(L"", { .sectionVariables = false });
 
 	// Parse new-style variables without parsing old-style section variables
 	if (parser.ContainsKeyedSectionVariable(url))
@@ -334,12 +336,12 @@ void MeasureWebParser::ReadOptions(ConfigParser::OptionReader& reader)
 	m_Headers.clear();
 	size_t hNum = 1;
 	std::wstring hOption = L"Header";
-	std::wstring hValue = parser.ReadString(m_ID, hOption.c_str(), L"");
+	std::wstring hValue = reader.ReadString(hOption.c_str(), L"");
 	while (!hValue.empty())
 	{
 		m_Headers += hValue + L"\r\n";
 		hOption = L"Header" + std::to_wstring(++hNum);
-		hValue = parser.ReadString(m_ID, hOption.c_str(), L"");
+		hValue = reader.ReadString(hOption.c_str(), L"");
 	}
 
 	if (!m_Headers.empty())
@@ -347,15 +349,15 @@ void MeasureWebParser::ReadOptions(ConfigParser::OptionReader& reader)
 		m_Headers += L"\r\n";  // Append "\r\n" to last header to denote end of header section
 	}
 
-	parser.ReadString<"RegExp">(m_Expression, m_ID, L"");
-	if (!parser.GetLastDefaultUsed())
+	reader.ReadString<"RegExp">(m_Expression, L"");
+	if (!reader.GetLastDefaultUsed())
 	{
 		m_ParseType = ParseType::RegExp;
 	}
 	else
 	{
-		parser.ReadString<"JsonPointer">(m_Expression, m_ID, L"");
-		m_ParseType = parser.GetLastDefaultUsed() ? ParseType::RegExp : ParseType::JsonPointer;
+		reader.ReadString<"JsonPointer">(m_Expression, L"");
+		m_ParseType = reader.GetLastDefaultUsed() ? ParseType::RegExp : ParseType::JsonPointer;
 
 		// |JsonPointer=1| enables JSON parsing without resolving a value for this measure.
 		// Only child measures will resolve values from the parsed document. Note that "1" is
@@ -366,46 +368,46 @@ void MeasureWebParser::ReadOptions(ConfigParser::OptionReader& reader)
 			m_Expression.clear();
 		}
 	}
-	parser.ReadString<"FinishAction">(m_FinishAction, m_ID, L"", { .sectionVariables = false });
-	parser.ReadString<"OnRegExpErrorAction">(m_OnRegExpErrAction, m_ID, L"", { .sectionVariables = false });
-	parser.ReadString<"OnConnectErrorAction">(m_OnConnectErrAction, m_ID, L"", { .sectionVariables = false });
-	parser.ReadString<"OnDownloadErrorAction">(m_OnDownloadErrAction, m_ID, L"", { .sectionVariables = false });
-	parser.ReadString<"ErrorString">(m_ErrorString, m_ID, L"");
-	m_LogSubstringErrors = parser.ReadBool<"LogSubstringErrors">(m_ID, true);
+	reader.ReadString<"FinishAction">(m_FinishAction, L"", { .sectionVariables = false });
+	reader.ReadString<"OnRegExpErrorAction">(m_OnRegExpErrAction, L"", { .sectionVariables = false });
+	reader.ReadString<"OnConnectErrorAction">(m_OnConnectErrAction, L"", { .sectionVariables = false });
+	reader.ReadString<"OnDownloadErrorAction">(m_OnDownloadErrAction, L"", { .sectionVariables = false });
+	reader.ReadString<"ErrorString">(m_ErrorString, L"");
+	m_LogSubstringErrors = reader.ReadBool<"LogSubstringErrors">(true);
 
-	int index = parser.ReadInt<"StringIndex">(m_ID, 0);
+	int index = reader.ReadInt<"StringIndex">(0);
 	m_StringIndex = index < 0 ? 0 : index;
 
-	index = parser.ReadInt<"StringIndex2">(m_ID, 0);
+	index = reader.ReadInt<"StringIndex2">(0);
 	m_StringIndex2 = index < 0 ? 0 : index;
 
-	m_DecodeCharacterReference = parser.ReadInt<"DecodeCharacterReference">(m_ID, 0);
-	m_DecodeCodePoints = parser.ReadBool<"DecodeCodePoints">(m_ID, false);
+	m_DecodeCharacterReference = reader.ReadInt<"DecodeCharacterReference">(0);
+	m_DecodeCodePoints = reader.ReadBool<"DecodeCodePoints">(false);
 
-	m_UpdateRate = parser.ReadInt<"UpdateRate">(m_ID, 600);
-	m_Codepage = parser.ReadInt<"CodePage">(m_ID, 0);
+	m_UpdateRate = reader.ReadInt<"UpdateRate">(600);
+	m_Codepage = reader.ReadInt<"CodePage">(0);
 	if (m_Codepage == 0)
 	{
 		m_Codepage = CP_UTF8;
 	}
 
-	m_Download = parser.ReadBool<"Download">(m_ID, false);
+	m_Download = reader.ReadBool<"Download">(false);
 	if (m_Download)
 	{
 		m_DownloadFolder = L"DownloadFile\\";
 		GetSkin()->MakePathAbsolute(m_DownloadFolder);
-		parser.ReadString<"DownloadFile">(m_DownloadFile, m_ID, L"");
+		reader.ReadString<"DownloadFile">(m_DownloadFile, L"");
 	}
 	else
 	{
 		m_DownloadFile.clear();
 	}
 
-	m_Debug = parser.ReadInt<"Debug">(m_ID, 0);
+	m_Debug = reader.ReadInt<"Debug">(0);
 	if (m_Debug == 2)
 	{
 		std::wstring oldDebugFileLocation = m_DebugFileLocation;
-		parser.ReadString<"Debug2File">(m_DebugFileLocation, m_ID, L"WebParserDump.txt");
+		reader.ReadString<"Debug2File">(m_DebugFileLocation, L"WebParserDump.txt");
 		GetSkin()->MakePathAbsolute(m_DebugFileLocation);
 
 		if (_wcsicmp(oldDebugFileLocation.c_str(), m_DebugFileLocation.c_str()) != 0)
@@ -415,10 +417,10 @@ void MeasureWebParser::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 
 	{
-		m_ForceReload = parser.ReadBool<"ForceReload">(m_ID, false);  // Deprecated
+		m_ForceReload = reader.ReadBool<"ForceReload">(false);  // Deprecated
 
 		m_InternetOpenUrlFlags = m_ForceReload ? INTERNET_FLAG_RELOAD : INTERNET_FLAG_RESYNCHRONIZE;
-		std::wstring szFlags = parser.ReadString<"Flags">(m_ID, L"");
+		std::wstring szFlags = reader.ReadString<"Flags">(L"");
 		if (!szFlags.empty())
 		{
 			// Flags: https://docs.microsoft.com/en-us/windows/win32/api/wininet/nf-wininet-internetopenurlw#parameters

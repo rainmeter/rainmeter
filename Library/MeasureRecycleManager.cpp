@@ -132,7 +132,6 @@ MeasureRecycleManager::~MeasureRecycleManager()
 
 void MeasureRecycleManager::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
 	static constexpr ConfigParser::EnumOption<Type> s_Types[] =
@@ -140,7 +139,7 @@ void MeasureRecycleManager::ReadOptions(ConfigParser::OptionReader& reader)
 		{ L"COUNT", Type::Count },
 		{ L"SIZE", Type::Size },
 	};
-	m_Type = parser.ReadEnum<"RecycleType">(m_ID, Type::Count, s_Types);
+	m_Type = reader.ReadEnum<"RecycleType">(Type::Count, s_Types);
 }
 
 void MeasureRecycleManager::UpdateValue()

@@ -36,11 +36,10 @@ void MeasureVirtualMemory::UpdateValue()
 
 void MeasureVirtualMemory::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	double oldMaxValue = m_MaxValue;
 	Measure::ReadOptions(reader);
 	m_MaxValue = oldMaxValue;
 
-	m_Total = parser.ReadBool<"Total">(m_ID, false);
+	m_Total = reader.ReadBool<"Total">(false);
 }
 

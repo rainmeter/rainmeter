@@ -35,10 +35,9 @@ void MeterSvg::InvalidateDeviceResources()
 
 void MeterSvg::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Meter::ReadOptions(reader);
 
-	const std::wstring svgImage = parser.ReadString<"SvgImage">(m_ID, L"");
+	const std::wstring svgImage = reader.ReadString<"SvgImage">(L"");
 	const bool sourceChanged = svgImage != m_SvgImage;
 	m_SvgImage = svgImage;
 
@@ -47,7 +46,7 @@ void MeterSvg::ReadOptions(ConfigParser::OptionReader& reader)
 	{
 		WCHAR option[64];
 		_snwprintf_s(option, _TRUNCATE, i == 1 ? L"Attribute" : L"Attribute%zu", i);
-		const std::wstring& value = parser.ReadString(m_ID, option, L"");
+		const std::wstring& value = reader.ReadString(option, L"");
 		if (value.empty()) break;
 
 		StringParser stringParser(value);
@@ -72,7 +71,7 @@ void MeterSvg::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 	m_SvgAttributes = std::move(svgAttributes);
 
-	m_AspectRatioMode = ParseAspectRatioMode(parser.ReadInt<"PreserveAspectRatio">(m_ID, 0));
+	m_AspectRatioMode = ParseAspectRatioMode(reader.ReadInt<"PreserveAspectRatio">(0));
 
 	if (sourceChanged || attributesRequireReload)
 	{
@@ -96,9 +95,9 @@ void MeterSvg::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 }
 
-void MeterSvg::BindMeasures(ConfigParser& parser)
+void MeterSvg::BindMeasures(ConfigParser::OptionReader& reader)
 {
-	BindPrimaryMeasure(parser, true);
+	BindPrimaryMeasure(reader, true);
 }
 
 bool MeterSvg::LoadSvg()

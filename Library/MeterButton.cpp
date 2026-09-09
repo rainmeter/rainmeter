@@ -85,19 +85,19 @@ void MeterButton::InvalidateDeviceResources()
 
 void MeterButton::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
+	auto& parser = m_Skin->GetParser();
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 	Meter::ReadOptions(reader);
 
-	parser.ReadString<"ButtonImage">(m_ImageName, m_ID, L"");
+	reader.ReadString<"ButtonImage">(m_ImageName, L"");
 	if (!m_ImageName.empty())
 	{
 		// Read tinting options
-		m_Image.ReadOptions(parser, m_ID);
+		m_Image.ReadOptions(parser, reader);
 	}
 
-	parser.ReadString<"ButtonCommand">(m_Command, m_ID, L"", { .sectionVariables = false });
+	reader.ReadString<"ButtonCommand">(m_Command, L"", { .sectionVariables = false });
 
 	if (m_Initialized)
 	{
@@ -132,9 +132,9 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 	return true;
 }
 
-void MeterButton::BindMeasures(ConfigParser& parser)
+void MeterButton::BindMeasures(ConfigParser::OptionReader& reader)
 {
-	BindPrimaryMeasure(parser, true);
+	BindPrimaryMeasure(reader, true);
 }
 
 bool MeterButton::HitTest2(int px, int py)

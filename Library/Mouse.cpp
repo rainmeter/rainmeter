@@ -55,7 +55,7 @@ Mouse::~Mouse()
 	DestroyCustomCursor();
 }
 
-void Mouse::ReadOptions(ConfigParser& parser, IniSectionID section, bool isSkinLevel)
+void Mouse::ReadOptions(ConfigParser& parser, ConfigParser::OptionReader& reader, bool isSkinLevel)
 {
 	DestroyCustomCursor();
 
@@ -63,15 +63,15 @@ void Mouse::ReadOptions(ConfigParser& parser, IniSectionID section, bool isSkinL
 	for (auto& mouseAction : m_MouseActions)
 	{
 		m_MouseActionTypes |= mouseAction.type;
-		parser.ReadString(mouseAction.action, section, OptionNameForMouseActionType(mouseAction.type), L"", { .sectionVariables = false });
+		reader.ReadString(mouseAction.action, OptionNameForMouseActionType(mouseAction.type), L"", { .sectionVariables = false });
 	}
 
 	for (auto& entry : g_MouseActionTable)
 	{
 		if (m_MouseActionTypes & entry.type) continue;
 
-		const std::wstring& action = parser.ReadString(section, OptionNameForMouseActionType(entry.type), L"", { .sectionVariables = false });
-		if (parser.GetLastDefaultUsed()) continue;
+		const std::wstring& action = reader.ReadString(OptionNameForMouseActionType(entry.type), L"", { .sectionVariables = false });
+		if (reader.GetLastDefaultUsed()) continue;
 
 		m_MouseActionTypes |= entry.type;
 		auto& mouseAction = m_MouseActions.emplace_back();
@@ -85,10 +85,10 @@ void Mouse::ReadOptions(ConfigParser& parser, IniSectionID section, bool isSkinL
 	}
 
 	const bool defaultState = isSkinLevel ? true : m_Skin->GetMouse().GetCursorState();
-	m_CursorState = parser.ReadBool<"MouseActionCursor">(section, defaultState);
+	m_CursorState = reader.ReadBool<"MouseActionCursor">(defaultState);
 
 	const WCHAR* defaultMouseCursor = isSkinLevel ? L"HAND" : L"";
-	const WCHAR* mouseCursor = parser.ReadString<"MouseActionCursorName">(section, defaultMouseCursor).c_str();
+	const WCHAR* mouseCursor = reader.ReadString<"MouseActionCursorName">(defaultMouseCursor).c_str();
 
 	auto inheritSkinDefault = [&]()
 	{
@@ -97,7 +97,8 @@ void Mouse::ReadOptions(ConfigParser& parser, IniSectionID section, bool isSkinL
 		if (m_CursorType == MOUSECURSOR_CUSTOM)
 		{
 			const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
-			mouseCursor = m_Skin->GetParser().ReadString<"MouseActionCursorName">(rainmeterID, L"").c_str();
+			auto rainmeterScope = parser.GetOptionReader(L"Rainmeter", rainmeterID);
+			mouseCursor = rainmeterScope.ReadString<"MouseActionCursorName">(L"").c_str();
 		}
 	};
 

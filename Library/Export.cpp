@@ -129,9 +129,9 @@ bool ShouldScalePluginCoordinateOption(MeasurePlugin* plugin, LPCWSTR option)
 	return false;
 }
 
-int ReadScaledPluginCoordinateOption(MeasurePlugin* measure, ConfigParser& parser, LPCWSTR option, int defValue)
+int ReadScaledPluginCoordinateOption(MeasurePlugin* measure, ConfigParser::OptionReader& reader, LPCWSTR option, int defValue)
 {
-	const int value = parser.ReadInt(measure->GetName(), option, defValue);
+	const int value = reader.ReadInt(option, defValue);
 	return measure->GetSkin()->LogicalToPhysical(value);
 }
 
@@ -144,6 +144,7 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
+	auto reader = parser.GetInheritableOptionReader(measure->GetName(), measure->GetSectionID());
 	if (ShouldScalePluginCoordinateOption(measure, option))
 	{
 		static WCHAR buffer[32] = { 0 };
@@ -151,14 +152,14 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 
 		const auto defValueInt = parser.ParseInt(defValue, 0);
 		parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
-		const auto result = ReadScaledPluginCoordinateOption(measure, parser, option, defValueInt);
+		const auto result = ReadScaledPluginCoordinateOption(measure, reader, option, defValueInt);
 		parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
 		_itow_s(result, buffer, 10);
 		return buffer;
 	}
 
 	parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
-	LPCWSTR result = parser.ReadString(measure->GetName(), option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
+	LPCWSTR result = reader.ReadString(option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
 	parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
 	return result;
 }
@@ -175,8 +176,8 @@ LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 	const auto sectionID = IniNameRegistry::FindSection(section).value_or(IniSectionID{});
 
-	ConfigParser::OptionReader optionReader(parser, section, sectionID, AllowMeterStyleInheritance(measure, section));
-	return parser.ReadString(sectionID, option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
+	auto optionReader = parser.GetInheritableOptionReader(section, sectionID, AllowMeterStyleInheritance(measure, section));
+	return optionReader.ReadString(option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
 }
 
 double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
@@ -187,16 +188,17 @@ double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetSkin()->GetParser();
+	auto reader = parser.GetInheritableOptionReader(measure->GetName(), measure->GetSectionID());
 
 	parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
 	double result;
 	if (ShouldScalePluginCoordinateOption(measure, option))
 	{
-		result = ReadScaledPluginCoordinateOption(measure, parser, option, (int)defValue);
+		result = ReadScaledPluginCoordinateOption(measure, reader, option, (int)defValue);
 	}
 	else
 	{
-		result = parser.ReadFloat(measure->GetName(), option, defValue);
+		result = reader.ReadFloat(option, defValue);
 	}
 	parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
 
@@ -214,8 +216,8 @@ double __stdcall RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 	const auto sectionID = IniNameRegistry::FindSection(section).value_or(IniSectionID{});
 
-	ConfigParser::OptionReader optionReader(parser, section, sectionID, AllowMeterStyleInheritance(measure, section));
-	return parser.ReadFloat(sectionID, option, defValue);
+	auto optionReader = parser.GetInheritableOptionReader(section, sectionID, AllowMeterStyleInheritance(measure, section));
+	return optionReader.ReadFloat(option, defValue);
 }
 
 LPCWSTR __stdcall RmReplaceVariables(void* rm, LPCWSTR str)
@@ -387,7 +389,9 @@ LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue)
 	ConfigParser* parser = GetRainmeter().GetCurrentParser();
 	if (parser)
 	{
-		return parser->ReadString(section, option, defValue, { .sectionVariables = false }).c_str();
+		const auto sectionID = IniNameRegistry::FindSection(section).value_or(IniSectionID{});
+		auto reader = parser->GetInheritableOptionReader(section, sectionID, parser->GetMeter(section) != nullptr);
+		return reader.ReadString(option, defValue, { .sectionVariables = false }).c_str();
 	}
 
 	return defValue;

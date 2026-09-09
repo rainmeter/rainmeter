@@ -48,7 +48,6 @@ void MeasureCalc::UpdateValue()
 
 void MeasureCalc::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
 	// Store the current values so we know if the value needs to be updated
@@ -58,14 +57,14 @@ void MeasureCalc::ReadOptions(ConfigParser::OptionReader& reader)
 	bool oldUniqueRandom = m_UniqueRandom;
 
 	std::wstring oldFormula = m_Formula;
-	parser.ReadString<"Formula">(m_Formula, m_ID, L"");
+	reader.ReadString<"Formula">(m_Formula, L"");
 
-	m_LowBound = parser.ReadInt<"LowBound">(m_ID, DEFAULT_LOWER_BOUND);
-	m_HighBound = parser.ReadInt<"HighBound">(m_ID, DEFAULT_UPPER_BOUND);
-	m_UpdateRandom = parser.ReadBool<"UpdateRandom">(m_ID, false);
+	m_LowBound = reader.ReadInt<"LowBound">(DEFAULT_LOWER_BOUND);
+	m_HighBound = reader.ReadInt<"HighBound">(DEFAULT_UPPER_BOUND);
+	m_UpdateRandom = reader.ReadBool<"UpdateRandom">(false);
 	const size_t range = (m_HighBound - m_LowBound) + 1;
 
-	m_UniqueRandom = (range <= DEFAULT_UNIQUELIMIT) && parser.ReadBool<"UniqueRandom">(m_ID, false);
+	m_UniqueRandom = (range <= DEFAULT_UNIQUELIMIT) && reader.ReadBool<"UniqueRandom">(false);
 	if (!m_UniqueRandom)
 	{
 		m_UniqueNumbers.clear();

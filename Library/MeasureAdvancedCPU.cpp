@@ -171,26 +171,25 @@ MeasureAdvancedCPU::~MeasureAdvancedCPU()
 
 void MeasureAdvancedCPU::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
-	std::wstring value = parser.ReadString<"CPUInclude">(m_ID, L"");
+	std::wstring value = reader.ReadString<"CPUInclude">(L"");
 	if (_wcsicmp(value.c_str(), m_IncludesCache.c_str()) != 0)
 	{
 		m_IncludesCache = value;
 		ReadProcessList(value, m_Includes);
 	}
 
-	parser.ReadString<"CPUExclude">(value, m_ID, L"");
+	reader.ReadString<"CPUExclude">(value, L"");
 	if (_wcsicmp(value.c_str(), m_ExcludesCache.c_str()) != 0)
 	{
 		m_ExcludesCache = value;
 		ReadProcessList(value, m_Excludes);
 	}
 
-	m_TopProcess = parser.ReadInt<"TopProcess">(m_ID, 0);
+	m_TopProcess = reader.ReadInt<"TopProcess">(0);
 
-	if (!parser.IsValueDefined<"MaxValue">(m_ID))
+	if (!reader.IsValueDefined<"MaxValue">())
 	{
 		m_MaxValue = 10000000.0;
 		m_LogMaxValue = false;

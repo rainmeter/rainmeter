@@ -140,12 +140,11 @@ const WCHAR* MeasureDiskSpace::GetStringValue()
 
 void MeasureDiskSpace::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	double oldMaxValue = m_MaxValue;
 
 	Measure::ReadOptions(reader);
 
-	parser.ReadString<"Drive">(m_Drive, m_ID, L"C:\\");
+	reader.ReadString<"Drive">(m_Drive, L"C:\\");
 	if (m_Drive.empty())
 	{
 		LogWarningF(this, L"FreeDiskSpace: Drive= empty");
@@ -160,11 +159,11 @@ void MeasureDiskSpace::ReadOptions(ConfigParser::OptionReader& reader)
 		PathUtil::AppendBackslashIfMissing(m_Drive);
 	}
 
-	m_Type = parser.ReadBool<"Type">(m_ID, false);
-	m_Total = parser.ReadBool<"Total">(m_ID, false);
-	m_Label = parser.ReadBool<"Label">(m_ID, false);
-	m_IgnoreRemovable = parser.ReadBool<"IgnoreRemovable">(m_ID, true);
-	m_DiskQuota = parser.ReadBool<"DiskQuota">(m_ID, true);
+	m_Type = reader.ReadBool<"Type">(false);
+	m_Total = reader.ReadBool<"Total">(false);
+	m_Label = reader.ReadBool<"Label">(false);
+	m_IgnoreRemovable = reader.ReadBool<"IgnoreRemovable">(true);
+	m_DiskQuota = reader.ReadBool<"DiskQuota">(true);
 
 	// Set the m_MaxValue
 	if (!m_Initialized)

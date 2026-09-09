@@ -75,10 +75,9 @@ const WCHAR* MeasureScript::GetStringValue()
 
 void MeasureScript::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	auto& parser = reader.GetParser();
 	Measure::ReadOptions(reader);
 
-	std::wstring scriptFile = parser.ReadString<"ScriptFile">(m_ID, L"");
+	std::wstring scriptFile = reader.ReadString<"ScriptFile">(L"");
 	if (!scriptFile.empty())
 	{
 		if (m_Skin)
@@ -131,7 +130,7 @@ void MeasureScript::ReadOptions(ConfigParser::OptionReader& reader)
 							const char* strKey = lua_tostring(L, -1);
 							const std::wstring wstrKey = StringUtil::Widen(strKey);
 							const std::wstring& wstrValue =
-								parser.ReadString(m_ID, wstrKey.c_str(), L"");
+								reader.ReadString(wstrKey.c_str(), L"");
 							if (!wstrValue.empty())
 							{
 								const std::string strStrVal = StringUtil::Narrow(wstrValue);
