@@ -325,7 +325,7 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 	ConfigParser parser;
 	parser.Initialize(iniFile, nullptr, L"Statistics");
 
-	const auto statisticsID = GetStaticIniSectionID<"Statistics">();
+	const auto statisticsID = IniNameRegistry::InternSection<"Statistics">();
 	auto reader = parser.GetOptionReader(L"Statistics", statisticsID);
 
 	const std::wstring& date = reader.ReadString<"Since">(L"", { .sectionVariables = false });

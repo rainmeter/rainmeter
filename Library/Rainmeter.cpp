@@ -1659,7 +1659,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	ConfigParser parser;
 	parser.Initialize(iniFile, nullptr, nullptr);
 
-	const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
+	const auto rainmeterID = IniNameRegistry::InternSection<"Rainmeter">();
 	auto reader = parser.GetOptionReader(L"Rainmeter", rainmeterID);
 
 	m_Debug = reader.ReadBool<"Debug">(false);

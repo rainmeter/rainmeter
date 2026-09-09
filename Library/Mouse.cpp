@@ -96,7 +96,7 @@ void Mouse::ReadOptions(ConfigParser& parser, ConfigParser::OptionReader& reader
 		m_CursorType = m_Skin->GetMouse().GetCursorType();
 		if (m_CursorType == MOUSECURSOR_CUSTOM)
 		{
-			const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
+			const auto rainmeterID = IniNameRegistry::InternSection<"Rainmeter">();
 			auto rainmeterScope = parser.GetOptionReader(L"Rainmeter", rainmeterID);
 			mouseCursor = rainmeterScope.ReadString<"MouseActionCursorName">(L"").c_str();
 		}
