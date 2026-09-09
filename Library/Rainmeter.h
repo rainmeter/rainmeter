@@ -56,7 +56,7 @@ class Rainmeter
 public:
 	static Rainmeter& GetInstance();
 
-	int Initialize(LPCWSTR iniPath, LPCWSTR layout);
+	int Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupCommand);
 	void Finalize();
 
 	void RestartApp();
