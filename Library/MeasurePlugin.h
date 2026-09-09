@@ -38,6 +38,7 @@ public:
 
 	bool IsDpiAware() const { return m_HandleSkinSettingChangeFunc != nullptr; }
 	ConfigParser::MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
+	ConfigParser::OptionReader* GetCurrentOptionReader() { return m_CurrentOptionReader; }
 
 	static void HandleSkinSettingChange(Skin* skin, RmSkinSettingChange setting);
 	void HandleSkinSettingChange(RmSkinSettingChange setting);
@@ -54,6 +55,7 @@ private:
 	HMODULE m_Plugin;
 
 	ConfigParser::MonitorVariableMode m_MonitorVariableMode;
+	ConfigParser::OptionReader* m_CurrentOptionReader;
 
 	union
 	{
