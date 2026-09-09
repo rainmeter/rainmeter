@@ -2799,7 +2799,7 @@ bool Skin::ReadSkin()
 			_wcsicmp(L"Metadata", section) != 0)
 		{
 			const auto sectionID = IniNameRegistry::FindSection(section).value_or(IniSectionID{});
-			auto sectionScope = m_Parser.GetInheritableOptionReader(section, sectionID);
+			auto sectionScope = m_Parser.GetOptionReader(section, sectionID);
 			std::wstring measureName = sectionScope.ReadString(L"Measure", L"", { .sectionVariables = false });
 			if (!measureName.empty())
 			{
