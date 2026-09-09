@@ -502,13 +502,6 @@ void WindowOcclusionTracker::UntrackWindow(HWND hwnd)
 	ScheduleOcclusionCalculationIfNeeded(g_MessageWindow);
 }
 
-void WindowOcclusionTracker::HandleWindowStateChange(HWND hwnd)
-{
-	if (!IsTrackedWindow(hwnd)) return;
-
-	ScheduleOcclusionCalculationIfNeeded(g_MessageWindow);
-}
-
 void WindowOcclusionTracker::HandleTimer()
 {
 	KillTimer(g_MessageWindow, g_TimerID);
