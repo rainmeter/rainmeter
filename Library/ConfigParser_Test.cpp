@@ -163,6 +163,14 @@ public:
 			auto reader = parser.GetInheritableOptionReader(L"Child", childID);
 			Assert::AreEqual(reader.ReadInt(L"Value", 0), 1);
 		}
+
+		parser.SetValue(L"OtherParent", L"Value", L"2");
+		parser.SetValue(L"OtherChild", L"@Inherit", L"OtherParent");
+		const auto otherChildID = IniNameRegistry::FindSection(L"OtherChild").value_or(IniSectionID{});
+		auto reader = parser.GetInheritableOptionReader(L"Child", childID);
+		auto otherReader = parser.GetInheritableOptionReader(L"OtherChild", otherChildID);
+		Assert::AreEqual(reader.ReadInt(L"Value", 0), 1);
+		Assert::AreEqual(otherReader.ReadInt(L"Value", 0), 2);
 	}
 
 	TEST_METHOD(TestVariables)
