@@ -152,16 +152,16 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 			buffer[0] = L'\0';
 
 			const auto defValueInt = parser.ParseInt(defValue, 0);
-			parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
+			reader.SetMonitorVariableMode(measure->GetMonitorVariableMode());
 			const auto result = ReadScaledPluginCoordinateOption(measure, reader, option, defValueInt);
-			parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
+			reader.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
 			_itow_s(result, buffer, 10);
 			return buffer;
 		}
 
-		parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
+		reader.SetMonitorVariableMode(measure->GetMonitorVariableMode());
 		LPCWSTR result = reader.ReadString(option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
-		parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
+		reader.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
 		return result;
 	};
 
@@ -196,11 +196,11 @@ double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 	auto read = [&](ConfigParser::OptionReader& reader)
 	{
-		parser.SetMonitorVariableMode(measure->GetMonitorVariableMode());
+		reader.SetMonitorVariableMode(measure->GetMonitorVariableMode());
 		const double result = ShouldScalePluginCoordinateOption(measure, option) ?
 			ReadScaledPluginCoordinateOption(measure, reader, option, (int)defValue) :
 			reader.ReadFloat(option, defValue);
-		parser.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
+		reader.SetMonitorVariableMode(ConfigParser::MonitorVariableMode::DEFAULT_LOGICAL);
 		return result;
 	};
 
