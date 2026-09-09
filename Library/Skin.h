@@ -291,6 +291,7 @@ protected:
 
 	LRESULT OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam);

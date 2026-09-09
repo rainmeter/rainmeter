@@ -5855,6 +5855,16 @@ LRESULT Skin::OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return MA_ACTIVATE;
 }
 
+LRESULT Skin::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (wParam == SIZE_MINIMIZED || m_WindowOcclusionState == SkinWindowOcclusionState::Hidden)
+	{
+		WindowOcclusionTracker::HandleWindowStateChange(m_Window);
+	}
+
+	return 0;
+}
+
 LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	Skin* instance = (Skin*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
@@ -5862,6 +5872,7 @@ LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	BEGIN_MESSAGEPROC
 	MESSAGE(OnMouseInput, WM_INPUT)
 	MESSAGE(OnMove, WM_MOVE)
+	MESSAGE(OnSize, WM_SIZE)
 	MESSAGE(OnTimer, WM_TIMER)
 	MESSAGE(OnCommand, WM_COMMAND)
 	MESSAGE(OnSysCommand, WM_SYSCOMMAND)
