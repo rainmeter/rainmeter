@@ -94,8 +94,7 @@ protected:
 	// a string into their number value.
 	LocaleUtil::NumberFormat ReadNumberFormatOption(ConfigParser::OptionReader& reader);
 
-	bool ParseSubstitute(std::wstring buffer);
-	std::wstring ExtractWord(std::wstring& buffer);
+	bool ParseSubstitute(std::wstring_view buffer);
 	std::wstring_view CheckSubstitute(std::wstring_view buffer);
 	void MakePlainSubstitute(std::wstring& str, const std::wstring& pattern, const std::wstring& replacement);
 
