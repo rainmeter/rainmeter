@@ -77,18 +77,19 @@ namespace IniNameRegistry {
 
 IniSectionID InternSection(std::wstring_view name);
 IniOptionID InternOption(std::wstring_view name);
+
+template<FixedWString Name>
+IniOptionID InternOption()
+{
+	static const IniOptionID id = InternOption(Name.View());
+	return id;
+}
+
 std::optional<IniSectionID> FindSection(std::wstring_view name);
 std::optional<IniOptionID> FindOption(std::wstring_view name);
 const std::wstring& GetOptionName(IniOptionID id);
 
 }  // namespace IniNameRegistry
-
-template <FixedWString Name>
-IniOptionID GetStaticIniOptionID()
-{
-	static const IniOptionID optionID = IniNameRegistry::InternOption(Name.View());
-	return optionID;
-}
 
 template <FixedWString Name>
 IniSectionID GetStaticIniSectionID()

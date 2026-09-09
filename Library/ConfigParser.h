@@ -76,47 +76,49 @@ public:
 		// Reads into |result|. Prefer this where the value is kept.
 		void ReadString(std::wstring& result, IniOptionID option, std::wstring_view defValue, ReadOptions options = {}) { m_Parser.ReadString(result, m_SectionID, option, defValue, options); }
 		void ReadString(std::wstring& result, std::wstring_view option, std::wstring_view defValue, ReadOptions options = {}) { ReadString(result, m_Parser.FindOptionID(option), defValue, options); }
-		template <FixedWString Name> void ReadString(std::wstring& result, std::wstring_view defValue = {}, ReadOptions options = {}) { m_Parser.ReadString<Name>(result, m_SectionID, defValue, options); }
+		template<FixedWString Name> void ReadString(std::wstring& result, std::wstring_view defValue = {}, ReadOptions options = {}) { ReadString(result, IniNameRegistry::InternOption<Name>(), defValue, options); }
 
+		// The returned reference is good only until the next ReadString() at the same nesting depth,
+		// which reuses the buffer. Copy it to keep it; no argument may point into it.
 		const std::wstring& ReadString(IniOptionID option, std::wstring_view defValue = {}, ReadOptions options = {}) { return m_Parser.ReadString(m_SectionID, option, defValue, options); }
 		const std::wstring& ReadString(std::wstring_view option, std::wstring_view defValue = {}, ReadOptions options = {}) { return ReadString(m_Parser.FindOptionID(option), defValue, options); }
-		template <FixedWString Name> const std::wstring& ReadString(std::wstring_view defValue = {}, ReadOptions options = {}) { return m_Parser.ReadString<Name>(m_SectionID, defValue, options); }
+		template<FixedWString Name> const std::wstring& ReadString(std::wstring_view defValue = {}, ReadOptions options = {}) { return ReadString(IniNameRegistry::InternOption<Name>(), defValue, options); }
 
 		template<typename T, size_t N> T ReadEnum(IniOptionID option, T defValue, const EnumOption<T> (&options)[N]) { return m_Parser.ReadEnum(m_SectionID, option, defValue, options); }
 		template<typename T, size_t N> T ReadEnum(std::wstring_view option, T defValue, const EnumOption<T> (&options)[N]) { return ReadEnum(m_Parser.FindOptionID(option), defValue, options); }
-		template <FixedWString Name, typename T, size_t N> T ReadEnum(T defValue, const EnumOption<T> (&options)[N]) { return m_Parser.ReadEnum<Name>(m_SectionID, defValue, options); }
+		template<FixedWString Name, typename T, size_t N> T ReadEnum(T defValue, const EnumOption<T> (&options)[N]) { return ReadEnum(IniNameRegistry::InternOption<Name>(), defValue, options); }
 
 		bool ReadBool(IniOptionID option, bool defValue) { return m_Parser.ReadBool(m_SectionID, option, defValue); }
 		bool ReadBool(std::wstring_view option, bool defValue) { return ReadBool(m_Parser.FindOptionID(option), defValue); }
-		template <FixedWString Name> bool ReadBool(bool defValue) { return m_Parser.ReadBool<Name>(m_SectionID, defValue); }
+		template<FixedWString Name> bool ReadBool(bool defValue) { return ReadBool(IniNameRegistry::InternOption<Name>(), defValue); }
 
 		int ReadInt(IniOptionID option, int defValue) { return m_Parser.ReadInt(m_SectionID, option, defValue); }
 		int ReadInt(std::wstring_view option, int defValue) { return ReadInt(m_Parser.FindOptionID(option), defValue); }
-		template <FixedWString Name> int ReadInt(int defValue) { return m_Parser.ReadInt<Name>(m_SectionID, defValue); }
+		template<FixedWString Name> int ReadInt(int defValue) { return ReadInt(IniNameRegistry::InternOption<Name>(), defValue); }
 
 		uint32_t ReadUInt(IniOptionID option, uint32_t defValue) { return m_Parser.ReadUInt(m_SectionID, option, defValue); }
 		uint32_t ReadUInt(std::wstring_view option, uint32_t defValue) { return ReadUInt(m_Parser.FindOptionID(option), defValue); }
-		template <FixedWString Name> uint32_t ReadUInt(uint32_t defValue) { return m_Parser.ReadUInt<Name>(m_SectionID, defValue); }
+		template<FixedWString Name> uint32_t ReadUInt(uint32_t defValue) { return ReadUInt(IniNameRegistry::InternOption<Name>(), defValue); }
 
 		uint64_t ReadUInt64(IniOptionID option, uint64_t defValue) { return m_Parser.ReadUInt64(m_SectionID, option, defValue); }
 		uint64_t ReadUInt64(std::wstring_view option, uint64_t defValue) { return ReadUInt64(m_Parser.FindOptionID(option), defValue); }
-		template <FixedWString Name> uint64_t ReadUInt64(uint64_t defValue) { return m_Parser.ReadUInt64<Name>(m_SectionID, defValue); }
+		template<FixedWString Name> uint64_t ReadUInt64(uint64_t defValue) { return ReadUInt64(IniNameRegistry::InternOption<Name>(), defValue); }
 
 		double ReadFloat(IniOptionID option, double defValue) { return m_Parser.ReadFloat(m_SectionID, option, defValue); }
 		double ReadFloat(std::wstring_view option, double defValue) { return ReadFloat(m_Parser.FindOptionID(option), defValue); }
-		template <FixedWString Name> double ReadFloat(double defValue) { return m_Parser.ReadFloat<Name>(m_SectionID, defValue); }
+		template<FixedWString Name> double ReadFloat(double defValue) { return ReadFloat(IniNameRegistry::InternOption<Name>(), defValue); }
 
 		D2D1_COLOR_F ReadColor(IniOptionID option, const D2D1_COLOR_F& defValue) { return m_Parser.ReadColor(m_SectionID, option, defValue); }
 		D2D1_COLOR_F ReadColor(std::wstring_view option, const D2D1_COLOR_F& defValue) { return ReadColor(m_Parser.FindOptionID(option), defValue); }
-		template <FixedWString Name> D2D1_COLOR_F ReadColor(const D2D1_COLOR_F& defValue) { return m_Parser.ReadColor<Name>(m_SectionID, defValue); }
+		template<FixedWString Name> D2D1_COLOR_F ReadColor(const D2D1_COLOR_F& defValue) { return ReadColor(IniNameRegistry::InternOption<Name>(), defValue); }
 
 		D2D1_RECT_F ReadRect(IniOptionID option, const D2D1_RECT_F& defValue) { return m_Parser.ReadRect(m_SectionID, option, defValue); }
 		D2D1_RECT_F ReadRect(std::wstring_view option, const D2D1_RECT_F& defValue) { return ReadRect(m_Parser.FindOptionID(option), defValue); }
-		template <FixedWString Name> D2D1_RECT_F ReadRect(const D2D1_RECT_F& defValue) { return m_Parser.ReadRect<Name>(m_SectionID, defValue); }
+		template<FixedWString Name> D2D1_RECT_F ReadRect(const D2D1_RECT_F& defValue) { return ReadRect(IniNameRegistry::InternOption<Name>(), defValue); }
 
 		RECT ReadRECT(IniOptionID option, const RECT& defValue) { return m_Parser.ReadRECT(m_SectionID, option, defValue); }
 		RECT ReadRECT(std::wstring_view option, const RECT& defValue) { return ReadRECT(m_Parser.FindOptionID(option), defValue); }
-		template <FixedWString Name> RECT ReadRECT(const RECT& defValue) { return m_Parser.ReadRECT<Name>(m_SectionID, defValue); }
+		template<FixedWString Name> RECT ReadRECT(const RECT& defValue) { return ReadRECT(IniNameRegistry::InternOption<Name>(), defValue); }
 
 	private:
 		friend class ConfigParser;
@@ -202,22 +204,7 @@ public:
 
 private:
 	void ReadString(std::wstring& result, IniSectionID section, IniOptionID option, std::wstring_view defValue, ReadOptions options = {});
-
-	template <FixedWString Name>
-	void ReadString(std::wstring& result, IniSectionID section, std::wstring_view defValue = {}, ReadOptions options = {})
-	{
-		ReadString(result, section, GetStaticIniOptionID<Name>(), defValue, options);
-	}
-
-	// The returned reference is good only until the next ReadString() at the same nesting depth,
-	// which reuses the buffer. Copy it to keep it; no argument may point into it.
 	const std::wstring& ReadString(IniSectionID section, IniOptionID option, std::wstring_view defValue = {}, ReadOptions options = {});
-
-	template <FixedWString Name>
-	const std::wstring& ReadString(IniSectionID section, std::wstring_view defValue = {}, ReadOptions options = {})
-	{
-		return ReadString(section, GetStaticIniOptionID<Name>(), defValue, options);
-	}
 
 	template<typename T, size_t N>
 	T ReadEnum(IniSectionID section, IniOptionID option, T defValue, const EnumOption<T> (&options)[N])
@@ -226,35 +213,14 @@ private:
 		return index < N ? options[index].value : defValue;
 	}
 
-	template <FixedWString Name, typename T, size_t N>
-	T ReadEnum(IniSectionID section, T defValue, const EnumOption<T> (&options)[N])
-	{
-		return ReadEnum(section, GetStaticIniOptionID<Name>(), defValue, options);
-	}
-
 	bool ReadBool(IniSectionID section, IniOptionID option, bool defValue) { return ReadInt(section, option, (int)defValue) != 0; }
-	template <FixedWString Name> bool ReadBool(IniSectionID section, bool defValue) { return ReadBool(section, GetStaticIniOptionID<Name>(), defValue); }
-
 	int ReadInt(IniSectionID section, IniOptionID option, int defValue);
-	template <FixedWString Name> int ReadInt(IniSectionID section, int defValue) { return ReadInt(section, GetStaticIniOptionID<Name>(), defValue); }
-
 	uint32_t ReadUInt(IniSectionID section, IniOptionID option, uint32_t defValue);
-	template <FixedWString Name> uint32_t ReadUInt(IniSectionID section, uint32_t defValue) { return ReadUInt(section, GetStaticIniOptionID<Name>(), defValue); }
-
 	uint64_t ReadUInt64(IniSectionID section, IniOptionID option, uint64_t defValue);
-	template <FixedWString Name> uint64_t ReadUInt64(IniSectionID section, uint64_t defValue) { return ReadUInt64(section, GetStaticIniOptionID<Name>(), defValue); }
-
 	double ReadFloat(IniSectionID section, IniOptionID option, double defValue);
-	template <FixedWString Name> double ReadFloat(IniSectionID section, double defValue) { return ReadFloat(section, GetStaticIniOptionID<Name>(), defValue); }
-
 	D2D1_COLOR_F ReadColor(IniSectionID section, IniOptionID option, const D2D1_COLOR_F& defValue);
-	template <FixedWString Name> D2D1_COLOR_F ReadColor(IniSectionID section, const D2D1_COLOR_F& defValue) { return ReadColor(section, GetStaticIniOptionID<Name>(), defValue); }
-
 	D2D1_RECT_F ReadRect(IniSectionID section, IniOptionID option, const D2D1_RECT_F& defValue);
-	template <FixedWString Name> D2D1_RECT_F ReadRect(IniSectionID section, const D2D1_RECT_F& defValue) { return ReadRect(section, GetStaticIniOptionID<Name>(), defValue); }
-
 	RECT ReadRECT(IniSectionID section, IniOptionID option, const RECT& defValue);
-	template <FixedWString Name> RECT ReadRECT(IniSectionID section, const RECT& defValue) { return ReadRECT(section, GetStaticIniOptionID<Name>(), defValue); }
 
 	void ReadVariables();
 
