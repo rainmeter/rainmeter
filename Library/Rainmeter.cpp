@@ -1659,11 +1659,13 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	ConfigParser parser;
 	parser.Initialize(iniFile, nullptr, nullptr);
 
-	m_Debug = parser.ReadBool(L"Rainmeter", L"Debug", false);
+	const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
+
+	m_Debug = parser.ReadBool<"Debug">(rainmeterID, false);
 
 	// Read Logging settings
 	Logger& logger = GetLogger();
-	const bool logging = parser.ReadBool(L"Rainmeter", L"Logging", false);
+	const bool logging = parser.ReadBool<"Logging">(rainmeterID, false);
 	logger.SetLogToFile(logging);
 	if (logging)
 	{
@@ -1675,15 +1677,15 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		m_TrayIcon->ReadOptions(parser);
 	}
 
-	m_GlobalOptions.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", 0.0);
-	m_GlobalOptions.netOutSpeed = parser.ReadFloat(L"Rainmeter", L"NetOutSpeed", 0.0);
+	m_GlobalOptions.netInSpeed = parser.ReadFloat<"NetInSpeed">(rainmeterID, 0.0);
+	m_GlobalOptions.netOutSpeed = parser.ReadFloat<"NetOutSpeed">(rainmeterID, 0.0);
 
-	m_DisableDragging = parser.ReadBool(L"Rainmeter", L"DisableDragging", false);
-	m_DisableRDP = parser.ReadBool(L"Rainmeter", L"DisableRDP", false);
+	m_DisableDragging = parser.ReadBool<"DisableDragging">(rainmeterID, false);
+	m_DisableRDP = parser.ReadBool<"DisableRDP">(rainmeterID, false);
 
-	m_DefaultSelectedColor = parser.ReadColor(L"Rainmeter", L"SelectedColor", D2D1::ColorF(D2D1::ColorF::LightBlue));
+	m_DefaultSelectedColor = parser.ReadColor<"SelectedColor">(rainmeterID, D2D1::ColorF(D2D1::ColorF::LightBlue));
 
-	parser.ReadString(m_SkinEditor, L"Rainmeter", L"ConfigEditor", L"");
+	parser.ReadString<"ConfigEditor">(m_SkinEditor, rainmeterID, L"");
 	if (m_SkinEditor.empty())
 	{
 		// Get the program path associated with .ini files
@@ -1698,16 +1700,16 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		LogNoticeF(L"ConfigEditor: %s", m_SkinEditor.c_str());
 	}
 
-	parser.ReadString(m_TrayExecuteR, L"Rainmeter", L"TrayExecuteR", L"", { .sectionVariables = false });
-	parser.ReadString(m_TrayExecuteM, L"Rainmeter", L"TrayExecuteM", L"", { .sectionVariables = false });
-	parser.ReadString(m_TrayExecuteDR, L"Rainmeter", L"TrayExecuteDR", L"", { .sectionVariables = false });
-	parser.ReadString(m_TrayExecuteDM, L"Rainmeter", L"TrayExecuteDM", L"", { .sectionVariables = false });
+	parser.ReadString<"TrayExecuteR">(m_TrayExecuteR, rainmeterID, L"", { .sectionVariables = false });
+	parser.ReadString<"TrayExecuteM">(m_TrayExecuteM, rainmeterID, L"", { .sectionVariables = false });
+	parser.ReadString<"TrayExecuteDR">(m_TrayExecuteDR, rainmeterID, L"", { .sectionVariables = false });
+	parser.ReadString<"TrayExecuteDM">(m_TrayExecuteDM, rainmeterID, L"", { .sectionVariables = false });
 
-	m_DisableVersionCheck = parser.ReadBool(L"Rainmeter", L"DisableVersionCheck", false);
-	m_DisableAutoUpdate = parser.ReadBool(L"Rainmeter", L"DisableAutoUpdate", false);
+	m_DisableVersionCheck = parser.ReadBool<"DisableVersionCheck">(rainmeterID, false);
+	m_DisableAutoUpdate = parser.ReadBool<"DisableAutoUpdate">(rainmeterID, false);
 
-	m_ForceDefaultZoom = parser.ReadBool(L"Rainmeter", L"ForceDefaultZoom", false);
-	m_DefaultZoom = std::clamp(parser.ReadInt(L"Rainmeter", L"DefaultZoom", 100), 10, 500);
+	m_ForceDefaultZoom = parser.ReadBool<"ForceDefaultZoom">(rainmeterID, false);
+	m_DefaultZoom = std::clamp(parser.ReadInt<"DefaultZoom">(rainmeterID, 100), 10, 500);
 	if (parser.GetLastDefaultUsed())
 	{
 		// If the user has selected "Override high DPI scaling behavior" in the executable properties,
@@ -1728,7 +1730,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		}
 	}
 
-	const std::wstring& area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
+	const std::wstring& area = parser.ReadString<"DesktopWorkArea">(rainmeterID, L"");
 	if (!area.empty())
 	{
 		m_DesktopWorkAreas[0] = parser.ParseRECT(area.c_str());
@@ -1740,7 +1742,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	{
 		WCHAR buffer[64];
 		_snwprintf_s(buffer, _TRUNCATE, L"DesktopWorkArea@%i", (int)i);
-		const std::wstring& area = parser.ReadString(L"Rainmeter", buffer, L"");
+		const std::wstring& area = parser.ReadString(rainmeterID, buffer, L"");
 		if (!area.empty())
 		{
 			m_DesktopWorkAreas[i] = parser.ParseRECT(area.c_str());
@@ -1748,9 +1750,9 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		}
 	}
 
-	m_DesktopWorkAreaType = parser.ReadBool(L"Rainmeter", L"DesktopWorkAreaType", false);
+	m_DesktopWorkAreaType = parser.ReadBool<"DesktopWorkAreaType">(rainmeterID, false);
 
-	m_NormalStayDesktop = parser.ReadBool(L"Rainmeter", L"NormalStayDesktop", true);
+	m_NormalStayDesktop = parser.ReadBool<"NormalStayDesktop">(rainmeterID, true);
 
 	bool hasActiveSkins = false;
 	for (auto iter = parser.GetSectionNames().cbegin(); iter != parser.GetSectionNames().end(); ++iter)
@@ -1772,14 +1774,15 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		SkinRegistry::Folder& skinFolder = m_SkinRegistry.GetFolder(index);
 
 		// Make sure there is a ini file available
-		int active = parser.ReadInt(section, L"Active", 0);
+		const auto sectionID = IniNameRegistry::FindSection(section).value_or(IniSectionID{});
+		int active = parser.ReadInt<"Active">(sectionID, 0);
 		if (active > 0 && active <= (int)skinFolder.files.size())
 		{
 			hasActiveSkins = true;
 			skinFolder.active = active;
 		}
 
-		int order = parser.ReadInt(section, L"LoadOrder", 0);
+		int order = parser.ReadInt<"LoadOrder">(sectionID, 0);
 		SetLoadOrder(index, order);
 	}
 

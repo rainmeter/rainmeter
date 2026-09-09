@@ -413,10 +413,12 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 	m_MeterType = TRAY_METER_TYPE_NONE;
 
 	// Read tray settings
-	m_IconEnabled = parser.ReadBool(L"Rainmeter", L"TrayIcon", true);
+	const auto rainmeterID = GetStaticIniSectionID<"Rainmeter">();
+	const auto trayMeasureID = GetStaticIniSectionID<"TrayMeasure">();
+	m_IconEnabled = parser.ReadBool<"TrayIcon">(rainmeterID, true);
 	if (m_IconEnabled)
 	{
-		const std::wstring& measureName = parser.ReadString(L"TrayMeasure", L"Measure", L"");
+		const std::wstring& measureName = parser.ReadString<"Measure">(trayMeasureID, L"");
 
 		if (!measureName.empty())
 		{
@@ -438,7 +440,7 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 			{ L"HISTOGRAM", TRAY_METER_TYPE_HISTOGRAM },
 			{ L"BITMAP", TRAY_METER_TYPE_BITMAP },
 		};
-		m_MeterType = parser.ReadEnum(L"TrayMeasure", L"TrayMeter",
+		m_MeterType = parser.ReadEnum<"TrayMeter">(trayMeasureID,
 			m_Measure ? TRAY_METER_TYPE_HISTOGRAM : TRAY_METER_TYPE_NONE, s_MeterTypes);
 
 		if (m_MeterType == TRAY_METER_TYPE_HISTOGRAM)
@@ -448,12 +450,12 @@ void TrayIcon::ReadOptions(ConfigParser& parser)
 				return Gdiplus::Color::MakeARGB((BYTE)(255 * color.a), (BYTE)(255 * color.r), (BYTE)(255 * color.g), (BYTE)(255 * color.b));
 			};
 
-			m_ImageData->color1 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor1", D2D1::ColorF(0.0f, 100.0f / 255.0f, 0.0f, 1.0f)));
-			m_ImageData->color2 = toARGB(parser.ReadColor(L"TrayMeasure", L"TrayColor2", D2D1::ColorF(0.0f, 1.0f, 0.0f, 1.0f) ));
+			m_ImageData->color1 = toARGB(parser.ReadColor<"TrayColor1">(trayMeasureID, D2D1::ColorF(0.0f, 100.0f / 255.0f, 0.0f, 1.0f)));
+			m_ImageData->color2 = toARGB(parser.ReadColor<"TrayColor2">(trayMeasureID, D2D1::ColorF(0.0f, 1.0f, 0.0f, 1.0f) ));
 		}
 		else if (m_MeterType == TRAY_METER_TYPE_BITMAP)
 		{
-			std::wstring imageName = parser.ReadString(L"TrayMeasure", L"TrayBitmap", L"");
+			std::wstring imageName = parser.ReadString<"TrayBitmap">(trayMeasureID, L"");
 
 			// Load the bitmaps if defined
 			if (!imageName.empty())

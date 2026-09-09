@@ -399,9 +399,10 @@ private:
 
 	void UpdateWindowTransparency(int alpha);
 	void ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault);
+	void ReadOptions(ConfigParser& parser, IniSectionID section, bool isDefault);
 	void WriteOptions(INT setting = OPTION_ALL);
 	void WriteDeferredOptions();
-	void ReadUpdateOption();
+	void ReadUpdateOption(IniSectionID section);
 	bool ReadSkin();
 	bool ShowWindowIfAppropriate();
 	HWND GetWindowFromPoint(POINT pos);
