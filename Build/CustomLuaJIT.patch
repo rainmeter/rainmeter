@@ -13,6 +13,7 @@ The patch:
 - Makes os.setlocale() return nil without changing the process locale.
 - Protects Windows builds from invalid CRT parameters passed through strftime.
 - Increases the maximum number of pattern captures to 256.
+- Restores Lua 5.1 handling for unknown string escape sequences.
 - Restores the Lua 5.1 LUA_COMPAT_VARARG behavior, i.e. the implicit 'arg'
   table in vararg functions which do not use '...'.
 
@@ -187,6 +188,22 @@ diff --git a/src/lib_os.c b/src/lib_os.c
 +  lua_pushnil(L);
    return 1;
  }
+
+diff --git a/src/lj_lex.c b/src/lj_lex.c
+--- a/src/lj_lex.c
++++ b/src/lj_lex.c
+@@ -262,6 +262,9 @@ static void lex_string(LexState *ls, TValue *tv)
+       default:
+-	if (!lj_char_isdigit(c))
+-	  goto err_xesc;
++	if (!lj_char_isdigit(c)) {
++	  lex_save(ls, c);  /* Lua 5.1 discards the backslash for unknown escapes. */
++	  lex_next(ls);
++	  continue;
++	}
+ 	c -= '0';  /* Decimal escape '\ddd'. */
+ 	if (lj_char_isdigit(lex_next(ls))) {
+ 	  c = c*10 + (ls->c - '0');
 
 diff --git a/src/lj_parse.c b/src/lj_parse.c
 --- a/src/lj_parse.c
