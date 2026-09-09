@@ -564,7 +564,7 @@ void MeasureWebParser::AdvanceUpdateCounter(UINT count)
 	if (m_UpdateRateCounter >= m_UpdateRate) m_UpdateRateCounter = 0;
 }
 
-const WCHAR* MeasureWebParser::GetStringValue()
+std::optional<std::wstring_view> MeasureWebParser::GetStringValue()
 {
 	static std::wstring s_ResultString;
 
@@ -577,7 +577,7 @@ const WCHAR* MeasureWebParser::GetStringValue()
 		s_ResultString = m_ResultString;
 	}
 
-	return CheckSubstitute(s_ResultString.c_str());
+	return CheckSubstitute(s_ResultString);
 }
 
 void MeasureWebParser::HandleFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode)

@@ -184,7 +184,7 @@ void MeasurePower::UpdateValue()
 	m_Value = 0.0;
 }
 
-const WCHAR* MeasurePower::GetStringValue()
+std::optional<std::wstring_view> MeasurePower::GetStringValue()
 {
 	if (m_State == PowerState::LIFETIME)
 	{
@@ -215,7 +215,7 @@ const WCHAR* MeasurePower::GetStringValue()
 		return CheckSubstitute(s_Buffer);
 	}
 
-	return nullptr;
+	return std::nullopt;
 }
 
 void MeasurePower::LogProcessorPowerError(LONG status)

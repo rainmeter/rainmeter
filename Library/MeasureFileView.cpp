@@ -583,7 +583,7 @@ void MeasureFileView::UpdateValue()
 	m_Value = value;
 }
 
-const WCHAR* MeasureFileView::GetStringValue()
+std::optional<std::wstring_view> MeasureFileView::GetStringValue()
 {
 	FileViewParentData* parent = m_Parent;
 	if (!parent) return CheckSubstitute(L"");
@@ -597,7 +597,7 @@ const WCHAR* MeasureFileView::GetStringValue()
 			m_StrValue.clear();
 
 			// Force a numeric return (see the Update function)
-			if (!parent->files[trueIndex].isFolder) return nullptr;
+			if (!parent->files[trueIndex].isFolder) return std::nullopt;
 			break;
 
 		case TYPE_FILENAME:
@@ -689,7 +689,7 @@ const WCHAR* MeasureFileView::GetStringValue()
 	case TYPE_FILECOUNT:
 	case TYPE_FOLDERCOUNT:
 	case TYPE_FOLDERSIZE:
-		return nullptr;	// Force numeric return (see the Update function)
+		return std::nullopt;	// Force numeric return (see the Update function)
 		break;
 
 	case TYPE_FOLDERPATH:
@@ -697,7 +697,7 @@ const WCHAR* MeasureFileView::GetStringValue()
 		break;
 	}
 
-	return CheckSubstitute(m_StrValue.c_str());
+	return CheckSubstitute(m_StrValue);
 }
 
 void MeasureFileView::Command(const std::wstring& command)

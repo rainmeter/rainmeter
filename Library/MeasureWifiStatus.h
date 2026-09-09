@@ -14,7 +14,7 @@ public:
 	MeasureWifiStatus(const MeasureWifiStatus& other) = delete;
 	MeasureWifiStatus& operator=(MeasureWifiStatus other) = delete;
 
-	virtual const WCHAR* GetStringValue();
+	virtual std::optional<std::wstring_view> GetStringValue();
 
 	UINT GetTypeID() override { return TypeID<MeasureWifiStatus>(); }
 

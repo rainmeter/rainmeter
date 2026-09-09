@@ -163,9 +163,9 @@ void MeasureDragDrop::UpdateValue()
 	m_Value = 0.0;
 }
 
-const WCHAR* MeasureDragDrop::GetStringValue()
+std::optional<std::wstring_view> MeasureDragDrop::GetStringValue()
 {
-	return CheckSubstitute(m_StringValue.c_str());
+	return CheckSubstitute(m_StringValue);
 }
 
 bool MeasureDragDrop::ContainsPoint(const POINTL& screenPoint) const

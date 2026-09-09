@@ -593,7 +593,7 @@ void MeasureiTunes::UpdateValue()
 	}
 }
 
-const WCHAR* MeasureiTunes::GetStringValue()
+std::optional<std::wstring_view> MeasureiTunes::GetStringValue()
 {
 	m_StringValue.clear();
 	if (!g_InstanceCreated)
@@ -602,14 +602,14 @@ const WCHAR* MeasureiTunes::GetStringValue()
 		{
 			m_StringValue = m_BaseDir + m_DefaultTrackArtworkPath;
 		}
-		return CheckSubstitute(m_StringValue.c_str());
+		return CheckSubstitute(m_StringValue);
 	}
 
 	if (m_Command >= COMMAND_GETCURRENTTRACK_ALBUM && m_Command <= COMMAND_GETCURRENTTRACK_ARTWORK)
 	{
 		if (!UpdateCurrentTrack(m_BaseDir, m_DefaultTrackArtworkPath, m_CurrentTrackArtworkPath))
 		{
-			return CheckSubstitute(m_StringValue.c_str());
+			return CheckSubstitute(m_StringValue);
 		}
 
 		BSTR bstrValue = nullptr;
@@ -733,11 +733,11 @@ const WCHAR* MeasureiTunes::GetStringValue()
 			SysFreeString(bstrValue);
 		}
 
-		return CheckSubstitute(m_StringValue.c_str());
+		return CheckSubstitute(m_StringValue);
 	}
 
 	m_StringValue = L"Type Incorrect";
-	return CheckSubstitute(m_StringValue.c_str());
+	return CheckSubstitute(m_StringValue);
 }
 
 void MeasureiTunes::Command(const std::wstring& command)

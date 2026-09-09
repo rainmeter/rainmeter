@@ -5,6 +5,8 @@
 #include <windows.h>
 #include <vector>
 #include <string>
+#include <string_view>
+#include <optional>
 #include <memory>
 #include "IfActions.h"
 #include "LocaleUtil.h"
@@ -26,9 +28,9 @@ enum AUTOSCALE
 class MeasureValueSet
 {
 public:
-	MeasureValueSet(double val, const WCHAR* str) : m_Value(val), m_StringValue(str) {}
-	void Set(double val, const WCHAR* str) { m_Value = val; m_StringValue = str; }
-	bool IsChanged(double val, const WCHAR* str) { if (m_Value != val || wcscmp(m_StringValue.c_str(), str) != 0) { Set(val, str); return true; } return false; }
+	MeasureValueSet(double val, std::wstring_view str) : m_Value(val), m_StringValue(str) {}
+	void Set(double val, std::wstring_view str) { m_Value = val; m_StringValue = str; }
+	bool IsChanged(double val, std::wstring_view str) { if (m_Value != val || m_StringValue != str) { Set(val, str); return true; } return false; }
 private:
 	double m_Value;
 	std::wstring m_StringValue;
@@ -70,9 +72,9 @@ public:
 	double GetMinValue() { return m_MinValue; }
 	double GetMaxValue() { return m_MaxValue; }
 
-	virtual const WCHAR* GetStringValue();
-	const WCHAR* GetStringOrFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
-	const WCHAR* GetFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
+	virtual std::optional<std::wstring_view> GetStringValue();
+	std::wstring_view GetStringOrFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
+	std::wstring_view GetFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 
 	static void GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords);
 	static void RemoveTrailingZero(WCHAR* str, int strLen);
@@ -93,7 +95,7 @@ protected:
 
 	bool ParseSubstitute(std::wstring buffer);
 	std::wstring ExtractWord(std::wstring& buffer);
-	const WCHAR* CheckSubstitute(const WCHAR* buffer);
+	std::wstring_view CheckSubstitute(std::wstring_view buffer);
 	bool MakePlainSubstitute(std::wstring& str, size_t index);
 
 	double m_Value;

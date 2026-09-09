@@ -97,7 +97,7 @@ void MeasureCoreTemp::UpdateValue()
 	}
 }
 
-const WCHAR* MeasureCoreTemp::GetStringValue()
+std::optional<std::wstring_view> MeasureCoreTemp::GetStringValue()
 {
 	static WCHAR s_Buffer[32];
 	s_Buffer[0] = L'\0';
@@ -114,7 +114,7 @@ const WCHAR* MeasureCoreTemp::GetStringValue()
 		return CheckSubstitute(s_Buffer);
 	}
 
-	return nullptr;
+	return std::nullopt;
 }
 
 MeasureCoreTemp::Type MeasureCoreTemp::ConvertType(const WCHAR* type)

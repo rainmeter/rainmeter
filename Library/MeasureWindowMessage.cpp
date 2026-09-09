@@ -66,14 +66,14 @@ void MeasureWindowMessage::UpdateValue()
 	}
 }
 
-const WCHAR* MeasureWindowMessage::GetStringValue()
+std::optional<std::wstring_view> MeasureWindowMessage::GetStringValue()
 {
 	if (m_Message == 0)
 	{
-		return CheckSubstitute(m_StringValue.c_str());
+		return CheckSubstitute(m_StringValue);
 	}
 
-	return nullptr;
+	return std::nullopt;
 }
 
 void MeasureWindowMessage::Command(const std::wstring& command)

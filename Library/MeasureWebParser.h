@@ -25,7 +25,7 @@ public:
 
 	UINT GetTypeID() override { return TypeID<MeasureWebParser>(); }
 
-	const WCHAR* GetStringValue() override;
+	std::optional<std::wstring_view> GetStringValue() override;
 
 	void AdvanceUpdateCounter(UINT count) override;
 

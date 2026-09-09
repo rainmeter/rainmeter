@@ -227,8 +227,8 @@ void MeasureRegistry::ReadOptions(ConfigParser::OptionReader& reader)
 
 // If the measured registry value is a string display it. Otherwise convert the
 // value to string as normal.
-const WCHAR* MeasureRegistry::GetStringValue()
+std::optional<std::wstring_view> MeasureRegistry::GetStringValue()
 {
-	return !m_StringValue.empty() ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
+	if (!m_StringValue.empty()) return CheckSubstitute(m_StringValue);
+	return std::nullopt;
 }
-

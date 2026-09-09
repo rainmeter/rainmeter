@@ -404,15 +404,13 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	{
 		if (valueType == ValueType::EscapeRegExp)
 		{
-			const WCHAR* tmp = measure->GetStringValue();
-			strValue = tmp ? tmp : L"";
+			strValue = measure->GetStringValue().value_or(L"");
 			StringUtil::EscapeRegExp(strValue);
 			return true;
 		}
 		else if (valueType == ValueType::EncodeUrl)
 		{
-			const WCHAR* tmp = measure->GetStringValue();
-			strValue = tmp ? tmp : L"";
+			strValue = measure->GetStringValue().value_or(L"");
 			StringUtil::EncodeUrl(strValue);
 			return true;
 		}
@@ -893,12 +891,11 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result, std::wstring_view curre
 				Measure* measure = GetMeasure(section);
 				if (measure)
 				{
-					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
-					size_t valueLen = wcslen(value);
+					const std::wstring_view value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
 
 					// Measure found, replace it with the value
-					result.replace(start, end - start + 1, value, valueLen);
-					start += valueLen;
+					result.replace(start, end - start + 1, value);
+					start += value.length();
 					replaced = true;
 				}
 				else
@@ -1033,8 +1030,8 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, std::wstring_view c
 				Measure* measure = GetMeasure(variable);
 				if (measure)
 				{
-					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
-					replaceFoundValue(value);
+					const std::wstring_view value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
+					replaceFoundValue(std::wstring(value));
 					break;
 				}
 				else

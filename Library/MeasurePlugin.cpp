@@ -209,7 +209,7 @@ void MeasurePlugin::ReadOptions(ConfigParser::OptionReader& reader)
 	++id;
 }
 
-const WCHAR* MeasurePlugin::GetStringValue()
+std::optional<std::wstring_view> MeasurePlugin::GetStringValue()
 {
 	if (m_GetStringFunc)
 	{
@@ -226,7 +226,7 @@ const WCHAR* MeasurePlugin::GetStringValue()
 		if (ret) return CheckSubstitute(ret);
 	}
 
-	return nullptr;
+	return std::nullopt;
 }
 
 void MeasurePlugin::Command(const std::wstring& command)

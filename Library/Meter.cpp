@@ -619,17 +619,16 @@ bool Meter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scale
 			size_t len = _snwprintf_s(buffer, _TRUNCATE, L"%%%i", (int)i);
 			size_t start = 0, pos;
 
-			const WCHAR* measureValue = m_Measures[i - 1]->GetStringOrFormattedValue(
+			const std::wstring_view measureValue = m_Measures[i - 1]->GetStringOrFormattedValue(
 				autoScale, scale, decimals, percentual);
-			const size_t measureValueLen = wcslen(measureValue);
 
 			do
 			{
 				pos = str.find(buffer, start, len);
 				if (pos != std::wstring::npos)
 				{
-					str.replace(pos, len, measureValue, measureValueLen);
-					start = pos + measureValueLen;
+					str.replace(pos, len, measureValue);
+					start = pos + measureValue.length();
 					replaced = true;
 				}
 			}

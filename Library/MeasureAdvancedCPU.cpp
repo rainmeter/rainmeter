@@ -217,9 +217,10 @@ void MeasureAdvancedCPU::UpdateValue()
 	m_Value = (double)newValue;
 }
 
-const WCHAR* MeasureAdvancedCPU::GetStringValue()
+std::optional<std::wstring_view> MeasureAdvancedCPU::GetStringValue()
 {
-	return m_TopProcess == 2 ? CheckSubstitute(m_TopProcessName.c_str()) : nullptr;
+	if (m_TopProcess == 2) return CheckSubstitute(m_TopProcessName);
+	return std::nullopt;
 }
 
 void MeasureAdvancedCPU::ReadProcessList(const std::wstring& value, std::vector<std::wstring>& processList)

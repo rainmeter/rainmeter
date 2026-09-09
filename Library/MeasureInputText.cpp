@@ -719,9 +719,9 @@ void MeasureInputText::CloseBox()
 	if (m_Box) m_Box->Close(false);
 }
 
-const WCHAR* MeasureInputText::GetStringValue()
+std::optional<std::wstring_view> MeasureInputText::GetStringValue()
 {
-	return CheckSubstitute(m_Input.c_str());
+	return CheckSubstitute(m_Input);
 }
 
 void MeasureInputText::Command(const std::wstring& command)

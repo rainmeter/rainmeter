@@ -16,7 +16,7 @@ public:
 	MeasureFileView& operator=(MeasureFileView other) = delete;
 
 	UINT GetTypeID() override { return TypeID<MeasureFileView>(); }
-	const WCHAR* GetStringValue() override;
+	std::optional<std::wstring_view> GetStringValue() override;
 	void Command(const std::wstring& command) override;
 
 	class UpdateTask;

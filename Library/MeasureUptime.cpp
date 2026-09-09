@@ -54,7 +54,7 @@ void MeasureUptime::UpdateValue()
 	}
 }
 
-const WCHAR* MeasureUptime::GetStringValue()
+std::optional<std::wstring_view> MeasureUptime::GetStringValue()
 {
 	static WCHAR buffer[MAX_LINE_LENGTH];
 

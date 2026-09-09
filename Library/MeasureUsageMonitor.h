@@ -15,7 +15,7 @@ public:
 	MeasureUsageMonitor& operator=(MeasureUsageMonitor other) = delete;
 
 	UINT GetTypeID() override { return TypeID<MeasureUsageMonitor>(); }
-	const WCHAR* GetStringValue() override;
+	std::optional<std::wstring_view> GetStringValue() override;
 
 	// Stops the background collectors. Must be called before the library is unloaded.
 	static void FinalizeStatic();

@@ -235,7 +235,7 @@ bool Measure::MakePlainSubstitute(std::wstring& str, size_t index)
 }
 
 // Substitutes part of the text
-const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
+std::wstring_view Measure::CheckSubstitute(std::wstring_view buffer)
 {
 	static std::wstring str;
 
@@ -322,7 +322,7 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 		}
 	}
 
-	return str.c_str();
+	return str;
 }
 
 // Reads the buffer for "Name":"Value"-pairs separated with comma and
@@ -540,15 +540,16 @@ double Measure::GetValueRange()
 
 // Base implementation. Derivied classes can provide an alternative implementation if they have a
 // string value that is not based on m_Value.
-const WCHAR* Measure::GetStringValue()
+std::optional<std::wstring_view> Measure::GetStringValue()
 {
-	return nullptr;
+	return std::nullopt;
 }
 
-const WCHAR* Measure::GetStringOrFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
+std::wstring_view Measure::GetStringOrFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
-	const WCHAR* stringValue = GetStringValue();
-	return stringValue ? stringValue : GetFormattedValue(autoScale, scale, decimals, percentual);
+	const std::optional<std::wstring_view> stringValue = GetStringValue();
+	if (stringValue) return *stringValue;
+	return GetFormattedValue(autoScale, scale, decimals, percentual);
 }
 
 // This method returns the value as text string. The actual value is retrieved with GetValue() so
@@ -558,7 +559,7 @@ const WCHAR* Measure::GetStringOrFormattedValue(AUTOSCALE autoScale, double scal
 // scale      The scale to use if autoScale is false.
 // decimals   Number of decimals used in the value. If -1, removes ".00000" for dynamic variables.
 // percentual Return the value as % from the maximum value.
-const WCHAR* Measure::GetFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
+std::wstring_view Measure::GetFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	static WCHAR buffer[128];
 	WCHAR format[32];
@@ -666,11 +667,7 @@ void Measure::DoChangeAction(bool execute)
 	if (!m_OnChangeAction.empty() && m_ValueAssigned)
 	{
 		double newValue = GetValue();
-		const WCHAR* newStringValue = GetStringValue();
-		if (!newStringValue)
-		{
-			newStringValue = L"";
-		}
+		const std::wstring_view newStringValue = GetStringValue().value_or(L"");
 
 		if (!m_OldValue)
 		{

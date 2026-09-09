@@ -33,7 +33,7 @@ public:
 
 	virtual UINT GetTypeID() { return TypeID<MeasurePlugin>(); }
 
-	virtual const WCHAR* GetStringValue();
+	virtual std::optional<std::wstring_view> GetStringValue();
 	virtual void Command(const std::wstring& command);
 
 	bool IsDpiAware() const { return m_HandleSkinSettingChangeFunc != nullptr; }

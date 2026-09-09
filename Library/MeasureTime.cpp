@@ -269,7 +269,7 @@ void MeasureTime::UpdateValue()
 }
 
 
-const WCHAR* MeasureTime::GetStringValue()
+std::optional<std::wstring_view> MeasureTime::GetStringValue()
 {
 	static WCHAR tmpSz[MAX_LINE_LENGTH];
 	struct tm today = { 0 };
