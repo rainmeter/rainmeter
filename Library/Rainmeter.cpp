@@ -56,6 +56,7 @@ int RainmeterMain(LPWSTR cmdLine)
 	SetDllDirectory(L"");
 
 	const WCHAR* layout = nullptr;
+	const WCHAR* startupCommand = nullptr;
 
 	if (_wcsnicmp(cmdLine, L"/Restart ", 9) == 0)
 	{
@@ -72,7 +73,31 @@ int RainmeterMain(LPWSTR cmdLine)
 		while (*cmdLine == L' ') ++cmdLine;
 	}
 
-	if (cmdLine[0] == L'!' || cmdLine[0] == L'[')
+	constexpr WCHAR launchOption[] = L"/Launch";
+	constexpr size_t launchOptionLength = _countof(launchOption) - 1;
+	if (_wcsnicmp(cmdLine, launchOption, launchOptionLength) == 0 &&
+		(!cmdLine[launchOptionLength] || iswspace(cmdLine[launchOptionLength])))
+	{
+		startupCommand = cmdLine + launchOptionLength;
+		while (iswspace(*startupCommand)) ++startupCommand;
+	}
+
+	if (startupCommand)
+	{
+		if (!*startupCommand) return 1;
+
+		HWND wnd = FindWindow(RAINMETER_CLASS_NAME, RAINMETER_WINDOW_NAME);
+		if (wnd)
+		{
+			COPYDATASTRUCT cds = { 0 };
+			cds.dwData = 1;
+			cds.cbData = (DWORD)((wcslen(startupCommand) + 1) * sizeof(WCHAR));
+			cds.lpData = (PVOID)startupCommand;
+			SendMessage(wnd, WM_COPYDATA, 0, (LPARAM)&cds);
+			return 0;
+		}
+	}
+	else if (cmdLine[0] == L'!' || cmdLine[0] == L'[')
 	{
 		HWND wnd = FindWindow(RAINMETER_CLASS_NAME, RAINMETER_WINDOW_NAME);
 		if (wnd)
@@ -109,10 +134,10 @@ int RainmeterMain(LPWSTR cmdLine)
 
 	g_CmdLine = cmdLine;
 
-	const WCHAR* iniFile = (*cmdLine && !layout) ? cmdLine : nullptr;
+	const WCHAR* iniFile = (*cmdLine && !layout && !startupCommand) ? cmdLine : nullptr;
 
 	auto& rainmeter = GetRainmeter();
-	int ret = rainmeter.Initialize(iniFile, layout);
+	int ret = rainmeter.Initialize(iniFile, layout, startupCommand);
 	if (ret == 0)
 	{
 		ret = rainmeter.MessagePump();
@@ -175,7 +200,7 @@ Rainmeter& Rainmeter::GetInstance()
 	return s_Rainmeter;
 }
 
-int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
+int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupCommand)
 {
 	if (!IsWindows10OrGreater() || GetPlatform().GetBuildNumber() < 18362)
 	{
@@ -568,6 +593,11 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	else if (!m_DisableVersionCheck)
 	{
 		ScheduleUpdateCheck(INTERVAL_UPDATECHECK_INITIAL);
+	}
+
+	if (startupCommand)
+	{
+		ExecuteCommand(startupCommand, nullptr);
 	}
 
 	return 0;	// All is OK
