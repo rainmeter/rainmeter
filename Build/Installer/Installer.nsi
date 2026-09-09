@@ -926,7 +926,8 @@ Function RemoveUserStartupShortcut
 FunctionEnd
 
 Function FinishRun
-	!insertmacro UAC_AsUser_ExecShell "" "$INSTDIR\Rainmeter.exe" "" "" ""
+	; Explorer launches Rainmeter with the desktop user's token instead of the elevated installer's token.
+	ExecShell "" "$WINDIR\explorer.exe" '$\"$INSTDIR\Rainmeter.exe$\"'
 FunctionEnd
 
 
