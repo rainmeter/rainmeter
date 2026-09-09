@@ -31,9 +31,7 @@ jobs:
         shell: bash
 
       - name: Build ${{ matrix.arch }}-bit Rainmeter
-        run: |
-          $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
-          .\Build\Build.ps1 rainmeter-${{ matrix.arch }} $buildVersion include-tests -MSBuildTarget build
+        run: .\Build\Build.ps1 rainmeter-${{ matrix.arch }} "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER" include-tests -MSBuildTarget build
         shell: pwsh
 
       - name: Test 64-bit Rainmeter
@@ -81,9 +79,7 @@ jobs:
         uses: ./.github/actions/install-nsis
 
       - name: Build installer
-        run: |
-          $buildVersion = "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
-          .\Build\Build.ps1 installer $buildVersion
+        run: .\Build\Build.ps1 installer "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
         shell: pwsh
 
       - name: Upload installer
