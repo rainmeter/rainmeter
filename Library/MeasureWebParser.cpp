@@ -566,18 +566,7 @@ void MeasureWebParser::AdvanceUpdateCounter(UINT count)
 
 std::optional<std::wstring_view> MeasureWebParser::GetStringValue()
 {
-	static std::wstring s_ResultString;
-
-	if (m_Download)
-	{
-		s_ResultString = m_DownloadedFile;
-	}
-	else
-	{
-		s_ResultString = m_ResultString;
-	}
-
-	return CheckSubstitute(s_ResultString);
+	return CheckSubstitute(m_Download ? m_DownloadedFile : m_ResultString);
 }
 
 void MeasureWebParser::HandleFetchResult(BYTE* data, DWORD dataSize, DWORD errorCode)
