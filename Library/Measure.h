@@ -48,7 +48,10 @@ public:
 	UINT GetBaseTypeID() override { return TypeID<Measure>(); }
 
 	virtual void Initialize();
-	void ReadOptions(ConfigParser& parser) override;
+
+	using Section::ReadOptions;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
+
 	bool Update(bool rereadOptions = false);
 
 	void Disable();

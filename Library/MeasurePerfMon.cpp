@@ -92,9 +92,10 @@ bool MeasurePerfMon::GetRawValue(ULONGLONG& value)
 	return true;
 }
 
-void MeasurePerfMon::ReadOptions(ConfigParser& parser)
+void MeasurePerfMon::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	bool changed = false;
 

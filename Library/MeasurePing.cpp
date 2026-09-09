@@ -215,9 +215,10 @@ MeasurePing::~MeasurePing()
 	}
 }
 
-void MeasurePing::ReadOptions(ConfigParser& parser)
+void MeasurePing::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	parser.ReadString<"DestAddress">(m_Destination, m_ID, L"");
 	m_UpdateRate = parser.ReadUInt<"UpdateRate">(m_ID, 32);

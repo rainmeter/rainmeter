@@ -527,9 +527,10 @@ MeasureiTunes::~MeasureiTunes()
 	}
 }
 
-void MeasureiTunes::ReadOptions(ConfigParser& parser)
+void MeasureiTunes::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	size_t pos = m_Skin->GetFilePath().find_last_of(L"\\/");
 	m_BaseDir = (pos != std::wstring::npos) ? m_Skin->GetFilePath().substr(0, pos + 1) : L"";

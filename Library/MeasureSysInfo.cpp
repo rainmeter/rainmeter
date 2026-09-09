@@ -48,9 +48,10 @@ MeasureSysInfo::~MeasureSysInfo()
 {
 }
 
-void MeasureSysInfo::ReadOptions(ConfigParser& parser)
+void MeasureSysInfo::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	SysInfoType oldType = m_Type;
 	int oldData = m_Data;

@@ -46,9 +46,10 @@ void MeasureCalc::UpdateValue()
 	}
 }
 
-void MeasureCalc::ReadOptions(ConfigParser& parser)
+void MeasureCalc::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	// Store the current values so we know if the value needs to be updated
 	int oldLowBound = m_LowBound;

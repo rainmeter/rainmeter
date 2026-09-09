@@ -138,11 +138,12 @@ const WCHAR* MeasureDiskSpace::GetStringValue()
 	return (m_Type || m_Label) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
 }
 
-void MeasureDiskSpace::ReadOptions(ConfigParser& parser)
+void MeasureDiskSpace::ReadOptions(ConfigParser::OptionReader& reader)
 {
+	auto& parser = reader.GetParser();
 	double oldMaxValue = m_MaxValue;
 
-	Measure::ReadOptions(parser);
+	Measure::ReadOptions(reader);
 
 	parser.ReadString<"Drive">(m_Drive, m_ID, L"C:\\");
 	if (m_Drive.empty())

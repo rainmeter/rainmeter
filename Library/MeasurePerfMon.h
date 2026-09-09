@@ -17,7 +17,7 @@ public:
 	UINT GetTypeID() override { return TypeID<MeasurePerfMon>(); }
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	void UpdateValue() override;
 
 private:

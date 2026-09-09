@@ -95,9 +95,10 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 	}
 }
 
-void MeterImage::ReadOptions(ConfigParser& parser)
+void MeterImage::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Meter::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Meter::ReadOptions(reader);
 
 	parser.ReadString<"ImageName">(m_ImageName, m_ID, L"");
 	parser.ReadString<"MaskImageName">(m_MaskImageName, m_ID, L"");

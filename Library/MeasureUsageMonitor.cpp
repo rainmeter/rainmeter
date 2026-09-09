@@ -673,9 +673,10 @@ void MeasureUsageMonitor::FinalizeStatic()
 	GetCollectors().clear();
 }
 
-void MeasureUsageMonitor::ReadOptions(ConfigParser& parser)
+void MeasureUsageMonitor::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	static constexpr ConfigParser::EnumOption<Alias> s_Aliases[] =
 	{

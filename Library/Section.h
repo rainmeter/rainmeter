@@ -5,10 +5,10 @@
 #include <windows.h>
 #include <string>
 #include <string_view>
+#include "ConfigParser.h"
 #include "Group.h"
 #include "IniNameRegistry.h"
 
-class ConfigParser;
 class Skin;
 
 class __declspec(novtable) Section : public Group
@@ -41,11 +41,12 @@ public:
 	void DoUpdateAction();
 
 	Skin* GetSkin() { return m_Skin; }
+	void ReadOptions(ConfigParser& parser, bool allowMeterStyle);
 
 protected:
 	Section(Skin* skin, const WCHAR* name);
 
-	virtual void ReadOptions(ConfigParser& parser);
+	virtual void ReadOptions(ConfigParser::OptionReader& reader);
 
 	bool UpdateCounter();
 

@@ -155,12 +155,13 @@ bool MeterBitmap::HitTest(int x, int y)
 	}
 }
 
-void MeterBitmap::ReadOptions(ConfigParser& parser)
+void MeterBitmap::ReadOptions(ConfigParser::OptionReader& reader)
 {
+	auto& parser = reader.GetParser();
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 
-	Meter::ReadOptions(parser);
+	Meter::ReadOptions(reader);
 
 	parser.ReadString<"BitmapImage">(m_ImageName, m_ID, L"");
 	if (!m_ImageName.empty())

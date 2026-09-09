@@ -38,9 +38,10 @@ MeterRoundLine::~MeterRoundLine()
 {
 }
 
-void MeterRoundLine::ReadOptions(ConfigParser& parser)
+void MeterRoundLine::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Meter::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Meter::ReadOptions(reader);
 
 	m_LineWidth = parser.ReadFloat<"LineWidth">(m_ID, 1.0);
 	m_LineLength = parser.ReadFloat<"LineLength">(m_ID, 20.0);

@@ -2879,7 +2879,6 @@ bool Skin::ReadSkin()
 	// First read the container option, then set the appropriate relative meter.
 	for (Meter* meter : m_Meters)
 	{
-		ConfigParser::OptionReader optionReader(m_Parser, meter->GetOriginalName(), meter->GetSectionID(), true);
 		meter->ReadContainerOptions(m_Parser);
 	}
 	m_ResetRelativeMeters = true;
@@ -2891,16 +2890,14 @@ bool Skin::ReadSkin()
 	for (auto iter = m_Measures.cbegin(); iter != m_Measures.cend(); ++iter)
 	{
 		Measure* measure = *iter;
-		ConfigParser::OptionReader optionReader(m_Parser, measure->GetOriginalName(), measure->GetSectionID());
-		measure->ReadOptions(m_Parser);
+		measure->ReadOptions(m_Parser, false);
 	}
 
 	// Initialize meters.
 	for (auto iter = m_Meters.cbegin(); iter != m_Meters.cend(); ++iter)
 	{
 		Meter* meter = *iter;
-		ConfigParser::OptionReader optionReader(m_Parser, meter->GetOriginalName(), meter->GetSectionID(), true);
-		meter->ReadOptions(m_Parser);
+		meter->ReadOptions(m_Parser, true);
 		meter->Initialize();
 	}
 
@@ -3370,8 +3367,7 @@ bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 		if (meter->HasDynamicVariables() &&
 			(meter->GetUpdateCounter() + 1) >= updateDivider)
 		{
-			ConfigParser::OptionReader optionReader(m_Parser, meter->GetOriginalName(), meter->GetSectionID(), true);
-			meter->ReadOptions(m_Parser);
+			meter->ReadOptions(m_Parser, true);
 		}
 
 		bUpdate = meter->Update();

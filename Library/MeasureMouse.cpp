@@ -215,11 +215,12 @@ MeasureMouse::~MeasureMouse()
 	}
 }
 
-void MeasureMouse::ReadOptions(ConfigParser& parser)
+void MeasureMouse::ReadOptions(ConfigParser::OptionReader& reader)
 {
+	auto& parser = reader.GetParser();
 	const bool wasCapturing = WantsCapture();
 
-	Measure::ReadOptions(parser);
+	Measure::ReadOptions(reader);
 
 	m_Mouse.ReadOptions(parser, m_ID);
 

@@ -15,9 +15,10 @@ MeasureString::~MeasureString()
 {
 }
 
-void MeasureString::ReadOptions(ConfigParser& parser)
+void MeasureString::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	m_NumberFormat = ReadNumberFormatOption(parser);
 

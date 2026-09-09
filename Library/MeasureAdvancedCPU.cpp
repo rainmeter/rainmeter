@@ -169,9 +169,10 @@ MeasureAdvancedCPU::~MeasureAdvancedCPU()
 	ProcessCollector::GetInstance().ReleaseReference();
 }
 
-void MeasureAdvancedCPU::ReadOptions(ConfigParser& parser)
+void MeasureAdvancedCPU::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	std::wstring value = parser.ReadString<"CPUInclude">(m_ID, L"");
 	if (_wcsicmp(value.c_str(), m_IncludesCache.c_str()) != 0)

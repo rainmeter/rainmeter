@@ -19,9 +19,10 @@ MeasureWindowMessage::~MeasureWindowMessage()
 {
 }
 
-void MeasureWindowMessage::ReadOptions(ConfigParser& parser)
+void MeasureWindowMessage::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	parser.ReadString<"WindowName">(m_WindowName, m_ID, L"");
 	parser.ReadString<"WindowClass">(m_WindowClass, m_ID, L"");

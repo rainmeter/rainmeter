@@ -97,9 +97,10 @@ MeasureWifiStatus::~MeasureWifiStatus()
 	}
 }
 
-void MeasureWifiStatus::ReadOptions(ConfigParser& parser)
+void MeasureWifiStatus::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	if (!s_Client) return;
 

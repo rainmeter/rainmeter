@@ -32,9 +32,10 @@ MeasureSpeedFan::~MeasureSpeedFan()
 {
 }
 
-void MeasureSpeedFan::ReadOptions(ConfigParser& parser)
+void MeasureSpeedFan::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	const std::wstring type = parser.ReadString<"SpeedFanType">(m_ID, L"TEMPERATURE");
 	if (_wcsicmp(L"TEMPERATURE", type.c_str()) == 0)

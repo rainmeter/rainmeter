@@ -45,7 +45,7 @@ public:
 	bool CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry = nullptr);
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	virtual void UpdateValue();
 
 private:

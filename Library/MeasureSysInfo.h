@@ -91,7 +91,7 @@ public:
 	virtual UINT GetTypeID() { return TypeID<MeasureSysInfo>(); }
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	virtual void UpdateValue();
 
 private:

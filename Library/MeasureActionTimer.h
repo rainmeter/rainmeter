@@ -19,7 +19,7 @@ public:
 	static void HandleExecuteMessage(WPARAM wParam, LPARAM lParam);
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	void UpdateValue() override {};
 	void Command(const std::wstring& command) override;
 

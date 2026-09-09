@@ -245,8 +245,9 @@ void MeasureAudioLevel::ResolveParent(ConfigParser& parser)
 	LogErrorF(this, L"Couldn't find Parent measure '%s'.", parentName.c_str());
 }
 
-void MeasureAudioLevel::ReadOptions(ConfigParser& parser)
+void MeasureAudioLevel::ReadOptions(ConfigParser::OptionReader& reader)
 {
+	auto& parser = reader.GetParser();
 	static const LPCWSTR s_typeName[MeasureAudioLevel::NUM_TYPES] =
 	{
 		L"RMS", // TYPE_RMS
@@ -275,7 +276,7 @@ void MeasureAudioLevel::ReadOptions(ConfigParser& parser)
 		{ L"Sum", L"Avg", L"", }, // CHANNEL_SUM
 	};
 
-	Measure::ReadOptions(parser);
+	Measure::ReadOptions(reader);
 
 	if (!m_Initialized)
 	{

@@ -28,7 +28,7 @@ public:
 
 protected:
 	virtual void Initialize();
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	virtual void UpdateValue();
 
 private:

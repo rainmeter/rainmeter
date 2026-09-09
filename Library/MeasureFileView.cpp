@@ -336,9 +336,10 @@ MeasureFileView::~MeasureFileView()
 	}
 }
 
-void MeasureFileView::ReadOptions(ConfigParser& parser)
+void MeasureFileView::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	static constexpr ConfigParser::EnumOption<DateType> s_DateTypes[] =
 	{

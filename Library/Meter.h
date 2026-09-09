@@ -25,8 +25,11 @@ public:
 
 	virtual void Initialize();
 	virtual void InvalidateDeviceResources();
-	void ReadOptions(ConfigParser& parser) override;
+
+	using Section::ReadOptions;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	void ReadContainerOptions(ConfigParser& parser);
+
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 	virtual bool HasActiveTransition() { return false; }

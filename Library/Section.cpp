@@ -19,10 +19,17 @@ Section::~Section()
 {
 }
 
+void Section::ReadOptions(ConfigParser& parser, bool allowMeterStyle)
+{
+	ConfigParser::OptionReader optionReader(parser, m_Name, m_ID, allowMeterStyle);
+	ReadOptions(optionReader);
+}
+
 // Read the common options specified in the ini file. The inherited classes must
 // call this base implementation if they overwrite this method.
-void Section::ReadOptions(ConfigParser& parser)
+void Section::ReadOptions(ConfigParser::OptionReader& reader)
 {
+	auto& parser = reader.GetParser();
 	const int defaultUpdateDivider =
 		m_Skin ? m_Skin->GetDefaultUpdateDivider() : 1;
 	int updateDivider = parser.ReadInt<"UpdateDivider">(m_ID, defaultUpdateDivider);

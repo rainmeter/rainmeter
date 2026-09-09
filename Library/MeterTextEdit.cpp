@@ -245,9 +245,10 @@ void MeterTextEdit::UpdatePlaceholderFormat()
 	m_PlaceholderFormat->SetVerticalAlignment(m_TextFormat->GetVerticalAlignment());
 }
 
-void MeterTextEdit::ReadOptions(ConfigParser& parser)
+void MeterTextEdit::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	MeterStringBase::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	MeterStringBase::ReadOptions(reader);
 
 	m_MaxLength = parser.ReadInt<"MaxLength">(m_ID, 0);
 	m_Multiline = parser.ReadBool<"Multiline">(m_ID, false);

@@ -70,11 +70,10 @@ void MeasurePlugin::UpdateValue()
 	}
 }
 
-void MeasurePlugin::ReadOptions(ConfigParser& parser)
+void MeasurePlugin::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	static UINT id = 0;
-
-	Measure::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Measure::ReadOptions(reader);
 
 	if (m_Initialized)
 	{
@@ -155,6 +154,8 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser)
 	SetDllDirectory(L"");
 
 	double maxValue = 0.0;
+
+	static UINT id = 0;
 
 	if (IsNewApi())
 	{

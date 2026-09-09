@@ -33,9 +33,10 @@ void MeterSvg::InvalidateDeviceResources()
 	m_LoadAttempted = false;
 }
 
-void MeterSvg::ReadOptions(ConfigParser& parser)
+void MeterSvg::ReadOptions(ConfigParser::OptionReader& reader)
 {
-	Meter::ReadOptions(parser);
+	auto& parser = reader.GetParser();
+	Meter::ReadOptions(reader);
 
 	const std::wstring svgImage = parser.ReadString<"SvgImage">(m_ID, L"");
 	const bool sourceChanged = svgImage != m_SvgImage;

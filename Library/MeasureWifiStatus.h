@@ -19,7 +19,7 @@ public:
 	UINT GetTypeID() override { return TypeID<MeasureWifiStatus>(); }
 
 protected:
-	void ReadOptions(ConfigParser& parser) override;
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	void UpdateValue() override;
 
 private:
