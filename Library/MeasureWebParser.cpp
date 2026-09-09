@@ -272,14 +272,6 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 		SetupGlobalProxySetting();
 	}
 
-	// No DynamicVariables support for ProxyServer or UserAgent
-	auto& parser = GetSkin()->GetParser();
-	auto reader = parser.GetInheritableOptionReader(name, m_ID);
-	SetupProxySetting(
-		m_Proxy,
-		reader.ReadString<"ProxyServer">(L""),
-		reader.ReadString<"UserAgent">(L""));
-
 	++g_InstanceCount;
 }
 
@@ -306,7 +298,7 @@ MeasureWebParser::~MeasureWebParser()
 		}
 	}
 
-	ClearProxySetting(m_Proxy);
+	if (m_Proxy) ClearProxySetting(*m_Proxy);
 
 	--g_InstanceCount;
 	if (g_InstanceCount == 0)
@@ -332,6 +324,16 @@ void MeasureWebParser::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 
 	m_Url = url;
+
+	if (!m_Proxy && m_Url.find(L'[') == std::wstring::npos)
+	{
+		// No DynamicVariables support for ProxyServer or UserAgent
+		m_Proxy = std::make_unique<ProxySetting>();
+		SetupProxySetting(
+			*m_Proxy,
+			reader.ReadString<"ProxyServer">(L""),
+			reader.ReadString<"UserAgent">(L""));
+	}
 
 	m_Headers.clear();
 	size_t hNum = 1;
@@ -525,7 +527,7 @@ void MeasureWebParser::UpdateValue()
 					if (m_Debug) LogDebugF(this, L"Fetching: %s", m_Url.c_str());
 
 					m_FetchTask = Net::FetchTask::Create(
-						(void*)this, m_Url, m_Headers, m_Proxy.handle, m_InternetOpenUrlFlags,
+						(void*)this, m_Url, m_Headers, m_Proxy->handle, m_InternetOpenUrlFlags,
 						[](const Net::FetchTask* fetchTask, void* requestor, BYTE* data, DWORD dataSize, DWORD errorCode)
 						{
 							auto measure = (MeasureWebParser*)requestor;
