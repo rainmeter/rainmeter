@@ -64,6 +64,7 @@ public:
 	{
 	public:
 		OptionReader(const OptionReader& other) = delete;
+		OptionReader(OptionReader&& other) = default;
 		OptionReader& operator=(OptionReader other) = delete;
 
 		bool GetLastReplaced() { return m_LastReplaced; }
