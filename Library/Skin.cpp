@@ -3033,6 +3033,10 @@ void Skin::Redraw()
 	if (m_ResizeWindow)
 	{
 		ResizeWindow(m_ResizeWindow == RESIZEMODE_RESET);
+		if (m_KeepOnScreen)
+		{
+			ClampPositionToScreenBounds(m_Position.GetSpace());
+		}
 		SetResizeWindowMode(RESIZEMODE_NONE);
 	}
 
