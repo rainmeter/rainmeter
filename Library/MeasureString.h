@@ -23,6 +23,6 @@ protected:
 
 private:
 	LocaleUtil::NumberFormat m_NumberFormat;
-	std::wstring m_String;
-	std::wstring m_StringValue;
+	std::wstring m_CurrentString;
+	std::optional<std::wstring> m_PendingString;
 };
