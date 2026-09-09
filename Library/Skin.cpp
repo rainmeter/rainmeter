@@ -2638,7 +2638,7 @@ bool Skin::ReadSkin()
 	m_DefaultUpdateDivider = reader.ReadInt<"DefaultUpdateDivider">(1);
 	m_ToolTipHidden = reader.ReadBool<"ToolTipHidden">(false);
 
-	if (reader.IsKeyDefined<"UpdateMode">())
+	if (!reader.ReadString<"UpdateMode">(L"").empty())
 	{
 		LogWarningF(this, L"UpdateMode is no longer supported, see pre-release notes");
 	}
