@@ -64,7 +64,6 @@ std::optional<std::wstring> GetRectComponent(StringParser& strParser, const RECT
 }  // namespace
 
 ConfigParser::ConfigParser() :
-	m_MonitorVariableMode(MonitorVariableMode::DEFAULT_LOGICAL),
 	m_Skin()
 {
 }
@@ -116,8 +115,6 @@ void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR 
 	m_Variables.clear();
 	m_OriginalVariableNames.clear();
 
-	m_MonitorVariableMode = MonitorVariableMode::DEFAULT_LOGICAL;
-
 	m_CurrentPath = PathUtil::GetFolderFromFilePath(filename);
 	m_SectionNamesInsertPos = m_SectionNames.end();
 
@@ -152,10 +149,10 @@ void ConfigParser::SetVariable(std::wstring_view strVariable, std::wstring_view 
 
 bool ConfigParser::GetVariable(std::wstring_view strVariable, std::wstring& strValue, bool isNewStyle)
 {
-	return GetVariable(strVariable, strValue, {}, isNewStyle);
+	return GetVariable(strVariable, strValue, {}, MonitorVariableMode::DEFAULT_LOGICAL, isNewStyle);
 }
 
-bool ConfigParser::GetVariable(std::wstring_view strVariable, std::wstring& strValue, std::wstring_view currentSection, bool isNewStyle)
+bool ConfigParser::GetVariable(std::wstring_view strVariable, std::wstring& strValue, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle)
 {
 	// #1: Built-in variables
 	auto result = GetBuiltInVariable(strVariable, currentSection);
@@ -164,7 +161,7 @@ bool ConfigParser::GetVariable(std::wstring_view strVariable, std::wstring& strV
 	if (!result) result = GetCurrentConfigVariable(strVariable);
 
 	// #3: Monitor variables
-	if (!result) result = GetMonitorVariable(strVariable);
+	if (!result) result = GetMonitorVariable(strVariable, monitorVariableMode);
 
 	if (result)
 	{
@@ -603,7 +600,7 @@ std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(std::wstring_
 	return GetRectComponent(strParser, rect);
 }
 
-std::optional<std::wstring> ConfigParser::GetMonitorVariable(std::wstring_view variableStr)
+std::optional<std::wstring> ConfigParser::GetMonitorVariable(std::wstring_view variableStr, MonitorVariableMode monitorVariableMode)
 {
 	enum class MonitorArea
 	{
@@ -694,7 +691,7 @@ std::optional<std::wstring> ConfigParser::GetMonitorVariable(std::wstring_view v
 
 	if (!strParser.IsConsumed()) return std::nullopt;
 
-	if (m_MonitorVariableMode == MonitorVariableMode::FORCE_PHYSICAL)
+	if (monitorVariableMode == MonitorVariableMode::FORCE_PHYSICAL)
 	{
 		physical = true;
 	}
@@ -783,10 +780,10 @@ std::optional<std::wstring> ConfigParser::GetMonitorVariable(std::wstring_view v
 
 bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 {
-	return ReplaceVariables(result, {}, isNewStyle);
+	return ReplaceVariables(result, {}, MonitorVariableMode::DEFAULT_LOGICAL, isNewStyle);
 }
 
-bool ConfigParser::ReplaceVariables(std::wstring& result, std::wstring_view currentSection, bool isNewStyle)
+bool ConfigParser::ReplaceVariables(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle)
 {
 	bool replaced = false;
 	const size_t firstSpecialPos = result.find_first_of(L"[]%#");
@@ -800,7 +797,7 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, std::wstring_view curr
 	//   section variables).
 	if (isNewStyle)
 	{
-		replaced = ExpandSectionVariables(result, currentSection, VariableExpandMode::HashOnly, nullptr, 0, firstSpecialPos);
+		replaced = ExpandSectionVariables(result, currentSection, monitorVariableMode, VariableExpandMode::HashOnly, nullptr, 0, firstSpecialPos);
 	}
 	else if (!currentSection.empty())
 	{
@@ -835,7 +832,7 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, std::wstring_view curr
 		else
 		{
 			std::wstring value;
-			if (GetVariable(std::wstring_view(&result[si], end - si), value, currentSection))
+			if (GetVariable(std::wstring_view(&result[si], end - si), value, currentSection, monitorVariableMode))
 			{
 				result.replace(start, end - start + 1, value);
 				start += value.length();
@@ -853,10 +850,10 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, std::wstring_view curr
 
 bool ConfigParser::ReplaceMeasures(std::wstring& result)
 {
-	return ReplaceMeasures(result, {});
+	return ReplaceMeasures(result, {}, MonitorVariableMode::DEFAULT_LOGICAL);
 }
 
-bool ConfigParser::ReplaceMeasures(std::wstring& result, std::wstring_view currentSection)
+bool ConfigParser::ReplaceMeasures(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode)
 {
 	const size_t firstBracket = result.find_first_of(L"[]");
 	if (firstBracket == std::wstring::npos) return false;
@@ -867,7 +864,7 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result, std::wstring_view curre
 	size_t start = result.find(L'[', firstBracket);
 	if (start != std::wstring::npos)
 	{
-		replaced = ExpandSectionVariables(result, currentSection, VariableExpandMode::AllKeys, nullptr, 0, start);
+		replaced = ExpandSectionVariables(result, currentSection, monitorVariableMode, VariableExpandMode::AllKeys, nullptr, 0, start);
 	}
 
 	// Check for old-style measures and section variables. [Measure], [Meter:X], etc.
@@ -931,10 +928,10 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result, std::wstring_view curre
 
 bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpandMode expandMode, Meter* meter, int depth, size_t start)
 {
-	return ExpandSectionVariables(str, {}, expandMode, meter, depth, start);
+	return ExpandSectionVariables(str, {}, MonitorVariableMode::DEFAULT_LOGICAL, expandMode, meter, depth, start);
 }
 
-bool ConfigParser::ExpandSectionVariables(std::wstring& str, std::wstring_view currentSection, const VariableExpandMode expandMode, Meter* meter, int depth, size_t start)
+bool ConfigParser::ExpandSectionVariables(std::wstring& str, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, const VariableExpandMode expandMode, Meter* meter, int depth, size_t start)
 {
 	constexpr int maxRecursionDepth = 10;
 	if (depth > maxRecursionDepth) return false;
@@ -1004,7 +1001,7 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, std::wstring_view c
 				{
 					if (depth < maxRecursionDepth)
 					{
-						ExpandSectionVariables(value, currentSection, expandMode, meter, depth + 1);
+						ExpandSectionVariables(value, currentSection, monitorVariableMode, expandMode, meter, depth + 1);
 					}
 					else if (ContainsKeyedSectionVariable(value))
 					{
@@ -1054,7 +1051,7 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, std::wstring_view c
 			else if (keyType == VariableType::Hash && (expandMode == VariableExpandMode::AllKeys || expandMode == VariableExpandMode::HashOnly))
 			{
 				std::wstring value;
-				if (GetVariable(variable, value, currentSection, true))
+				if (GetVariable(variable, value, currentSection, monitorVariableMode, true))
 				{
 					replaceFoundValue(std::move(value));
 					break;
@@ -1270,7 +1267,7 @@ void ConfigParser::ReadStringInternal(std::wstring& result, OptionReader& reader
 				// Make sure new-style variables are processed for the [Variables] section
 				const auto variablesID = IniNameRegistry::InternSection<"Variables">();
 				bool runNewStyle = reader.GetSectionID() == variablesID;
-				if (ReplaceVariables(result, reader.GetSectionName(), runNewStyle))
+				if (ReplaceVariables(result, reader.GetSectionName(), reader.GetMonitorVariableMode(), runNewStyle))
 				{
 					reader.MarkReplaced();
 				}
@@ -1280,7 +1277,7 @@ void ConfigParser::ReadStringInternal(std::wstring& result, OptionReader& reader
 				PathUtil::ExpandEnvironmentVariables(result);
 			}
 
-			if (options.sectionVariables && ReplaceMeasures(result, reader.GetSectionName()))
+			if (options.sectionVariables && ReplaceMeasures(result, reader.GetSectionName(), reader.GetMonitorVariableMode()))
 			{
 				reader.MarkReplaced();
 			}

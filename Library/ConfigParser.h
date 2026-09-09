@@ -69,7 +69,10 @@ public:
 		bool GetLastReplaced() { return m_LastReplaced; }
 		bool GetLastDefaultUsed() { return m_LastDefaultUsed; }
 		bool GetLastValueDefined() { return m_LastValueDefined; }
+
 		std::wstring_view FindSectionName() { return m_Parser.FindSectionName(m_SectionID); }
+
+		void SetMonitorVariableMode(MonitorVariableMode mode) { m_MonitorVariableMode = mode; }
 
 		// Reads into |result|. Prefer this where the value is kept.
 		void ReadString(std::wstring& result, IniOptionID option, std::wstring_view defValue, ReadOptions options = {}) { m_Parser.ReadString(result, *this, option, defValue, options); }
@@ -120,20 +123,25 @@ public:
 
 	private:
 		friend class ConfigParser;
+
 		OptionReader(ConfigParser& parser, std::wstring_view sectionName, IniSectionID sectionID, ReadOptionInheritMode inheritMode);
+
 		void ClearLastReadFlags() { m_LastReplaced = false; m_LastDefaultUsed = false; m_LastValueDefined = false; }
 		void MarkReplaced() { m_LastReplaced = true; }
 		void MarkDefaultUsed() { m_LastDefaultUsed = true; }
 		void MarkValueDefined() { m_LastValueDefined = true; }
+
 		const std::vector<IniSectionID>& GetInheritChain() const { return m_InheritChain; }
 		std::wstring_view GetSectionName() const { return m_SectionName; }
 		IniSectionID GetSectionID() const { return m_SectionID; }
+		MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
 
 		ConfigParser& m_Parser;
 		std::vector<IniSectionID> m_InheritChain;
 		bool m_LastReplaced = false;
 		bool m_LastDefaultUsed = false;
 		bool m_LastValueDefined = false;
+		MonitorVariableMode m_MonitorVariableMode = MonitorVariableMode::DEFAULT_LOGICAL;
 		std::wstring_view m_SectionName;
 		IniSectionID m_SectionID;
 	};
@@ -162,9 +170,6 @@ public:
 	const std::wstring* GetVariableOriginalName(const std::wstring& strVariable);
 	void SetVariable(std::wstring_view strVariable, std::wstring_view strValue);
 	const StringMap<std::wstring>& GetVariables() { return m_Variables; }
-	MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
-	void SetMonitorVariableMode(MonitorVariableMode mode) { m_MonitorVariableMode = mode; }
-
 	const std::wstring* GetValue(std::wstring_view section, std::wstring_view option) const;
 	const std::wstring* GetValue(IniSectionID section, IniOptionID option) const;
 	void SetValue(IniSectionID section, IniOptionID option, std::wstring value);
@@ -235,12 +240,12 @@ private:
 	std::optional<std::wstring> GetCurrentConfigVariable(std::wstring_view variableStr);
 	std::optional<std::wstring> GetDollarSkinVariable(std::wstring_view variableStr);
 	std::optional<std::wstring> GetDollarDisplayVariable(std::wstring_view variableStr);
-	std::optional<std::wstring> GetMonitorVariable(std::wstring_view variableStr);
+	std::optional<std::wstring> GetMonitorVariable(std::wstring_view variableStr, MonitorVariableMode monitorVariableMode);
 
-	bool GetVariable(std::wstring_view strVariable, std::wstring& strValue, std::wstring_view currentSection, bool isNewStyle = false);
-	bool ReplaceVariables(std::wstring& result, std::wstring_view currentSection, bool isNewStyle = false);
-	bool ReplaceMeasures(std::wstring& result, std::wstring_view currentSection);
-	bool ExpandSectionVariables(std::wstring& result, std::wstring_view currentSection, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0, size_t start = 0);
+	bool GetVariable(std::wstring_view strVariable, std::wstring& strValue, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle = false);
+	bool ReplaceVariables(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle = false);
+	bool ReplaceMeasures(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode);
+	bool ExpandSectionVariables(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0, size_t start = 0);
 
 	void ReadStringInternal(std::wstring& result, OptionReader& reader, IniOptionID option, std::wstring_view defValue, ReadOptions options);
 	const std::wstring& ReadStringInternal(OptionReader& reader, IniOptionID option, std::wstring_view defValue, ReadOptions options);
@@ -253,8 +258,6 @@ private:
 	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
 
 	StringMap<Section*> m_Sections;
-
-	MonitorVariableMode m_MonitorVariableMode;
 
 	std::wstring m_CurrentPath;
 
