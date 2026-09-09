@@ -16,7 +16,6 @@ void Initialize(HWND messageWindow, UINT timerID);
 void Finalize();
 void TrackWindow(HWND hwnd);
 void UntrackWindow(HWND hwnd);
-void HandleWindowStateChange(HWND hwnd);
 void HandleTimer();
 void HandleShowDesktopChange();
 void HandleDisplayChange();
