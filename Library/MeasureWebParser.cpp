@@ -611,9 +611,18 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 		utf16Data = true;
 	}
 
+	const bool localFile = _wcsnicmp(m_Url.c_str(), L"file://", 7) == 0;
 	std::wstring buffer;
 	std::wstring_view data((const WCHAR*)rawData, rawSize / sizeof(WCHAR));
-	if (!utf16Data)
+	if (localFile && m_Codepage == CP_UTF8)
+	{
+		if (!FileUtil::DecodeTextWithAnsiFallback(rawData, rawSize, buffer))
+		{
+			buffer.clear();
+		}
+		data = buffer;
+	}
+	else if (!utf16Data)
 	{
 		buffer = StringUtil::Widen((LPCSTR)rawData, rawSize, m_Codepage);
 		data = buffer;
