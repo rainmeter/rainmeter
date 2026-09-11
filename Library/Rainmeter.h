@@ -77,7 +77,7 @@ public:
 	Skin* GetSkinByINI(const std::wstring& ini_searching);
 
 	Skin* GetSkin(HWND hwnd);
-	void GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, std::wstring_view group = {});
+	std::multimap<int, Skin*> GetSkinsByLoadOrder(std::wstring_view group = {});
 	std::map<std::wstring, Skin*>& GetAllSkins() { return m_Skins; }
 	SkinRegistry& GetSkinRegistry() { return m_SkinRegistry; }
 

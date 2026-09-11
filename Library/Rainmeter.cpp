@@ -1487,8 +1487,9 @@ Skin* Rainmeter::GetSkin(HWND hwnd)
 	return nullptr;
 }
 
-void Rainmeter::GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, std::wstring_view group)
+std::multimap<int, Skin*> Rainmeter::GetSkinsByLoadOrder(std::wstring_view group)
 {
+	std::multimap<int, Skin*> windows;
 	auto iter = m_Skins.begin();
 	for (; iter != m_Skins.end(); ++iter)
 	{
@@ -1498,6 +1499,7 @@ void Rainmeter::GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, std::wst
 			windows.insert(std::pair<int, Skin*>(GetLoadOrder((*iter).first), skin));
 		}
 	}
+	return windows;
 }
 
 void Rainmeter::SetLoadOrder(int folderIndex, int order)
@@ -1841,8 +1843,7 @@ void Rainmeter::RefreshAll()
 	}
 
 	// Make the sending order by using LoadOrder
-	std::multimap<int, Skin*> windows;
-	GetSkinsByLoadOrder(windows);
+	const auto windows = GetSkinsByLoadOrder();
 
 	// Prepare the helper window
 	System::PrepareHelperWindow();

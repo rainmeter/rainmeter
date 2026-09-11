@@ -151,8 +151,7 @@ void DoGroupBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin
 {
 	if (args.size() > bangInfo.argCount)
 	{
-		std::multimap<int, Skin*> windows;
-		GetRainmeter().GetSkinsByLoadOrder(windows, args[bangInfo.argCount]);
+		const auto windows = GetRainmeter().GetSkinsByLoadOrder(args[bangInfo.argCount]);
 
 		// Remove extra parameters (including group).
 		args.resize(bangInfo.argCount);
@@ -728,8 +727,7 @@ void DoDeactivateSkinGroupBang(const BangInfo& bangInfo, std::vector<std::wstrin
 {
 	if (!args.empty())
 	{
-		std::multimap<int, Skin*> windows;
-		GetRainmeter().GetSkinsByLoadOrder(windows, args[0]);
+		const auto windows = GetRainmeter().GetSkinsByLoadOrder(args[0]);
 		for (const auto& ip : windows)
 		{
 			GetRainmeter().DeactivateSkin(ip.second, -1);
@@ -1327,9 +1325,7 @@ void DoSkinBang(std::wstring_view originalBang, std::wstring_view bang, std::vec
 	std::wstring_view group = target;
 	if (ConsumeGroupSelector(group))
 	{
-		std::multimap<int, Skin*> skins;
-		GetRainmeter().GetSkinsByLoadOrder(skins, group);
-
+		const auto skins = GetRainmeter().GetSkinsByLoadOrder(group);
 		for (const auto& ip : skins)
 		{
 			// The handlers may modify the arguments, so hand each skin its own copy.
