@@ -71,25 +71,23 @@ bool ReadTextFile(const std::wstring& path, std::wstring& text)
 	return result;
 }
 
-bool ReadTextFileWithAnsiFallback(const std::wstring& path, std::wstring& text)
+bool DecodeTextWithAnsiFallback(const BYTE* buffer, size_t size, std::wstring& text)
 {
-	size_t size;
-	std::unique_ptr<BYTE[]> buffer = ReadFullFile(path, &size);
-	if (!buffer || size > INT_MAX) return false;
+	if (size > INT_MAX) return false;
 
-	const Encoding encoding = GetEncoding(buffer.get(), size);
+	const Encoding encoding = GetEncoding(buffer, size);
 	if (encoding == Encoding::UTF16LE)
 	{
 		if (size % sizeof(WCHAR) != 0) return false;
 
 		const size_t length = (size - 2) / sizeof(WCHAR);
 		text.resize(length);
-		memcpy(text.data(), buffer.get() + 2, length * sizeof(WCHAR));
+		memcpy(text.data(), buffer + 2, length * sizeof(WCHAR));
 		return true;
 	}
 
 	const size_t offset = encoding == Encoding::UTF8 ? 3 : 0;
-	const char* bytes = reinterpret_cast<const char*>(buffer.get() + offset);
+	const char* bytes = reinterpret_cast<const char*>(buffer + offset);
 	const int length = (int)(size - offset);
 	int codePage = CP_UTF8;
 	int textLength = MultiByteToWideChar(codePage, MB_ERR_INVALID_CHARS, bytes, length, nullptr, 0);
@@ -104,6 +102,13 @@ bool ReadTextFileWithAnsiFallback(const std::wstring& path, std::wstring& text)
 	const DWORD flags = codePage == CP_UTF8 ? MB_ERR_INVALID_CHARS : 0;
 	text.resize(textLength);
 	return textLength == 0 || MultiByteToWideChar(codePage, flags, bytes, length, text.data(), textLength) == textLength;
+}
+
+bool ReadTextFileWithAnsiFallback(const std::wstring& path, std::wstring& text)
+{
+	size_t size;
+	std::unique_ptr<BYTE[]> buffer = ReadFullFile(path, &size);
+	return buffer && DecodeTextWithAnsiFallback(buffer.get(), size, text);
 }
 
 // A text mode stream turns an LF into a CRLF, which would leave a CR of its own in front of any
