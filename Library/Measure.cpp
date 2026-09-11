@@ -396,8 +396,18 @@ bool Measure::ParseSubstitute(std::wstring_view buffer)
 			patternValue = unquote(patternToken);
 		}
 
-		const std::wstring_view replacementToken = parser.ConsumeUntilOrRest(L',', options);
-		const auto replacementValue = unquote(replacementToken, quotesStripped && parser.IsConsumed());
+		std::wstring_view replacementToken = parser.Remaining();
+		const std::wstring_view parsedReplacementToken = parser.ConsumeUntilOrRest(L',', options);
+		const bool missingClosingQuote = quotesStripped && parser.IsConsumed();
+		if (!missingClosingQuote)
+		{
+			replacementToken = parsedReplacementToken;
+		}
+		else
+		{
+			while (!replacementToken.empty() && iswspace(replacementToken.front())) replacementToken.remove_prefix(1);
+		}
+		const auto replacementValue = unquote(replacementToken, missingClosingQuote);
 		if (!patternValue || !replacementValue) return false;
 
 		if (*patternValue != *replacementValue)
