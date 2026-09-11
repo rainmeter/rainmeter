@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.Default.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}</ProjectGuid>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup>
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>brotli\c\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>4244;4334;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Lib>
+      <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">true</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="brotli\c\common\constants.c" />
+    <ClCompile Include="brotli\c\common\context.c" />
+    <ClCompile Include="brotli\c\common\dictionary.c" />
+    <ClCompile Include="brotli\c\common\platform.c" />
+    <ClCompile Include="brotli\c\common\shared_dictionary.c" />
+    <ClCompile Include="brotli\c\common\transform.c" />
+    <ClCompile Include="brotli\c\dec\bit_reader.c" />
+    <ClCompile Include="brotli\c\dec\decode.c" />
+    <ClCompile Include="brotli\c\dec\huffman.c" />
+    <ClCompile Include="brotli\c\dec\prefix.c" />
+    <ClCompile Include="brotli\c\dec\state.c" />
+    <ClCompile Include="brotli\c\dec\static_init.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="brotli\c\common\constants.h" />
+    <ClInclude Include="brotli\c\common\context.h" />
+    <ClInclude Include="brotli\c\common\dictionary.h" />
+    <ClInclude Include="brotli\c\common\dictionary_inc.h" />
+    <ClInclude Include="brotli\c\common\platform.h" />
+    <ClInclude Include="brotli\c\common\shared_dictionary_internal.h" />
+    <ClInclude Include="brotli\c\common\static_init.h" />
+    <ClInclude Include="brotli\c\common\transform.h" />
+    <ClInclude Include="brotli\c\common\version.h" />
+    <ClInclude Include="brotli\c\dec\bit_reader.h" />
+    <ClInclude Include="brotli\c\dec\huffman.h" />
+    <ClInclude Include="brotli\c\dec\prefix.h" />
+    <ClInclude Include="brotli\c\dec\prefix_inc.h" />
+    <ClInclude Include="brotli\c\dec\state.h" />
+    <ClInclude Include="brotli\c\dec\static_init.h" />
+    <ClInclude Include="brotli\c\include\brotli\decode.h" />
+    <ClInclude Include="brotli\c\include\brotli\port.h" />
+    <ClInclude Include="brotli\c\include\brotli\shared_dictionary.h" />
+    <ClInclude Include="brotli\c\include\brotli\types.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
