@@ -23,6 +23,10 @@ std::unique_ptr<BYTE[]> ReadFullFile(const std::wstring& path, size_t* size = nu
 // lone LF and an LF is written out as a CRLF.
 bool ReadTextFile(const std::wstring& path, std::wstring& text);
 
+// Reads UTF-8 and UTF-16LE text, falling back to the active ANSI codepage when a file without a
+// BOM is not valid UTF-8. Line endings are preserved.
+bool ReadTextFileWithAnsiFallback(const std::wstring& path, std::wstring& text);
+
 // Writes |text| to |path| in |encoding|, prepending a BOM for the Unicode encodings.
 bool WriteTextFile(const std::wstring& path, std::wstring_view text, Encoding encoding);
 
