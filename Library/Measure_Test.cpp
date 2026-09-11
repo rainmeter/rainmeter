@@ -73,6 +73,13 @@ public:
 		Assert::AreEqual(L"c", measure.ApplySubstitute(L"ab").c_str());
 	}
 
+	TEST_METHOD(TestTrailingWhitespaceReplacement)
+	{
+		SubstituteTestMeasure measure;
+		Assert::IsTrue(measure.SetSubstitute(L"a\":\"  ", true));
+		Assert::AreEqual(L"  ", measure.ApplySubstitute(L"a").c_str());
+	}
+
 	TEST_METHOD(TestInvalidRegexpUsesPlainSubstitute)
 	{
 		SubstituteTestMeasure measure;
