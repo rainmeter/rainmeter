@@ -439,7 +439,7 @@ void Meter::ReadOptions(ConfigParser::OptionReader& reader)
 void Meter::ReadContainerOptions(ConfigParser::OptionReader& reader)
 {
 	const std::wstring& container = reader.ReadString<"Container">(L"");
-	if (StringUtil::EqualsIgnoreCase(m_Name, container))
+	if (!container.empty() && StringUtil::EqualsIgnoreCase(m_Name, container))
 	{
 		LogErrorF(this, L"Container cannot self-reference: %s", container.c_str());
 		return;
@@ -453,15 +453,18 @@ void Meter::ReadContainerOptions(ConfigParser::OptionReader& reader)
 			m_ContainerMeter = nullptr;
 		}
 
-		auto meter = m_Skin->GetMeter(container);
-		if (meter)
+		if (!container.empty())
 		{
-			meter->AddContainerItem(this);
-			m_ContainerMeter = meter;
-		}
-		else if (!container.empty())
-		{
-			LogErrorF(this, L"Invalid container: %s", container.c_str());
+			auto meter = m_Skin->GetMeter(container);
+			if (meter)
+			{
+				meter->AddContainerItem(this);
+				m_ContainerMeter = meter;
+			}
+			else
+			{
+				LogErrorF(this, L"Invalid container: %s", container.c_str());
+			}
 		}
 	}
 
