@@ -29,6 +29,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThirdParty_Fmt", "ThirdPart
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThirdParty_LuaJIT", "ThirdParty\ThirdParty_LuaJIT.vcxproj", "{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThirdParty_Brotli", "ThirdParty\ThirdParty_Brotli.vcxproj", "{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64EC = Debug|ARM64EC
@@ -159,6 +161,18 @@ Global
 		{924A5B6A-6358-4FA8-A899-F7C4850606D5}.Release|Win32.Build.0 = Release|Win32
 		{924A5B6A-6358-4FA8-A899-F7C4850606D5}.Release|x64.ActiveCfg = Release|x64
 		{924A5B6A-6358-4FA8-A899-F7C4850606D5}.Release|x64.Build.0 = Release|x64
+		{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}.Debug|ARM64EC.ActiveCfg = Debug|ARM64EC
+		{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}.Debug|ARM64EC.Build.0 = Debug|ARM64EC
+		{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}.Debug|Win32.Build.0 = Debug|Win32
+		{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}.Debug|x64.ActiveCfg = Debug|x64
+		{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}.Debug|x64.Build.0 = Debug|x64
+		{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}.Release|ARM64EC.ActiveCfg = Release|ARM64EC
+		{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}.Release|ARM64EC.Build.0 = Release|ARM64EC
+		{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}.Release|Win32.ActiveCfg = Release|Win32
+		{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}.Release|Win32.Build.0 = Release|Win32
+		{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}.Release|x64.ActiveCfg = Release|x64
+		{228AAA86-AC8B-45A4-BEF9-AB11595F0EBA}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
