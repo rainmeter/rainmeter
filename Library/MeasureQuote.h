@@ -27,5 +27,7 @@ private:
 	std::wstring m_PathName;
 	std::wstring m_Separator;
 	std::vector<std::wstring> m_Files;
+	std::optional<std::wstring> m_FileText;
+	WIN32_FILE_ATTRIBUTE_DATA m_FileData;
 	std::wstring m_StringValue;
 };
