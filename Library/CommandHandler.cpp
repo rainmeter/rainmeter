@@ -682,6 +682,16 @@ void DoDeactivateSkinBang(const BangInfo& bangInfo, std::vector<std::wstring>& a
 {
 	if (!args.empty())
 	{
+		if (args[0] == L"*")
+		{
+			const auto windows = GetRainmeter().GetSkinsByLoadOrder();
+			for (const auto& [_, targetSkin] : windows)
+			{
+				GetRainmeter().DeactivateSkin(targetSkin, -1);
+			}
+			return;
+		}
+
 		skin = GetRainmeter().GetSkin(args[0]);
 		if (!skin)
 		{
