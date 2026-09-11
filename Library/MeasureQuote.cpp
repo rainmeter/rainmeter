@@ -3,10 +3,8 @@
 #include "StdAfx.h"
 #include "MeasureQuote.h"
 #include "Rainmeter.h"
-#include "../Common/StringUtil.h"
+#include "../Common/FileUtil.h"
 #include <random>
-
-#define BUFFER_SIZE 4096
 
 template <typename T>
 T GetRandomNumber(T size)
@@ -74,154 +72,14 @@ void MeasureQuote::UpdateValue()
 
 	if (m_Files.empty())
 	{
-		BYTE buffer[BUFFER_SIZE + 2];
-		buffer[BUFFER_SIZE] = 0;
-
-		FILE* file = _wfopen(m_PathName.c_str(), L"rb");
-		if (file)
+		std::wstring text;
+		if (FileUtil::ReadTextFileWithAnsiFallback(m_PathName, text) && !text.empty())
 		{
-			fread(buffer, sizeof(WCHAR), 1, file);
-
-			fseek(file, 0, SEEK_END);
-			long size = ftell(file);
-
-			if (size > 0)
-			{
-				long pos = GetRandomNumber(size);
-
-				fseek(file, (pos / 2) * 2, SEEK_SET);
-
-				m_StringValue.clear();
-
-				if (0xFEFF == *(WCHAR*)buffer)
-				{
-					WCHAR* wBuffer = (WCHAR*)buffer;
-
-					WCHAR* sepPos1 = nullptr;
-					WCHAR* sepPos2 = nullptr;
-					do
-					{
-						size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-						buffer[len] = 0;
-						buffer[len + 1] = 0;
-
-						sepPos1 = wcsstr(wBuffer, m_Separator.c_str());
-						if (sepPos1 == nullptr)
-						{
-							if (feof(file))
-							{
-								fseek(file, 2, SEEK_SET);
-								len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-								buffer[len] = 0;
-								buffer[len + 1] = 0;
-								sepPos1 = wBuffer;
-							}
-						}
-						else
-						{
-							sepPos1 += m_Separator.size();
-						}
-					}
-					while (sepPos1 == nullptr);
-
-					do
-					{
-						sepPos2 = wcsstr(sepPos1, m_Separator.c_str());
-						if (sepPos2 == nullptr)
-						{
-							if (feof(file))
-							{
-								m_StringValue += sepPos1;
-								break;
-							}
-							else
-							{
-								m_StringValue += sepPos1;
-
-								size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-								buffer[len] = 0;
-								buffer[len + 1] = 0;
-								sepPos1 = wBuffer;
-							}
-						}
-						else
-						{
-							if (sepPos2)
-							{
-								*sepPos2 = 0;
-							}
-
-							m_StringValue += sepPos1;
-						}
-					}
-					while (sepPos2 == nullptr);
-				}
-				else
-				{
-					char* aBuffer = (char*)buffer;
-
-					const std::string separator = StringUtil::Narrow(m_Separator);
-					const char* separatorSz = separator.c_str();
-
-					char* sepPos1 = nullptr;
-					char* sepPos2 = nullptr;
-					do
-					{
-						size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-						aBuffer[len] = 0;
-
-						sepPos1 = strstr(aBuffer, separatorSz);
-						if (sepPos1 == nullptr)
-						{
-							if (feof(file))
-							{
-								fseek(file, 0, SEEK_SET);
-								len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-								aBuffer[len] = 0;
-								sepPos1 = aBuffer;
-							}
-						}
-						else
-						{
-							sepPos1 += separator.size();
-						}
-					}
-					while (sepPos1 == nullptr);
-
-					do
-					{
-						sepPos2 = strstr(sepPos1, separatorSz);
-						if (sepPos2 == nullptr)
-						{
-							if (feof(file))
-							{
-								m_StringValue += StringUtil::Widen(sepPos1);
-								break;
-							}
-							else
-							{
-								m_StringValue += StringUtil::Widen(sepPos1);
-
-								size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-								aBuffer[len] = 0;
-								sepPos1 = aBuffer;
-							}
-						}
-						else
-						{
-							if (sepPos2)
-							{
-								*sepPos2 = 0;
-							}
-
-							m_StringValue += StringUtil::Widen(sepPos1);
-						}
-					}
-					while (sepPos2 == nullptr);
-				}
-			}
-
-			fclose(file);
+			const size_t position = GetRandomNumber(text.size() - 1);
+			const size_t separator = text.find(m_Separator, position);
+			const size_t start = separator == std::wstring::npos ? 0 : separator + m_Separator.size();
+			const size_t end = text.find(m_Separator, start);
+			m_StringValue = text.substr(start, end - start);
 		}
 	}
 	else
