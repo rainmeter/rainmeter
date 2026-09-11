@@ -368,9 +368,21 @@ bool Measure::ParseSubstitute(std::wstring_view buffer)
 	{
 		// The INI parser removed the opening quote. Find its closing quote and the pair separator.
 		const size_t closingQuote = buffer.find(L'"');
-		if (closingQuote == std::wstring_view::npos || closingQuote + 1 >= buffer.length() || buffer[closingQuote + 1] != L':') return false;
+		if (closingQuote == std::wstring_view::npos || closingQuote + 1 >= buffer.length()) return false;
 		patternValue = buffer.substr(0, closingQuote);
-		buffer.remove_prefix(closingQuote + 2);
+		if (buffer[closingQuote + 1] == L':')
+		{
+			buffer.remove_prefix(closingQuote + 2);
+		}
+		else if (closingQuote + 3 < buffer.length() &&
+			buffer[closingQuote + 1] == L'"' && buffer[closingQuote + 2] == L':' && buffer[closingQuote + 3] == L'"')
+		{
+			buffer.remove_prefix(closingQuote + 4);
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	StringParser parser(buffer);

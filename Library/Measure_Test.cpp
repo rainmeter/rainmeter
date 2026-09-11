@@ -66,6 +66,13 @@ public:
 		Assert::AreEqual(L"c<34>d", measure.ApplySubstitute(L"c34d").c_str());
 	}
 
+	TEST_METHOD(TestQuotedPairSeparator)
+	{
+		SubstituteTestMeasure measure;
+		Assert::IsTrue(measure.SetSubstitute(LR"(a"":""","b":"c)", true));
+		Assert::AreEqual(L"c", measure.ApplySubstitute(L"ab").c_str());
+	}
+
 	TEST_METHOD(TestInvalidRegexpUsesPlainSubstitute)
 	{
 		SubstituteTestMeasure measure;
