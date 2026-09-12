@@ -594,10 +594,11 @@ void DialogManage::TabSkins::CreateImageList()
 	HWND tree = GetControl(Id_SkinsTreeView);
 	const int iconSize = MulDiv(16, (int)System::GetDpiForWindow(tree), USER_DEFAULT_SCREEN_DPI);
 	HIMAGELIST imageList = ImageList_Create(iconSize, iconSize, ILC_COLOR32, 2, 10);
-	HMODULE shell = GetModuleHandle(L"shell32");
 
-	HICON icon = (HICON)LoadImage(shell, MAKEINTRESOURCE(4), IMAGE_ICON, iconSize, iconSize, LR_SHARED);
+	HICON icon = GetIconBySize(IDI_FOLDER, iconSize);
 	ImageList_AddIcon(imageList, icon);
+
+	HMODULE shell = GetModuleHandle(L"shell32");
 	icon = (HICON)LoadImage(shell, MAKEINTRESOURCE(151), IMAGE_ICON, iconSize, iconSize, LR_SHARED);
 	ImageList_AddIcon(imageList, icon);
 

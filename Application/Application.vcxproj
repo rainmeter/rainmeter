@@ -52,6 +52,7 @@ if not exist "$(OutDir)Defaults\Layouts" xcopy /Q /S /Y ..\Build\Layouts "$(OutD
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Folder.ico" />
     <None Include="Rainmeter.ico" />
   </ItemGroup>
   <ItemGroup>

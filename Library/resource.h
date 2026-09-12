@@ -2,6 +2,7 @@
 #define IDI_RAINMETER                                100
 //#define IDI_TRAY                                     101
 #define IDI_ADDFOLDER                                102
+#define IDI_FOLDER                                   103
 
 #define IDI_SKININSTALLER                            200
 #define IDB_INSTALLHEADER                            201
