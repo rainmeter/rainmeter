@@ -699,6 +699,7 @@ SkipIniMove:
 
 	; Cleanup old stuff
 	Delete "$INSTDIR\Rainmeter.chm"
+	Delete "$INSTDIR\Rainmeter.VisualElementsManifest.xml"
 	Delete "$INSTDIR\Default.ini"
 	Delete "$INSTDIR\Launcher.exe"
 	Delete "$INSTDIR\SkinInstaller.dll"
@@ -707,6 +708,7 @@ SkipIniMove:
 	RMDir /r "$INSTDIR\Addons\Rainstaller"
 	RMDir /r "$INSTDIR\Addons\RainBackup"
 	RMDir /r "$INSTDIR\Runtime"
+	RMDir /r "$INSTDIR\VisualElements"
 
 	${If} $InstallPortable <> 1
 		CreateDirectory "$INSTDIR\Defaults"
@@ -730,11 +732,6 @@ SkipIniMove:
 
 !ifdef INCLUDEFILES
 	File "..\..\Application\Rainmeter.exe.config"
-
-	File "..\VisualElements\Rainmeter.VisualElementsManifest.xml"
-	SetOutPath "$INSTDIR\VisualElements"
-	File "..\VisualElements\Rainmeter_600.png"
-	File "..\VisualElements\Rainmeter_176.png"
 
 	${If} $instArc == "x86"
 		!insertmacro InstallFiles "BuildOut\Release32" "x86"
