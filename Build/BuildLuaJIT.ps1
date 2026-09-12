@@ -31,7 +31,8 @@ function Copy-DirectoryContents([string]$Source, [string]$Destination)
 
 # Disable FFI and suppress warnings from LuaJIT on newer MSVC toolsets.
 $env:LUAJIT_DISABLE_FFI = '1'
-$env:CL = ("$env:CL /wd4244 /wd5287").Trim()
+$runtimeLibrary = if ($Configuration -eq 'Debug') { '/MDd' } else { '/MD' }
+$env:CL = ("$env:CL $runtimeLibrary /wd4244 /wd5287").Trim()
 
 Copy-DirectoryContents (Join-Path $sourceDirectory 'src') $buildSourceDirectory
 Copy-DirectoryContents (Join-Path $sourceDirectory 'dynasm') (Join-Path $buildDirectory 'dynasm')
