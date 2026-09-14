@@ -5,6 +5,7 @@
 Unicode true
 
 !addplugindir ".\"
+!addplugindir /x86-unicode "..\..\BuildOut\Installer\Plugins\x86-unicode"
 
 !include "nsDialogs.nsh"
 !include "nsDialogs_setImageOle.nsh"
@@ -58,9 +59,9 @@ AllowSkipFiles off
 XPStyle on
 ManifestDPIAware true
 OutFile "..\${OUTFILE}"
-ReserveFile "${NSISDIR}\Plugins\x86-unicode\LangDLL.dll"
-ReserveFile "${NSISDIR}\Plugins\x86-unicode\nsDialogs.dll"
-ReserveFile "${NSISDIR}\Plugins\x86-unicode\System.dll"
+ReserveFile "..\..\BuildOut\Installer\Plugins\x86-unicode\LangDLL.dll"
+ReserveFile "..\..\BuildOut\Installer\Plugins\x86-unicode\nsDialogs.dll"
+ReserveFile "..\..\BuildOut\Installer\Plugins\x86-unicode\System.dll"
 ReserveFile ".\UAC.dll"
 ReserveFile ".\Wizard.jpg"
 ReserveFile ".\WizardEmpty.bmp"
