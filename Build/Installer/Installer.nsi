@@ -62,7 +62,7 @@ OutFile "..\${OUTFILE}"
 ReserveFile "..\..\BuildOut\Installer\Plugins\x86-unicode\LangDLL.dll"
 ReserveFile "..\..\BuildOut\Installer\Plugins\x86-unicode\nsDialogs.dll"
 ReserveFile "..\..\BuildOut\Installer\Plugins\x86-unicode\System.dll"
-ReserveFile ".\UAC.dll"
+ReserveFile "..\..\BuildOut\Installer\Plugins\x86-unicode\UAC.dll"
 ReserveFile ".\Wizard.jpg"
 ReserveFile ".\WizardEmpty.bmp"
 
