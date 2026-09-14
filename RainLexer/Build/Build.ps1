@@ -35,6 +35,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+. (Join-Path $PSScriptRoot '..\..\Build\VisualStudioBuildTools.ps1')
+
 function Write-UsageError {
 	param([string]$Message)
 
@@ -58,35 +60,6 @@ function Invoke-NativeCommand {
 		}
 	} finally {
 		Pop-Location
-	}
-}
-
-function Add-VisualStudioBuildToolsToPath {
-	$env:VSCMD_SKIP_SENDTELEMETRY = '1'
-
-	$vcVarsAll = @('Community', 'Enterprise', 'BuildTools') |
-		ForEach-Object {
-			"C:\Program Files\Microsoft Visual Studio\18\$_\VC\Auxiliary\Build\vcvarsall.bat"
-		} |
-		Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
-		Select-Object -First 1
-	if (-not $vcVarsAll) {
-		Write-Error 'ERROR: vcvarsall.bat not found'
-		exit 1
-	}
-
-	$vars = & cmd.exe /D /S /C "`"$vcVarsAll`" x64 > nul && set"
-	if ($LASTEXITCODE -ne 0) {
-		Write-Error "ERROR ${LASTEXITCODE}: vcvarsall.bat failed"
-		exit 1
-	}
-
-	$vars | ForEach-Object {
-		$_ | Select-String -Pattern '^([^=]+)=(.*)$' | ForEach-Object {
-			$var = $_.Matches[0].Groups[1].Value
-			$value = $_.Matches[0].Groups[2].Value
-			Set-Item -Path "Env:$var" -Value $value
-		}
 	}
 }
 
