@@ -601,10 +601,9 @@ Section
 
 	${If} $InstallPortable <> 1
 		${IfNot} ${UAC_IsAdmin}
-			; UAC_IsAdmin seems to return incorrect result sometimes. Recheck with UserInfo::GetAccountType to be sure.
-			UserInfo::GetAccountType
-			Pop $0
-			${If} $0 != "Admin"
+			; UAC_IsAdmin seems to return incorrect results sometimes, so check again before elevating.
+			System::Call "shell32::IsUserAnAdmin()i.r0"
+			${If} $0 = 0
 				!insertmacro Elevate
 			${EndIf}
 		${EndIf}
