@@ -67,6 +67,7 @@ ReserveFile ".\WizardEmpty.bmp"
 
 ; Additional Windows definitions
 !define PF_XMMI64_INSTRUCTIONS_AVAILABLE 10
+!define SCS_64BIT_BINARY 6
 
 !define MUI_ICON ".\Installer.ico"
 !define MUI_UNICON ".\Installer.ico"
@@ -518,10 +519,8 @@ Function PageOptionsDirectoryOnChange
 	StrCpy $Install64Bit 0
 	${If} ${RunningX64}
 		${If} ${FileExists} "$0\Rainmeter.exe"
-			MoreInfo::GetProductVersion "$0\Rainmeter.exe"
-			Pop $0
-			StrCpy $0 $0 2 -7
-			${If} $0 == 64
+			System::Call "kernel32::GetBinaryType(t '$0\Rainmeter.exe', *i .r1)"
+			${If} $1 = ${SCS_64BIT_BINARY}
 				StrCpy $Install64Bit 1
 			${EndIf}
 
