@@ -8,6 +8,7 @@
 namespace {
 
 std::atomic<bool> g_Thread = false;
+std::atomic<bool> g_Emptying = false;
 std::atomic<double> g_BinCount = 0.0;
 std::atomic<double> g_BinSize = 0.0;
 
@@ -26,6 +27,13 @@ DWORD WINAPI QueryRecycleBinThreadProc(void* pParam)
 	g_BinSize = (double)rbi.i64Size;
 	g_Thread = false;
 
+	return 0;
+}
+
+DWORD WINAPI EmptyRecycleBinThreadProc(void* pParam)
+{
+	SHEmptyRecycleBin(nullptr, nullptr, (DWORD)(UINT_PTR)pParam);
+	g_Emptying = false;
 	return 0;
 }
 
@@ -183,11 +191,24 @@ void MeasureRecycleManager::Command(const std::wstring& command)
 	const WCHAR* args = command.c_str();
 	if (_wcsicmp(args, L"EmptyBin") == 0)
 	{
-		SHEmptyRecycleBin(nullptr, nullptr, 0);
+		if (!g_Emptying.exchange(true))
+		{
+			if (!QueueUserWorkItem(EmptyRecycleBinThreadProc, nullptr, 0))
+			{
+				g_Emptying = false;
+			}
+		}
 	}
 	else if (_wcsicmp(args, L"EmptyBinSilent") == 0)
 	{
-		SHEmptyRecycleBin(nullptr, nullptr, SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND);
+		if (!g_Emptying.exchange(true))
+		{
+			const DWORD flags = SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND;
+			if (!QueueUserWorkItem(EmptyRecycleBinThreadProc, (void*)(UINT_PTR)flags, 0))
+			{
+				g_Emptying = false;
+			}
+		}
 	}
 	else if (_wcsicmp(args, L"OpenBin") == 0)
 	{
