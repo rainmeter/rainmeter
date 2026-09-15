@@ -927,6 +927,7 @@ HRESULT MeasureAudioLevel::DeviceInit()
 	HRESULT hr;
 	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
 	IPropertyStore* props = nullptr;
+	const DWORD streamFlags = m_Port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK : 0;
 
 	// get the device handle
 	assert(m_Enum && !m_Dev);
@@ -1036,7 +1037,6 @@ HRESULT MeasureAudioLevel::DeviceInit()
 	}
 
 	// initialize the audio client
-	const DWORD streamFlags = m_Port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK : 0;
 	hr = m_ClAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, streamFlags,
 		hnsRequestedDuration, 0, m_Wfx, NULL);
 	if (hr != S_OK)
