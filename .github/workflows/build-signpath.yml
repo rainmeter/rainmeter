@@ -86,12 +86,6 @@ jobs:
           wait-for-completion: true
           output-artifact-directory: BuildOut
 
-      - name: Download signed NSIS plugins
-        run: |
-          Invoke-WebRequest https://github.com/rainmeter/build-tools/releases/download/v1/plugins.zip -OutFile $env:RUNNER_TEMP\plugins.zip
-          Expand-Archive $env:RUNNER_TEMP\plugins.zip -DestinationPath BuildOut\Installer\Plugins\x86-unicode
-        shell: pwsh
-
       - name: Install NSIS
         uses: ./.github/actions/install-nsis
 
