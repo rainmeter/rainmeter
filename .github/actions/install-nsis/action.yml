@@ -14,6 +14,12 @@ runs:
           -Uri 'https://github.com/rainmeter/build-tools/releases/download/v1/nsis-3.12-setup.exe' `
           -OutFile $installer
 
+        $expectedHash = '3bc2b06253a7e4957111be152ac6a536e0c7478a706e19da814038db5d706495'
+        $actualHash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
+        if ($actualHash -ne $expectedHash) {
+          throw "SHA-256 mismatch for nsis-3.12-setup.exe: $actualHash"
+        }
+
         Start-Process -FilePath $installer -ArgumentList '/S' -Wait -NoNewWindow
 
         $installDirs = @(
