@@ -102,6 +102,30 @@ function New-MsvcrtImportLibrary {
 	return $importLibrary
 }
 
+function Build-BrotliEncoder {
+	param([string]$OutputDirectory)
+
+	$objectDirectory = Join-Path $OutputDirectory 'Obj\Brotli'
+	New-Item -ItemType Directory -Path $objectDirectory -Force | Out-Null
+	$objects = [System.Collections.Generic.List[string]]::new()
+	$sources = @(
+		Get-ChildItem -LiteralPath (Join-Path $brotliDirectory 'common') -Filter '*.c' -File
+		Get-ChildItem -LiteralPath (Join-Path $brotliDirectory 'dec') -Filter '*.c' -File
+		Get-ChildItem -LiteralPath (Join-Path $brotliDirectory 'enc') -Filter '*.c' -File
+		Get-Item -LiteralPath (Join-Path $brotliDirectory 'tools\brotli.c')
+	)
+	foreach ($source in $sources) {
+		$object = Join-Path $objectDirectory ("Brotli-$($objects.Count).obj")
+		$arguments = @('/nologo', '/c', '/O2', '/GL', '/MT', '/W3', '/DBROTLI_NO_STATIC_DICTIONARY', "/I$(Join-Path $brotliDirectory 'include')", "/Fo$object", $source.FullName)
+		Invoke-NativeCommand -FilePath 'cl.exe' -Arguments $arguments -ErrorMessage "Compilation failed for $($source.FullName)" -Quiet
+		[void]$objects.Add($object)
+	}
+
+	$output = Join-Path $OutputDirectory 'brotli.exe'
+	Invoke-NativeCommand -FilePath 'link.exe' -Arguments (@('/nologo', '/LTCG', '/OPT:REF', '/OPT:ICF', "/OUT:$output") + $objects.ToArray()) -ErrorMessage 'Linking failed for brotli.exe' -Quiet
+	return $output
+}
+
 function Build-Executable {
 	param([string]$Name, [string[]]$Definitions)
 
@@ -113,9 +137,9 @@ function Build-Executable {
 	)
 	if ($Definitions -notcontains 'RM_UNINSTALLER') {
 		$sources += @(
+			(Join-Path $nativeDirectory 'BrotliDictionary.c'),
 			(Join-Path $brotliDirectory 'common\constants.c'),
 			(Join-Path $brotliDirectory 'common\context.c'),
-			(Join-Path $brotliDirectory 'common\dictionary.c'),
 			(Join-Path $brotliDirectory 'common\platform.c'),
 			(Join-Path $brotliDirectory 'common\shared_dictionary.c'),
 			(Join-Path $brotliDirectory 'common\transform.c'),
@@ -180,28 +204,13 @@ if (-not (Test-Path -LiteralPath $uninstaller -PathType Leaf)) {
 	$uninstaller = Build-Executable -Name 'uninst' -Definitions ($versionDefinitions + @('RM_UNINSTALLER'))
 }
 
-$brotliCommand = Get-Command 'brotli.exe' -ErrorAction SilentlyContinue
-$brotliPath = if ($brotliCommand) { $brotliCommand.Source } else {
-	$hostArchitecture = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
-	$arch = switch ($hostArchitecture) {
-		'AMD64' { 'x64' }
-		'ARM64' { 'arm64' }
-		default { $hostArchitecture.ToLowerInvariant() }
-	}
-	$programFiles = if ($env:ProgramW6432) { $env:ProgramW6432 } else { ${env:ProgramFiles} }
-	Join-Path $programFiles "Git\clang$arch\bin\brotli.exe"
-}
-if (-not (Test-Path -LiteralPath $brotliPath -PathType Leaf)) {
-	throw 'brotli.exe was not found in PATH or the Git installation'
-}
+$brotliPath = Build-BrotliEncoder -OutputDirectory $outputDirectory
 
 $rawArchive = Join-Path $outputDirectory 'Payload.bin'
 $compressedArchive = Join-Path $outputDirectory 'Payload.br'
 New-PayloadArchive -Path $rawArchive -Uninstaller $uninstaller
-# Compression stays in the build process so the installer only carries Brotli's smaller decoder.
-Invoke-NativeCommand -FilePath $brotliPath -Arguments @('--quality=11', '--force', "--output=$compressedArchive", $rawArchive) -ErrorMessage 'Brotli compression failed'
-
 $installer = Join-Path $PSScriptRoot "Rainmeter-$Version.exe"
+Invoke-NativeCommand -FilePath $brotliPath -Arguments @('--quality=11', '--force', "--output=$compressedArchive", $rawArchive) -ErrorMessage 'Brotli compression failed' -Quiet
 $output = [System.IO.File]::Open($installer, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
 $writer = [System.IO.BinaryWriter]::new($output)
 try {
@@ -216,6 +225,11 @@ try {
 	$writer.Write([uint64](Get-Item -LiteralPath $rawArchive).Length)
 } finally {
 	$writer.Dispose()
+}
+
+$verification = Start-Process -FilePath $installer -ArgumentList '/VERIFYARCHIVE' -Wait -PassThru
+if ($verification.ExitCode -ne 0) {
+	throw 'The reduced Brotli decoder could not verify the installer archive'
 }
 
 Write-Host "Created $installer"

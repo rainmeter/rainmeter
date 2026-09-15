@@ -497,6 +497,14 @@ static BROTLI_BOOL BrotliFindAllStaticDictionaryMatchesFor(
 BROTLI_BOOL BrotliFindAllStaticDictionaryMatches(
     const BrotliEncoderDictionary* dictionary, const uint8_t* data,
     size_t min_length, size_t max_length, uint32_t* matches) {
+#if defined(BROTLI_NO_STATIC_DICTIONARY)
+  BROTLI_UNUSED(dictionary);
+  BROTLI_UNUSED(data);
+  BROTLI_UNUSED(min_length);
+  BROTLI_UNUSED(max_length);
+  BROTLI_UNUSED(matches);
+  return BROTLI_FALSE;
+#else
   BROTLI_BOOL has_found_match =
       BrotliFindAllStaticDictionaryMatchesFor(
           dictionary, data, min_length, max_length, matches);
@@ -530,6 +538,7 @@ BROTLI_BOOL BrotliFindAllStaticDictionaryMatches(
     }
   }
   return has_found_match;
+#endif
 }
 #if defined(__cplusplus) || defined(c_plusplus)
 }  /* extern "C" */

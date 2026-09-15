@@ -46,6 +46,7 @@ struct Settings
 	bool showLanguageDialog;
 	bool directorySpecified;
 	bool targetExisted;
+	bool verifyArchive;
 	unsigned short language;
 	WCHAR directory[MAX_PATH];
 };
@@ -189,6 +190,8 @@ static void ParseCommandLine()
 			g_settings.silent = true;
 		else if (lstrcmpiW(argument, L"/ELEVATED") == 0)
 			g_settings.elevated = true;
+		else if (lstrcmpiW(argument, L"/VERIFYARCHIVE") == 0)
+			g_settings.verifyArchive = true;
 		else if (StartsWith(argument, L"/LANGUAGE="))
 			g_settings.language = static_cast<unsigned short>(wcstoul(argument + 10, nullptr, 10));
 		else if (StartsWith(argument, L"/RESTART="))
@@ -340,7 +343,7 @@ static bool ReadExact(HANDLE file, void* data, size_t size)
 }
 
 #ifndef RM_UNINSTALLER
-static bool ExtractArchive(HWND window)
+static bool ExtractArchive(HWND window, bool verifyOnly = false)
 {
 	WCHAR executable[MAX_PATH];
 	GetModuleFileNameW(nullptr, executable, _countof(executable));
@@ -394,7 +397,6 @@ static bool ExtractArchive(HWND window)
 		HeapFree(GetProcessHeap(), 0, archive);
 		return false;
 	}
-
 	uint8_t* current = archive;
 	uint8_t* end = archive + archiveSize;
 	ArchiveHeader header;
@@ -441,13 +443,18 @@ static bool ExtractArchive(HWND window)
 
 		// Both architectures share one archive. Only common files and files for the selected platform
 		// are written, so the other platform never needs a temporary extraction directory.
-		bool extract = entry.architecture == ArchiveArchitectureAny ||
+		bool extract = verifyOnly || entry.architecture == ArchiveArchitectureAny ||
 		               (g_settings.install64Bit ? entry.architecture == ArchiveArchitecture64 : entry.architecture == ArchiveArchitecture32);
-		if (g_settings.portable && (entry.flags & g_ArchiveFlagStandardOnly))
+		if (!verifyOnly && g_settings.portable && (entry.flags & g_ArchiveFlagStandardOnly))
 			extract = false;
 		if (StrStrIA(pathUtf8, "..\\") || pathUtf8[0] == '\\')
 			extract = false;
 		if (!extract)
+		{
+			current += entry.size;
+			continue;
+		}
+		if (verifyOnly)
 		{
 			current += entry.size;
 			continue;
@@ -486,11 +493,12 @@ static bool ExtractArchive(HWND window)
 			SendDlgItemMessageW(window, IDC_PROGRESS, PBM_SETPOS, (index + 1) * 100 / header.fileCount, 0);
 	}
 
+	success = success && current == end;
 	HeapFree(GetProcessHeap(), 0, archive);
 	return success;
 }
 #else
-static bool ExtractArchive(HWND)
+static bool ExtractArchive(HWND, bool = false)
 {
 	return false;
 }
@@ -1097,7 +1105,7 @@ extern "C" void __cdecl wWinMainCRTStartup()
 #ifdef RM_UNINSTALLER
 	int result = RunUninstaller();
 #else
-	int result = RunInstaller();
+	int result = g_settings.verifyArchive ? (ExtractArchive(nullptr, true) ? 0 : 1) : RunInstaller();
 #endif
 	CoUninitialize();
 	ExitProcess(result);

@@ -181,6 +181,16 @@ static BROTLI_INLINE void SearchInStaticDictionary(
     HasherCommon* common, const uint8_t* data, size_t max_length,
     size_t max_backward, size_t max_distance,
     HasherSearchResult* out, BROTLI_BOOL shallow) {
+#if defined(BROTLI_NO_STATIC_DICTIONARY)
+  BROTLI_UNUSED(dictionary);
+  BROTLI_UNUSED(common);
+  BROTLI_UNUSED(data);
+  BROTLI_UNUSED(max_length);
+  BROTLI_UNUSED(max_backward);
+  BROTLI_UNUSED(max_distance);
+  BROTLI_UNUSED(out);
+  BROTLI_UNUSED(shallow);
+#else
   size_t key;
   size_t i;
   if (common->dict_num_matches < (common->dict_num_lookups >> 7)) {
@@ -199,6 +209,7 @@ static BROTLI_INLINE void SearchInStaticDictionary(
       }
     }
   }
+#endif
 }
 
 typedef struct BackwardMatch {
