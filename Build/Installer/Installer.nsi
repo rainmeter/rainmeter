@@ -222,6 +222,11 @@ Function .onInit
 					StrCpy $AutoStartup 1
 				${EndIf}
 			${Else}
+				ReadRegStr $0 HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "Rainmeter"
+				${If} $0 != ""
+					StrCpy $AutoStartup 1
+				${EndIf}
+
 				SetShellVarContext all
 				${If} ${FileExists} "$SMSTARTUP\Rainmeter.lnk"
 					StrCpy $AutoStartup 1
@@ -449,6 +454,11 @@ Function PageOptions
 		${If} $INSTDIR == ""
 			${NSD_Check} $R3
 		${Else}
+			ReadRegStr $0 HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "Rainmeter"
+			${If} $0 != ""
+				${NSD_Check} $R3
+			${EndIf}
+
 			SetShellVarContext all
 			${If} ${FileExists} "$SMSTARTUP\Rainmeter.lnk"
 				${NSD_Check} $R3
@@ -816,20 +826,8 @@ SkipIniMove:
 		${EndIf}
 		CreateShortcut "$0" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR\Rainmeter.exe" 0
 
-		${If} $AutoStartup = 1
-			${If} ${FileExists} "$SMSTARTUP\Rainmeter.lnk"
-				; Remove user shortcut to prevent duplicate with all users shortcut
-				!insertmacro UAC_AsUser_Call Function RemoveUserStartupShortcut ${UAC_SYNCREGISTERS}
-			${Else}
-				!insertmacro UAC_AsUser_Call Function CreateUserStartupShortcut ${UAC_SYNCREGISTERS}
-			${EndIf}
-		${Else}
-			SetShellVarContext current
-			${If} ${FileExists} "$SMSTARTUP\Rainmeter.lnk"
-				; Remove startup shortcut if it exists
-				!insertmacro UAC_AsUser_Call Function RemoveUserStartupShortcut ${UAC_SYNCREGISTERS}
-			${EndIF}
-		${EndIf}
+		Delete "$SMSTARTUP\Rainmeter.lnk"
+		!insertmacro UAC_AsUser_Call Function UpdateUserStartup ${UAC_SYNCREGISTERS}
 
 		SetShellVarContext current
 		Call RemoveStartMenuShortcuts
@@ -911,14 +909,14 @@ Function RemoveStartMenuShortcuts
 	!insertmacro RemoveStartMenuShortcuts "$SMPROGRAMS\Rainmeter"
 FunctionEnd
 
-Function CreateUserStartupShortcut
-	SetShellVarContext current
-	CreateShortcut "$SMSTARTUP\Rainmeter.lnk" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR\Rainmeter.exe" 0
-FunctionEnd
-
-Function RemoveUserStartupShortcut
+Function UpdateUserStartup
 	SetShellVarContext current
 	Delete "$SMSTARTUP\Rainmeter.lnk"
+	${If} $AutoStartup = 1
+		WriteRegStr HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "Rainmeter" "$INSTDIR\Rainmeter.exe"
+	${Else}
+		DeleteRegValue HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "Rainmeter"
+	${EndIf}
 FunctionEnd
 
 Function FinishRun
@@ -1037,4 +1035,5 @@ Function un.RemoveShortcuts
 	!insertmacro RemoveStartMenuShortcuts "$SMPROGRAMS\Rainmeter"
 	Delete "$SMSTARTUP\Rainmeter.lnk"
 	Delete "$DESKTOP\Rainmeter.lnk"
+	DeleteRegValue HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "Rainmeter"
 FunctionEnd
