@@ -21,7 +21,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
-      <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(OutDir)Defaults\Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Defaults\Skins\"
@@ -42,6 +42,10 @@ if not exist "$(OutDir)Defaults\Layouts" xcopy /Q /S /Y ..\Build\Layouts "$(OutD
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
+    <ClCompile Include="Uninstall.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Uninstall.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Application.rc" />

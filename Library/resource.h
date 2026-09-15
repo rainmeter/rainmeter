@@ -237,6 +237,15 @@
 #define IDS_Status                                  2230
 #define IDS_DefaultZoomColon                        2232
 #define IDS_Force                                   2233
+#define IDS_UninstallOptions                        2236
+#define IDS_UninstallDescription                    2237
+#define IDS_UninstallRainmeter                      2238
+#define IDS_Uninstall                               2239
+#define IDS_UninstallSettings                       2240
+#define IDS_Uninstalling                            2242
+#define IDS_UninstallComplete                       2243
+#define IDS_UninstallFailed                         2244
+#define IDS_UninstallFailedDescription              2245
 #define IDS_GameMode                                2800
 #define IDS_GameModeStart                           2801
 #define IDS_GameModeStop                            2802

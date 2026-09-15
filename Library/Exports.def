@@ -21,3 +21,5 @@ EXPORTS
 	RainmeterMain		@1 NONAME
 	; @2 - @7 were for the pcre_ and pcre16_ functions.
 	SkinInstallerMain	@8 NONAME
+
+	GetLanguageString	@9 NONAME

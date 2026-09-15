@@ -4,6 +4,8 @@
 #include "Language.h"
 #include "../Common/IniFile.h"
 
+EXTERN_C IMAGE_DOS_HEADER __ImageBase;
+
 Language& Language::GetInstance()
 {
 	static Language instance;
@@ -179,4 +181,30 @@ void Language::Unload()
 
 	if (m_FileMapping) CloseHandle(m_FileMapping);
 	m_FileMapping = nullptr;
+}
+
+EXTERN_C LPCWSTR GetLanguageString(UINT id)
+{
+	static bool loaded = []()
+	{
+		WCHAR language[16] = L"1033";
+		DWORD size = sizeof(language);
+		RegGetValueW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Rainmeter", L"Language", RRF_RT_REG_SZ | RRF_SUBKEY_WOW6432KEY, nullptr, language, &size);
+
+		WCHAR module[MAX_PATH];
+		if (!GetModuleFileName((HMODULE)&__ImageBase, module, _countof(module))) return false;
+		PathRemoveFileSpec(module);
+
+		std::wstring languageDirectory = module;
+		languageDirectory += L"\\Languages\\";
+		Language& instance = Language::GetInstance();
+		if (!instance.Load(languageDirectory, language) && !instance.Load(languageDirectory, L"1033")) return false;
+
+		SetProcessDefaultLayout(instance.IsRTL() ? LAYOUT_RTL : 0);
+
+		return true;
+	}();
+
+	// The uninstaller explicitly leaks these copies so it can unload Rainmeter.dll before displaying them.
+	return loaded ? _wcsdup(GetLanguage().GetString(id)) : nullptr;
 }
