@@ -8,7 +8,6 @@
 #include "Rainmeter.h"
 
 #include <AudioClient.h>
-#include <AudioPolicy.h>
 #include <FunctionDiscoveryKeys_devpkey.h>
 #include <MMDeviceApi.h>
 #include <numbers>
@@ -48,7 +47,6 @@ const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
 const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
 const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
-const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
 
 class AudioLevelDeviceNotificationClient final : public IMMNotificationClient
 {
@@ -126,10 +124,7 @@ MeasureAudioLevel::MeasureAudioLevel(Skin* skin, const WCHAR* name) : Measure(sk
 	m_Wfx(nullptr),
 	m_ClAudio(nullptr),
 	m_ClCapture(nullptr),
-#if (MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND)
-	m_ClBugAudio(nullptr),
-	m_ClBugRender(nullptr),
-#endif
+	m_CaptureEvent(nullptr),
 	m_FFTKWdw(nullptr),
 	m_FFTTmpIn(nullptr),
 	m_FFTTmpOut(nullptr),
@@ -179,6 +174,7 @@ MeasureAudioLevel::~MeasureAudioLevel()
 
 	DeviceRelease();
 	SAFE_RELEASE(m_Enum);
+	if (m_CaptureEvent) CloseHandle(m_CaptureEvent);
 }
 
 void MeasureAudioLevel::Initialize()
@@ -451,8 +447,11 @@ double MeasureAudioLevel::UpdateAudioValue()
 		m->m_PcPoll = pcCur;
 	}
 
+	const double pollElapsed = (pcCur.QuadPart - m->m_PcPoll.QuadPart) * m->m_PcMult;
+	const bool samplesReady = m->m_CaptureEvent && WaitForSingleObject(m->m_CaptureEvent, 0) == WAIT_OBJECT_0;
+
 	// query the buffer
-	if (m->m_ClCapture && (pcCur.QuadPart - m->m_PcPoll.QuadPart) * m->m_PcMult >= QUERY_TIMEOUT)
+	if (m->m_ClCapture && (samplesReady || pollElapsed >= (m->m_Port == PORT_OUTPUT ? DEVICE_TIMEOUT : QUERY_TIMEOUT)))
 	{
 		BYTE* buffer;
 		UINT32 nFrames;
@@ -472,7 +471,15 @@ double MeasureAudioLevel::UpdateAudioValue()
 			}
 
 			// loops unrolled for float, 16b and mono, stereo
-			if (m->m_Format == MeasureAudioLevel::FMT_PCM_F32)
+			if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
+			{
+				for (int iChan = 0; iChan < MeasureAudioLevel::MAX_CHANNELS; ++iChan)
+				{
+					rms[iChan] *= powf(m->m_KRMS[1], (float)nFrames);
+					peak[iChan] *= powf(m->m_KPeak[1], (float)nFrames);
+				}
+			}
+			else if (m->m_Format == MeasureAudioLevel::FMT_PCM_F32)
 			{
 				float* s = (float*)buffer;
 				if (m->m_Wfx->nChannels == 1)
@@ -585,7 +592,12 @@ double MeasureAudioLevel::UpdateAudioValue()
 					// fill ring buffers (demux streams)
 					for (unsigned int iChan = 0; iChan < m->m_Wfx->nChannels; ++iChan)
 					{
-						(m->m_FFTIn[iChan])[m->m_FFTBufW] = m->m_Format == MeasureAudioLevel::FMT_PCM_F32 ? *sF32++ : (float)*sI16++ * 1.0f / 0x7fff;
+						float sample = 0.0f;
+						if (!(flags & AUDCLNT_BUFFERFLAGS_SILENT))
+						{
+							sample = m->m_Format == MeasureAudioLevel::FMT_PCM_F32 ? *sF32++ : (float)*sI16++ * 1.0f / 0x7fff;
+						}
+						(m->m_FFTIn[iChan])[m->m_FFTBufW] = sample;
 					}
 
 					m->m_FFTBufW = (m->m_FFTBufW + 1) % m->m_FFTSize;
@@ -595,7 +607,11 @@ double MeasureAudioLevel::UpdateAudioValue()
 					{
 						for (unsigned int iChan = 0; iChan < m->m_Wfx->nChannels; ++iChan)
 						{
-							if (!(flags & AUDCLNT_BUFFERFLAGS_SILENT))
+							if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
+							{
+								memset(m->m_FFTTmpOut, 0, m->m_FFTSize * sizeof(kiss_fft_cpx));
+							}
+							else
 							{
 								// copy from the ring buffer to temp space
 								memcpy(&m->m_FFTTmpIn[0], &(m->m_FFTIn[iChan])[m->m_FFTBufW], (m->m_FFTSize - m->m_FFTBufW) * sizeof(float));
@@ -608,10 +624,6 @@ double MeasureAudioLevel::UpdateAudioValue()
 								}
 
 								kiss_fftr(m->m_FFTCfg[iChan], m->m_FFTTmpIn, m->m_FFTTmpOut);
-							}
-							else
-							{
-								memset(m->m_FFTTmpOut, 0, m->m_FFTSize * sizeof(kiss_fft_cpx));
 							}
 
 							// filter the bin levels as with peak measurements
@@ -674,17 +686,6 @@ double MeasureAudioLevel::UpdateAudioValue()
 		switch (hr)
 		{
 		case AUDCLNT_S_BUFFER_EMPTY:
-			// Windows bug: sometimes when shutting down a playback application, it doesn't zero
-			// out the buffer.  Detect this by checking the time since the last successful fill
-			// and resetting the volumes if past the threshold.
-			if (((pcCur.QuadPart - m->m_PcFill.QuadPart) * m->m_PcMult) >= EMPTY_TIMEOUT)
-			{
-				for (int iChan = 0; iChan < MeasureAudioLevel::MAX_CHANNELS; ++iChan)
-				{
-					m->m_RMS[iChan] = 0.0;
-					m->m_Peak[iChan] = 0.0;
-				}
-			}
 			break;
 
 		case AUDCLNT_E_BUFFER_ERROR:
@@ -698,13 +699,26 @@ double MeasureAudioLevel::UpdateAudioValue()
 		m->m_PcPoll = pcCur;
 
 	}
-	else if (!m->m_Parent && !m->m_ClCapture && (pcCur.QuadPart - m->m_PcPoll.QuadPart) * m->m_PcMult >= DEVICE_TIMEOUT)
+	else if (!m->m_Parent && !m->m_ClCapture && pollElapsed >= DEVICE_TIMEOUT)
 	{
 		// poll for new devices
 		assert(m->m_Enum);
 		assert(!m->m_Dev);
 		m->DeviceInit();
 		m->m_PcPoll = pcCur;
+	}
+
+	// Windows sometimes leaves the last buffer populated after playback stops.
+	if (m->m_ClCapture && (pcCur.QuadPart - m->m_PcFill.QuadPart) * m->m_PcMult >= EMPTY_TIMEOUT)
+	{
+		for (int iChan = 0; iChan < MeasureAudioLevel::MAX_CHANNELS; ++iChan)
+		{
+			m->m_RMS[iChan] = 0.0;
+			m->m_Peak[iChan] = 0.0;
+			if (m->m_FFTIn[iChan]) memset(m->m_FFTIn[iChan], 0, m->m_FFTSize * sizeof(float));
+			if (m->m_FFTOut[iChan]) memset(m->m_FFTOut[iChan], 0, m->m_FFTSize * sizeof(float));
+			if (m->m_BandOut[iChan]) memset(m->m_BandOut[iChan], 0, m->m_NBands * sizeof(float));
+		}
 	}
 
 	switch (m->m_Type)
@@ -945,16 +959,6 @@ HRESULT MeasureAudioLevel::DeviceInit()
 
 	SAFE_RELEASE(props);
 
-#if (MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND)
-	// get an extra audio client for the dummy silent channel
-	hr = m_Dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&m_ClBugAudio);
-	if (m_Port == PORT_OUTPUT)
-	{
-		// Only the loopback path below uses this client.
-		EXIT_ON_ERROR(hr);
-	}
-#endif
-
 	// get the main audio client
 	hr = m_Dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&m_ClAudio);
 	EXIT_ON_ERROR(hr);
@@ -1031,42 +1035,9 @@ HRESULT MeasureAudioLevel::DeviceInit()
 		}
 	}
 
-#if (MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND)
-	// ---------------------------------------------------------------------------------------
-	// Windows bug workaround: create a silent render client before initializing loopback mode
-	// see: http://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/c7ba0a04-46ce-43ff-ad15-ce8932c00171/loopback-recording-causes-digital-stuttering?forum=windowspro-audiodevelopment
-	if (m_Port == PORT_OUTPUT)
-	{
-		hr = m_ClBugAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, hnsRequestedDuration, 0, m_Wfx, NULL);
-		EXIT_ON_ERROR(hr);
-
-		// get the frame count
-		UINT32 nFrames;
-		hr = m_ClBugAudio->GetBufferSize(&nFrames);
-		EXIT_ON_ERROR(hr);
-
-		// create a render client
-		hr = m_ClBugAudio->GetService(IID_IAudioRenderClient, (void**)&m_ClBugRender);
-		EXIT_ON_ERROR(hr);
-
-		// get the buffer
-		BYTE* buffer;
-		hr = m_ClBugRender->GetBuffer(nFrames, &buffer);
-		EXIT_ON_ERROR(hr);
-
-		// release it
-		hr = m_ClBugRender->ReleaseBuffer(nFrames, AUDCLNT_BUFFERFLAGS_SILENT);
-		EXIT_ON_ERROR(hr);
-
-		// start the stream
-		hr = m_ClBugAudio->Start();
-		EXIT_ON_ERROR(hr);
-	}
-	// ---------------------------------------------------------------------------------------
-#endif
-
 	// initialize the audio client
-	hr = m_ClAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_Port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0,
+	const DWORD streamFlags = m_Port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK : 0;
+	hr = m_ClAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, streamFlags,
 		hnsRequestedDuration, 0, m_Wfx, NULL);
 	if (hr != S_OK)
 	{
@@ -1079,7 +1050,7 @@ HRESULT MeasureAudioLevel::DeviceInit()
 		m_Wfx->nBlockAlign = (2 * m_Wfx->wBitsPerSample) / 8;
 		m_Wfx->nAvgBytesPerSec = m_Wfx->nSamplesPerSec * m_Wfx->nBlockAlign;
 
-		hr = m_ClAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_Port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0,
+		hr = m_ClAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, streamFlags,
 			hnsRequestedDuration, 0, m_Wfx, NULL);
 	}
 	EXIT_ON_ERROR(hr);
@@ -1087,6 +1058,20 @@ HRESULT MeasureAudioLevel::DeviceInit()
 	// initialize the audio capture client
 	hr = m_ClAudio->GetService(IID_IAudioCaptureClient, (void**)&m_ClCapture);
 	EXIT_ON_ERROR(hr);
+
+	if (m_Port == PORT_OUTPUT)
+	{
+		if (!m_CaptureEvent) m_CaptureEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+		if (!m_CaptureEvent)
+		{
+			hr = E_FAIL;
+			goto Exit;
+		}
+
+		ResetEvent(m_CaptureEvent);
+		hr = m_ClAudio->SetEventHandle(m_CaptureEvent);
+		EXIT_ON_ERROR(hr);
+	}
 
 	// start the stream
 	hr = m_ClAudio->Start();
@@ -1108,16 +1093,6 @@ Exit:
  */
 void MeasureAudioLevel::DeviceRelease()
 {
-#if (MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND)
-	if (m_ClBugAudio)
-	{
-		if (!m_Parent) LogDebugF(this, L"Releasing dummy stream audio device.");
-		m_ClBugAudio->Stop();
-	}
-	SAFE_RELEASE(m_ClBugRender);
-	SAFE_RELEASE(m_ClBugAudio);
-#endif
-
 	if (m_ClAudio)
 	{
 		if (!m_Parent) LogDebugF(this, L"Releasing audio device.");
