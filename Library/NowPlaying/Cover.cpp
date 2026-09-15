@@ -82,6 +82,18 @@ bool ExtractFLAC(TagLib::FLAC::File* file, const std::wstring& target)
 	return false;
 }
 
+bool ExtractVorbis(TagLib::Ogg::Vorbis::File* file, const std::wstring& target)
+{
+	const auto& picList = file->tag()->pictureList();
+	if (!picList.isEmpty())
+	{
+		const auto* pic = picList[0];
+		return WriteCoverToFile(pic->data(), target);
+	}
+
+	return false;
+}
+
 bool ExtractMP4(TagLib::MP4::File* file, const std::wstring& target)
 {
 	TagLib::MP4::Tag* tag = file->tag();
@@ -148,6 +160,10 @@ bool CCover::GetEmbedded(const TagLib::FileRef& fr, const std::wstring& target)
 		{
 			found = ExtractID3(file->ID3v2Tag(), target);
 		}
+	}
+	else if (TagLib::Ogg::Vorbis::File* file = dynamic_cast<TagLib::Ogg::Vorbis::File*>(fr.file()))
+	{
+		found = ExtractVorbis(file, target);
 	}
 	else if (TagLib::MP4::File* file = dynamic_cast<TagLib::MP4::File*>(fr.file()))
 	{
