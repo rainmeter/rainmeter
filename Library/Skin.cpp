@@ -2107,17 +2107,10 @@ void Skin::SetOption(std::wstring_view section, std::wstring_view option, std::w
 	}
 	else
 	{
-		Meter* meter = GetMeter(section);
-		if (meter)
+		Section* targetSection = GetSection(section);
+		if (targetSection)
 		{
-			setValue(meter, option, value);
-			return;
-		}
-
-		Measure* measure = GetMeasure(section);
-		if (measure)
-		{
-			setValue(measure, option, value);
+			setValue(targetSection, option, value);
 			return;
 		}
 
