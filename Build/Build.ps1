@@ -101,6 +101,43 @@ function Write-Utf8File {
 	[System.IO.File]::WriteAllText($Path, $content, $utf8NoBom)
 }
 
+function Install-SignedInstallerPlugins {
+	$pluginDir = Join-Path $PSScriptRoot '..\BuildOut\Installer\Plugins\x86-unicode'
+	$pluginHashes = [ordered]@{
+		'LangDLL.dll' = '15c83bf9daaa9e0fe20ee0f3ea4fc4b80bf6044173b5115dbba27c7c358bbafe'
+		'nsDialogs.dll' = 'b06545d2dd59935da7c4c7f821503c4d06946224195a0e5a130573720563f38b'
+		'System.dll' = '0f3b34e416967137f71da4b43975716b22546441ae3c8c730d14ff9882442d36'
+		'UAC.dll' = '8319e659616ac168caa66f3d8d54eb0ac402f780ad618c10bfb6b50064f6ce75'
+	}
+	$pluginsNeedDownload = @($pluginHashes.GetEnumerator() | Where-Object {
+		$path = Join-Path $pluginDir $_.Key
+		-not (Test-Path -LiteralPath $path -PathType Leaf) -or (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $_.Value
+	}).Count -gt 0
+
+	if ($pluginsNeedDownload) {
+		Write-Host '* Downloading signed NSIS plugins'
+		New-Item -ItemType Directory -Path $pluginDir -Force | Out-Null
+		$archive = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::ChangeExtension([System.IO.Path]::GetRandomFileName(), '.zip'))
+		try {
+			Invoke-WebRequest 'https://github.com/rainmeter/build-tools/releases/download/v1/plugins.zip' -OutFile $archive
+			Expand-Archive $archive -DestinationPath $pluginDir -Force
+		} finally {
+			Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue
+		}
+	}
+
+	foreach ($plugin in $pluginHashes.GetEnumerator()) {
+		$path = Join-Path $pluginDir $plugin.Key
+		if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+			throw "Signed NSIS plugin archive does not contain $($plugin.Key)"
+		}
+		$actualHash = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+		if ($actualHash -ne $plugin.Value) {
+			throw "SHA-256 mismatch for $($plugin.Key)"
+		}
+	}
+}
+
 $excludeTests = 'true'
 
 if ($TestMode) {
@@ -214,6 +251,8 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'languages' -or $BuildType -eq 'ins
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'installer') {
+	Install-SignedInstallerPlugins
+
 	Write-Host '* Building installer'
 
 	$makeNsis = Join-Path $env:ProgramFiles 'NSIS\MakeNSIS.exe'
