@@ -8,38 +8,38 @@
 #include "Mouse.h"
 #include "../Common/StringParser.h"
 
-const struct { const WCHAR* name; MOUSEACTION type; } g_MouseActionTable[] =
+const struct { IniOptionID option; MOUSEACTION type; } g_MouseActionTable[] =
 {
-	{ L"LeftMouseUpAction", MOUSE_LMB_UP },
-	{ L"LeftMouseDownAction", MOUSE_LMB_DOWN },
-	{ L"LeftMouseDoubleClickAction", MOUSE_LMB_DBLCLK },
-	{ L"MiddleMouseUpAction", MOUSE_MMB_UP },
-	{ L"MiddleMouseDownAction", MOUSE_MMB_DOWN },
-	{ L"MiddleMouseDoubleClickAction", MOUSE_MMB_DBLCLK },
-	{ L"RightMouseUpAction", MOUSE_RMB_UP },
-	{ L"RightMouseDownAction", MOUSE_RMB_DOWN },
-	{ L"RightMouseDoubleClickAction", MOUSE_RMB_DBLCLK },
-	{ L"X1MouseUpAction", MOUSE_X1MB_UP },
-	{ L"X1MouseDownAction", MOUSE_X1MB_DOWN },
-	{ L"X1MouseDoubleClickAction", MOUSE_X1MB_DBLCLK },
-	{ L"X2MouseUpAction", MOUSE_X2MB_UP },
-	{ L"X2MouseDownAction", MOUSE_X2MB_DOWN },
-	{ L"X2MouseDoubleClickAction", MOUSE_X2MB_DBLCLK },
-	{ L"MouseScrollUpAction", MOUSE_MW_UP },
-	{ L"MouseScrollDownAction", MOUSE_MW_DOWN },
-	{ L"MouseScrollLeftAction", MOUSE_MW_LEFT },
-	{ L"MouseScrollRightAction", MOUSE_MW_RIGHT },
-	{ L"MouseOverAction", MOUSE_OVER },
-	{ L"MouseLeaveAction", MOUSE_LEAVE },
+	{ IniNameRegistry::InternOption<"LeftMouseUpAction">(), MOUSE_LMB_UP },
+	{ IniNameRegistry::InternOption<"LeftMouseDownAction">(), MOUSE_LMB_DOWN },
+	{ IniNameRegistry::InternOption<"LeftMouseDoubleClickAction">(), MOUSE_LMB_DBLCLK },
+	{ IniNameRegistry::InternOption<"MiddleMouseUpAction">(), MOUSE_MMB_UP },
+	{ IniNameRegistry::InternOption<"MiddleMouseDownAction">(), MOUSE_MMB_DOWN },
+	{ IniNameRegistry::InternOption<"MiddleMouseDoubleClickAction">(), MOUSE_MMB_DBLCLK },
+	{ IniNameRegistry::InternOption<"RightMouseUpAction">(), MOUSE_RMB_UP },
+	{ IniNameRegistry::InternOption<"RightMouseDownAction">(), MOUSE_RMB_DOWN },
+	{ IniNameRegistry::InternOption<"RightMouseDoubleClickAction">(), MOUSE_RMB_DBLCLK },
+	{ IniNameRegistry::InternOption<"X1MouseUpAction">(), MOUSE_X1MB_UP },
+	{ IniNameRegistry::InternOption<"X1MouseDownAction">(), MOUSE_X1MB_DOWN },
+	{ IniNameRegistry::InternOption<"X1MouseDoubleClickAction">(), MOUSE_X1MB_DBLCLK },
+	{ IniNameRegistry::InternOption<"X2MouseUpAction">(), MOUSE_X2MB_UP },
+	{ IniNameRegistry::InternOption<"X2MouseDownAction">(), MOUSE_X2MB_DOWN },
+	{ IniNameRegistry::InternOption<"X2MouseDoubleClickAction">(), MOUSE_X2MB_DBLCLK },
+	{ IniNameRegistry::InternOption<"MouseScrollUpAction">(), MOUSE_MW_UP },
+	{ IniNameRegistry::InternOption<"MouseScrollDownAction">(), MOUSE_MW_DOWN },
+	{ IniNameRegistry::InternOption<"MouseScrollLeftAction">(), MOUSE_MW_LEFT },
+	{ IniNameRegistry::InternOption<"MouseScrollRightAction">(), MOUSE_MW_RIGHT },
+	{ IniNameRegistry::InternOption<"MouseOverAction">(), MOUSE_OVER },
+	{ IniNameRegistry::InternOption<"MouseLeaveAction">(), MOUSE_LEAVE },
 };
 
-const WCHAR* OptionNameForMouseActionType(MOUSEACTION type)
+IniOptionID OptionForMouseActionType(MOUSEACTION type)
 {
 	for (const auto& entry : g_MouseActionTable)
 	{
-		if (entry.type == type) return entry.name;
+		if (entry.type == type) return entry.option;
 	}
-	return nullptr;
+	return {};
 }
 
 Mouse::Mouse(Skin* skin, Meter* meter) : m_Skin(skin), m_Meter(meter),
@@ -63,14 +63,14 @@ void Mouse::ReadOptions(ConfigParser& parser, ConfigParser::OptionReader& reader
 	for (auto& mouseAction : m_MouseActions)
 	{
 		m_MouseActionTypes |= mouseAction.type;
-		reader.ReadString(mouseAction.action, OptionNameForMouseActionType(mouseAction.type), L"", { .sectionVariables = false });
+		reader.ReadString(mouseAction.action, OptionForMouseActionType(mouseAction.type), L"", { .sectionVariables = false });
 	}
 
 	for (auto& entry : g_MouseActionTable)
 	{
 		if (m_MouseActionTypes & entry.type) continue;
 
-		const std::wstring& action = reader.ReadString(OptionNameForMouseActionType(entry.type), L"", { .sectionVariables = false });
+		const std::wstring& action = reader.ReadString(entry.option, L"", { .sectionVariables = false });
 		if (reader.GetLastDefaultUsed()) continue;
 
 		m_MouseActionTypes |= entry.type;
@@ -458,10 +458,10 @@ MOUSEACTION Mouse::OptionStringToMouseActions(const std::wstring& options) const
 		if (invalid) return;
 
 		bool found = false;
-		StringParser name(action);
+		const auto option = IniNameRegistry::FindOption(action);
 		for (auto& entry : g_MouseActionTable)
 		{
-			if (name.ConsumeRest(entry.name, wcslen(entry.name)))
+			if (option && *option == entry.option)
 			{
 				found = true;
 				result |= entry.type;
