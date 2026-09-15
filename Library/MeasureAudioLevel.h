@@ -5,11 +5,8 @@
 #include "Measure.h"
 #include "../ThirdParty/kiss_fft/kiss_fftr.h"
 
-#define MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND 1
-
 interface IAudioCaptureClient;
 interface IAudioClient;
-interface IAudioRenderClient;
 interface IMMDevice;
 interface IMMDeviceEnumerator;
 class AudioLevelDeviceNotificationClient;
@@ -107,10 +104,7 @@ private:
 	WAVEFORMATEX* m_Wfx;
 	IAudioClient* m_ClAudio;
 	IAudioCaptureClient* m_ClCapture;
-#if (MEASUREAUDIOLEVEL_WINDOWS_BUG_WORKAROUND)
-	IAudioClient* m_ClBugAudio;
-	IAudioRenderClient* m_ClBugRender;
-#endif
+	HANDLE m_CaptureEvent;
 	std::wstring m_ReqID;
 	std::wstring m_DevName;
 	float m_KRMS[2];
