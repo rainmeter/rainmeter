@@ -41,3 +41,5 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data) { return nullptr; }
 EXTERN_C int RainmeterMain(LPWSTR cmdLine) { return 0; }
 
 EXTERN_C int SkinInstallerMain(LPWSTR cmdLine) { return 0; }
+
+EXTERN_C LPCWSTR GetLanguageString(UINT id) { return nullptr; }
