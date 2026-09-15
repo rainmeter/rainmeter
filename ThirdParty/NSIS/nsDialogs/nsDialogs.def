@@ -1,3 +1,0 @@
-LIBRARY nsDialogs
-EXPORTS
-	KillTimer=nsdKillTimer

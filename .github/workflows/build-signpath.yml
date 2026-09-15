@@ -62,12 +62,19 @@ jobs:
           name: BuildOut-Release64
           path: BuildOut/Release64
 
+      - name: Build uninstaller
+        run: .\Build\Build.ps1 installer-uninstaller $env:BUILD_VERSION.Substring(1)
+        shell: pwsh
+
       - name: Upload combined build
         uses: actions/upload-artifact@v7
         id: upload-build
         with:
           name: RainmeterBuild-${{ github.ref_name }}
-          path: BuildOut
+          path: |
+            BuildOut/Release32
+            BuildOut/Release64
+            BuildOut/Installer/uninst.exe
           if-no-files-found: error
 
       - name: Remove build directories
@@ -85,9 +92,6 @@ jobs:
           github-artifact-id: '${{ steps.upload-build.outputs.artifact-id }}'
           wait-for-completion: true
           output-artifact-directory: BuildOut
-
-      - name: Install NSIS
-        uses: ./.github/actions/install-nsis
 
       - name: Build installer
         run: .\Build\Build.ps1 installer $env:BUILD_VERSION.Substring(1)

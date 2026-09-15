@@ -3,7 +3,7 @@
 Builds Rainmeter release artifacts.
 
 .PARAMETER BuildType
-The build target to run. Valid values are full, rainmeter-32, rainmeter-64, test-64, languages, plugin-api, and installer.
+The build target to run. Valid values are full, rainmeter-32, rainmeter-64, test-64, languages, plugin-api, installer, and installer-uninstaller.
 
 .PARAMETER Version
 The release version in major.minor.subminor.revision format. Required for all build types except test-64.
@@ -101,43 +101,6 @@ function Write-Utf8File {
 	[System.IO.File]::WriteAllText($Path, $content, $utf8NoBom)
 }
 
-function Install-SignedInstallerPlugins {
-	$pluginDir = Join-Path $PSScriptRoot '..\BuildOut\Installer\Plugins\x86-unicode'
-	$pluginHashes = [ordered]@{
-		'LangDLL.dll' = '15c83bf9daaa9e0fe20ee0f3ea4fc4b80bf6044173b5115dbba27c7c358bbafe'
-		'nsDialogs.dll' = 'b06545d2dd59935da7c4c7f821503c4d06946224195a0e5a130573720563f38b'
-		'System.dll' = '0f3b34e416967137f71da4b43975716b22546441ae3c8c730d14ff9882442d36'
-		'UAC.dll' = '8319e659616ac168caa66f3d8d54eb0ac402f780ad618c10bfb6b50064f6ce75'
-	}
-	$pluginsNeedDownload = @($pluginHashes.GetEnumerator() | Where-Object {
-		$path = Join-Path $pluginDir $_.Key
-		-not (Test-Path -LiteralPath $path -PathType Leaf) -or (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $_.Value
-	}).Count -gt 0
-
-	if ($pluginsNeedDownload) {
-		Write-Host '* Downloading signed NSIS plugins'
-		New-Item -ItemType Directory -Path $pluginDir -Force | Out-Null
-		$archive = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::ChangeExtension([System.IO.Path]::GetRandomFileName(), '.zip'))
-		try {
-			Invoke-WebRequest 'https://github.com/rainmeter/build-tools/releases/download/v1/plugins.zip' -OutFile $archive
-			Expand-Archive $archive -DestinationPath $pluginDir -Force
-		} finally {
-			Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue
-		}
-	}
-
-	foreach ($plugin in $pluginHashes.GetEnumerator()) {
-		$path = Join-Path $pluginDir $plugin.Key
-		if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
-			throw "Signed NSIS plugin archive does not contain $($plugin.Key)"
-		}
-		$actualHash = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
-		if ($actualHash -ne $plugin.Value) {
-			throw "SHA-256 mismatch for $($plugin.Key)"
-		}
-	}
-}
-
 $excludeTests = 'true'
 
 if ($TestMode) {
@@ -156,6 +119,7 @@ switch ($BuildType) {
 	'languages' { $Version = '0.0.0.0' }
 	'plugin-api' {}
 	'installer' {}
+	'installer-uninstaller' {}
 	default { Write-UsageError 'Unknown build type' }
 }
 
@@ -188,7 +152,7 @@ $msBuildArgs = @(
 	'/p:Configuration=Release'
 )
 
-if ($BuildType -ne 'test-64' -and $BuildType -ne 'languages' -and $BuildType -ne 'installer') {
+if ($BuildType -ne 'test-64' -and $BuildType -ne 'languages' -and $BuildType -ne 'installer' -and $BuildType -ne 'installer-uninstaller') {
 	Write-Host "* Starting $BuildType build for $versionFull"
 
 	$versionHeaderLines = @(
@@ -245,37 +209,20 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'plugin-api') {
 	Copy-Item (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.h'), (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.cs') $pluginApiDir
 }
 
-if ($BuildType -eq 'full' -or $BuildType -eq 'languages' -or $BuildType -eq 'installer') {
+if ($BuildType -eq 'full' -or $BuildType -eq 'languages' -or $BuildType -eq 'installer' -or $BuildType -eq 'installer-uninstaller') {
 	Write-Host '* Building languages'
 	Invoke-NativeCommand 'powershell.exe' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '.\GenerateLanguages.ps1') -ErrorMessage 'Language build failed'
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'installer') {
-	Install-SignedInstallerPlugins
-
 	Write-Host '* Building installer'
+	$installerArguments = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '.\BuildInstaller.ps1', '-Version', $versionFull, '-VersionShort', $versionShort, '-BuildYear', $buildYear)
+	Invoke-NativeCommand 'powershell.exe' $installerArguments -ErrorMessage 'Installer build failed'
+}
 
-	$makeNsis = Join-Path $env:ProgramFiles 'NSIS\MakeNSIS.exe'
-	if (-not (Test-Path -LiteralPath $makeNsis -PathType Leaf)) {
-		$makeNsis = $makeNsis.Replace('Program Files\', 'Program Files (x86)\')
-	}
-	if (-not (Test-Path -LiteralPath $makeNsis -PathType Leaf)) {
-		Write-Error 'ERROR: MakeNSIS.exe not found'
-		exit 1
-	}
-
-	$installerPath = "Rainmeter-$versionFull.exe"
-	$installerDefines = @(
-		"/DOUTFILE=$installerPath",
-		"/DVERSION_FULL=$versionFull",
-		"/DVERSION_SHORT=$versionShort",
-		"/DVERSION_REVISION=$versionRevision",
-		"/DVERSION_MAJOR=$versionMajor",
-		"/DVERSION_MINOR=$versionMinor",
-		"/DBUILD_YEAR=$buildYear"
-	)
-
-	Invoke-NativeCommand $makeNsis ($installerDefines + @('/WX', '.\Installer\Installer.nsi')) -ErrorMessage 'Installer build failed'
+if ($BuildType -eq 'installer-uninstaller') {
+	Write-Host '* Building uninstaller for signing'
+	Invoke-NativeCommand 'powershell.exe' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '.\BuildInstaller.ps1', '-Version', $versionFull, '-VersionShort', $versionShort, '-BuildYear', $buildYear, '-UninstallerOnly') -ErrorMessage 'Uninstaller build failed'
 }
 
 Write-Host

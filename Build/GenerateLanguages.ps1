@@ -7,49 +7,47 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# NSIS uses its own language names, while Rainmeter uses LCID. Note that English must be first
-# because it's the default language.
+# English must be first because it is the default language.
 $languages = [ordered]@{
-	'en'      = @{ nsis = 'English'; lcid = 1033 }
-	'ar'      = @{ nsis = 'Arabic'; lcid = 1025 }
-	'bg'      = @{ nsis = 'Bulgarian'; lcid = 1026 }
-	'zh-CN'   = @{ nsis = 'SimpChinese'; lcid = 2052 }
-	'zh-TW'   = @{ nsis = 'TradChinese'; lcid = 1028 }
-	'cs'      = @{ nsis = 'Czech'; lcid = 1029 }
-	'da'      = @{ nsis = 'Danish'; lcid = 1030 }
-	'nl'      = @{ nsis = 'Dutch'; lcid = 1043 }
-	'et'      = @{ nsis = 'Estonian'; lcid = 1061 }
-	'fi'      = @{ nsis = 'Finnish'; lcid = 1035 }
-	'fr'      = @{ nsis = 'French'; lcid = 1036 }
-	'de'      = @{ nsis = 'German'; lcid = 1031 }
-	'el'      = @{ nsis = 'Greek'; lcid = 1032 }
-	'he'      = @{ nsis = 'Hebrew'; lcid = 1037 }
-	'hr'      = @{ nsis = 'Croatian'; lcid = 1050 }
-	'hu'      = @{ nsis = 'Hungarian'; lcid = 1038 }
-	'id'      = @{ nsis = 'Indonesian'; lcid = 1057 }
-	'it'      = @{ nsis = 'Italian'; lcid = 1040 }
-	'ja'      = @{ nsis = 'Japanese'; lcid = 1041 }
-	'ko'      = @{ nsis = 'Korean'; lcid = 1042 }
-	'ms'      = @{ nsis = 'Malay'; lcid = 1086 }
-	'nb'      = @{ nsis = 'Norwegian'; lcid = 1044 }
-	'pl'      = @{ nsis = 'Polish'; lcid = 1045 }
-	'pt-BR'   = @{ nsis = 'PortugueseBR'; lcid = 1046 }
-	'pt-PT'   = @{ nsis = 'Portuguese'; lcid = 2070 }
-	'ro'      = @{ nsis = 'Romanian'; lcid = 1048 }
-	'ru'      = @{ nsis = 'Russian'; lcid = 1049 }
-	'sr-Cyrl' = @{ nsis = 'Serbian'; lcid = 3098 }
-	'sr-Latn' = @{ nsis = 'SerbianLatin'; lcid = 2074 }
-	'sk'      = @{ nsis = 'Slovak'; lcid = 1051 }
-	'sl'      = @{ nsis = 'Slovenian'; lcid = 1060 }
-	'es'      = @{ nsis = 'SpanishInternational'; lcid = 3082 }
-	'sv'      = @{ nsis = 'Swedish'; lcid = 1053 }
-	'th'      = @{ nsis = 'Thai'; lcid = 1054 }
-	'tr'      = @{ nsis = 'Turkish'; lcid = 1055 }
-	'uk'      = @{ nsis = 'Ukrainian'; lcid = 1058 }
-	'vi'      = @{ nsis = 'Vietnamese'; lcid = 1066 }
+	'en' = 1033
+	'ar' = 1025
+	'bg' = 1026
+	'zh-CN' = 2052
+	'zh-TW' = 1028
+	'cs' = 1029
+	'da' = 1030
+	'nl' = 1043
+	'et' = 1061
+	'fi' = 1035
+	'fr' = 1036
+	'de' = 1031
+	'el' = 1032
+	'he' = 1037
+	'hr' = 1050
+	'hu' = 1038
+	'id' = 1057
+	'it' = 1040
+	'ja' = 1041
+	'ko' = 1042
+	'ms' = 1086
+	'nb' = 1044
+	'pl' = 1045
+	'pt-BR' = 1046
+	'pt-PT' = 2070
+	'ro' = 1048
+	'ru' = 1049
+	'sr-Cyrl' = 3098
+	'sr-Latn' = 2074
+	'sk' = 1051
+	'sl' = 1060
+	'es' = 3082
+	'sv' = 1053
+	'th' = 1054
+	'tr' = 1055
+	'uk' = 1058
+	'vi' = 1066
 }
 
-$utf8WithBom = New-Object System.Text.UTF8Encoding($true)
 $scriptDirectory = Join-Path $PSScriptRoot '..\Language'
 $resourceHeaderPath = Join-Path $PSScriptRoot '..\Library\resource.h'
 $installerOutputDirectory = Join-Path $PSScriptRoot '..\BuildOut\Installer'
@@ -80,8 +78,8 @@ function Get-ResourceIds {
 	return $ids
 }
 
-# Rainmeter strings use %1 and {0} style placeholders, while the NSIS installer strings use
-# $INSTDIR and ${VERSION_SHORT} style variables.
+# Rainmeter strings use %1 and {0} style placeholders, while installer strings use $INSTDIR and
+# ${VERSION_SHORT} style variables.
 $placeholderRegex = [regex]'%[0-9]|\{[0-9]+\}|\$\{[A-Za-z0-9_]+\}|\$[A-Za-z0-9_]+'
 $argumentPlaceholderRegex = [regex]'^(%[0-9]|\{[0-9]+\})$'
 
@@ -94,7 +92,7 @@ function Get-Placeholder {
 
 # A translation that drops or misspells a placeholder leaves the text with an unsubstituted
 # variable, and an argument placeholder that has no matching argument crashes Rainmeter when the
-# string is formatted. Additional NSIS variables are allowed since they always expand.
+# string is formatted. Additional installer variables are allowed since they always expand.
 function Assert-Placeholder {
 	param(
 		[string]$Key,
@@ -227,22 +225,6 @@ function Read-LanguageFile {
 	}
 }
 
-function Write-InstallerLanguageFile {
-	param(
-		[string]$Path,
-		[System.Collections.IEnumerable]$Strings,
-		[System.Text.Encoding]$Encoding
-	)
-
-	$output = New-Object System.Collections.Generic.List[string]
-	foreach ($string in $Strings) {
-		[void]$output.Add(('${{LangFileString}} {0,-24} "{1}"' -f $string.Key, $string.Value))
-	}
-
-	$content = [string]::Join("`r`n", $output) + "`r`n"
-	[System.IO.File]::WriteAllText($Path, $content, $Encoding)
-}
-
 function Write-RuntimeLanguageFile {
 	param(
 		[string]$Locale,
@@ -286,36 +268,68 @@ function Write-RuntimeLanguageFile {
 	}
 }
 
-function Write-InstallerLanguagesFile {
+function ConvertTo-CppByteString {
+	param([string]$Value)
+
+	$bytes = [System.Text.Encoding]::UTF8.GetBytes($Value)
+	return ($bytes | ForEach-Object { '\x{0:x2}' -f $_ }) -join ''
+}
+
+function Write-NativeInstallerLanguagesFile {
 	param(
 		[string]$Path,
 		[System.Collections.IDictionary]$Languages,
-		[System.Text.Encoding]$Encoding
+		[System.Collections.IDictionary]$Definitions
 	)
 
-	$output = New-Object System.Collections.Generic.List[string]
-	$langDllParams = ''
-	$languageIds = ''
+	$keys = @($Definitions['en'].InstallerStrings | ForEach-Object { $_.Key })
+	$output = [System.Collections.Generic.List[string]]::new()
+	[void]$output.Add('#pragma once')
+	[void]$output.Add('')
+	[void]$output.Add('enum class InstallerString : unsigned short')
+	[void]$output.Add('{')
+	foreach ($key in $keys) {
+		[void]$output.Add("`t$key,")
+	}
+	[void]$output.Add("`tCount")
+	[void]$output.Add('};')
+	[void]$output.Add('')
+	[void]$output.Add('struct InstallerLanguage')
+	[void]$output.Add('{')
+	[void]$output.Add("`tunsigned short lcid;")
+	[void]$output.Add("`tbool rtl;")
+	[void]$output.Add("`tconst char* name;")
+	[void]$output.Add("`tconst char* strings;")
+	[void]$output.Add('};')
 	[void]$output.Add('')
 
+	$index = 0
 	foreach ($language in $Languages.GetEnumerator()) {
 		$locale = $language.Key
+		$definition = $Definitions[$locale]
 		$localeInfo = [System.Globalization.CultureInfo]::GetCultureInfo($locale)
 		$displayName = $localeInfo.NativeName
 		if ($locale -ne 'en') {
 			$displayName += " - $($localeInfo.EnglishName.split(' ')[0])"
 		}
-
-		$nsisLanguage = $language.Value.nsis
-		[void]$output.Add(('${{IncludeLanguage}} "{0}" "{1}"' -f $nsisLanguage, $locale))
-		$langDllParams += "'${displayName}' '`${LANG_${nsisLanguage}}' '`${LANG_${nsisLanguage}_CP}' "
-		$languageIds += "$($language.Value.lcid),"
+		$blob = [string]::Join([char]0, @($definition.InstallerStrings | ForEach-Object { $_.Value })) + [char]0
+		[void]$output.Add(('static const char g_languageStrings{0}[] = "{1}";' -f $index, (ConvertTo-CppByteString -Value $blob)))
+		[void]$output.Add(('static const char g_languageName{0}[] = "{1}";' -f $index, (ConvertTo-CppByteString -Value $displayName)))
+		++$index
 	}
 
-	[void]$output.Add(('!define LANGDLL_PARAMS "{0}"' -f $langDllParams))
-	[void]$output.Add(('!define LANGUAGE_IDS "{0}"' -f $languageIds))
-	$content = [string]::Join("`r`n", $output) + "`r`n"
-	[System.IO.File]::WriteAllText($Path, $content, $Encoding)
+	[void]$output.Add('')
+	[void]$output.Add('static const InstallerLanguage g_languages[] = {')
+	$index = 0
+	foreach ($language in $Languages.GetEnumerator()) {
+		$definition = $Definitions[$language.Key]
+		[void]$output.Add(("`t{{ {0}, {1}, g_languageName{2}, g_languageStrings{2} }}," -f $language.Value, $(if ($definition.Rtl) { 'true' } else { 'false' }), $index))
+		++$index
+	}
+	[void]$output.Add('};')
+
+	$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+	[System.IO.File]::WriteAllText($Path, ([string]::Join("`r`n", $output) + "`r`n"), $utf8NoBom)
 }
 
 $locales = if ($Locale) { $Locale } else { @($languages.Keys) }
@@ -329,8 +343,7 @@ if (-not $RuntimeOnly) {
 	[System.IO.Directory]::CreateDirectory($installerOutputDirectory) | Out-Null
 }
 
-Write-Host "Generating language files..."
-
+$definitions = [ordered]@{}
 foreach ($localeName in $locales) {
 	if (-not $languages.Contains($localeName)) {
 		throw "Unknown language locale: $localeName"
@@ -342,14 +355,13 @@ foreach ($localeName in $locales) {
 	} else {
 		Read-LanguageFile -Path $iniPath -ResourceIds $resourceIds -ResourceHeaderPath $resourceHeaderPath -BaseLanguage $englishDefinition
 	}
-	if (-not $RuntimeOnly) {
-		$nshPath = Join-Path $installerOutputDirectory ($localeName + '.nsh')
-		Write-InstallerLanguageFile -Path $nshPath -Strings $definition.InstallerStrings -Encoding $utf8WithBom
-	}
-	Write-RuntimeLanguageFile -Locale $localeName -Lcid $languages[$localeName].lcid -Language $definition -OutputDirectories $languageOutputDirectories
+	$definitions[$localeName] = $definition
+	Write-RuntimeLanguageFile -Locale $localeName -Lcid $languages[$localeName] -Language $definition -OutputDirectories $languageOutputDirectories
 }
 
 if (-not $RuntimeOnly) {
-	$installerLanguagesPath = Join-Path $installerOutputDirectory 'Languages.nsh'
-	Write-InstallerLanguagesFile -Path $installerLanguagesPath -Languages $languages -Encoding $utf8WithBom
+	if (-not $Locale) {
+		$nativeLanguagesPath = Join-Path $installerOutputDirectory 'InstallerLanguages.generated.h'
+		Write-NativeInstallerLanguagesFile -Path $nativeLanguagesPath -Languages $languages -Definitions $definitions
+	}
 }

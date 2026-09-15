@@ -75,9 +75,6 @@ jobs:
           name: BuildOut-Release64
           path: BuildOut/Release64
 
-      - name: Install NSIS
-        uses: ./.github/actions/install-nsis
-
       - name: Build installer
         run: .\Build\Build.ps1 installer "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
         shell: pwsh
