@@ -78,6 +78,10 @@ jobs:
       - name: Install NSIS
         uses: ./.github/actions/install-nsis
 
+      - name: Build uninstaller
+        run: .\Build\Build.ps1 uninstaller "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
+        shell: pwsh
+
       - name: Build installer
         run: .\Build\Build.ps1 installer "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER"
         shell: pwsh

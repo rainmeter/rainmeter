@@ -26,6 +26,7 @@ Unicode true
 !include "WinVer.nsh"
 !include "UAC.nsh"
 !include "RmError.nsh"
+!include "InstallerShared.nsh"
 
 ${Using:StrFunc} StrRep
 
@@ -41,23 +42,10 @@ ${Using:StrFunc} StrRep
  !define INCLUDEFILES
 !endif
 
-Name "Rainmeter"
-VIAddVersionKey "CompanyName" "Rainmeter"
-VIAddVersionKey "ProductName" "Rainmeter"
-VIAddVersionKey "FileDescription" "Rainmeter Installer"
-VIAddVersionKey "FileVersion" "${VERSION_FULL}"
-VIAddVersionKey "ProductVersion" "${VERSION_FULL}"
-VIAddVersionKey "OriginalFilename" "${OUTFILE}"
-VIAddVersionKey "LegalCopyright" "${U+00A9} ${BUILD_YEAR} Rainmeter Team"
-VIProductVersion "${VERSION_FULL}"
-BrandingText " "
-SetCompressor /SOLID lzma
-RequestExecutionLevel user
+!insertmacro SetInstallerSettings
+!insertmacro SetVersionInfo "Rainmeter Installer" "${OUTFILE}"
+
 InstallDirRegKey HKLM "SOFTWARE\Rainmeter" ""
-ShowInstDetails nevershow
-AllowSkipFiles off
-XPStyle on
-ManifestDPIAware true
 OutFile "..\${OUTFILE}"
 ReserveFile "..\..\BuildOut\Installer\Plugins\x86-unicode\LangDLL.dll"
 ReserveFile "..\..\BuildOut\Installer\Plugins\x86-unicode\nsDialogs.dll"
@@ -70,8 +58,6 @@ ReserveFile ".\WizardEmpty.bmp"
 !define PF_XMMI64_INSTRUCTIONS_AVAILABLE 10
 !define SCS_64BIT_BINARY 6
 
-!define MUI_ICON ".\Installer.ico"
-!define MUI_UNICON ".\Installer.ico"
 !define MUI_CUSTOMFUNCTION_GUIINIT InitWizardImage
 !define MUI_WELCOMEFINISHPAGE_BITMAP ".\WizardEmpty.bmp"
 !define MUI_FINISHPAGE_RUN
@@ -83,16 +69,7 @@ Page custom PageOptions PageOptionsOnLeave
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 
-UninstPage custom un.PageOptions un.GetOptions
-!insertmacro MUI_UNPAGE_INSTFILES
-
-; Include languages
-!macro IncludeLanguage LANGUAGE CUSTOMLANGUAGE
-	!insertmacro MUI_LANGUAGE ${LANGUAGE}
-	!insertmacro LANGFILE_INCLUDE "..\..\BuildOut\Installer\${CUSTOMLANGUAGE}.nsh"
-!macroend
-!define IncludeLanguage "!insertmacro IncludeLanguage"
-!include "..\..\BuildOut\Installer\Languages.nsh"
+!insertmacro IncludeLanguages
 
 Var NonDefaultLanguage
 Var AutoStartup
@@ -100,54 +77,8 @@ Var Install64Bit
 Var InstallPortable
 Var ExistingRainmeterInstallation
 Var RestartAfterInstall
-Var un.DeleteAll
 
 ${StrStr}	; Must be called before any sections or functions
-
-!macro Elevate
-UAC_TryAgain:
-	!insertmacro UAC_RunElevated
-	${Switch} $0
-	${Case} 0
-		${IfThen} $1 = 1 ${|} Quit ${|}			; This is the outer process, the inner process is done
-		${IfThen} $3 <> 0 ${|} ${Break} ${|}	; We are the admin
-		${If} $1 = 3							; RunAs completed successfully with a non-admin user
-			MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(AdminError)" /SD IDNO IDOK UAC_TryAgain IDNO 0
-			!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
-		${EndIf}
-		; Fall-through
-	${Case} 1223
-		Quit
-	${Case} 1062
-		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(LogonError)" /SD IDOK
-		!insertmacro LOG_ERROR ${ERROR_NOLOGONSVC}
-		Quit
-	${Default}
-		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(UacError) ($0)" /SD IDOK
-		!insertmacro LOG_ERROR ${ERROR_NOTADMIN}
-		Quit
-	${EndSwitch}
-
-SetShellVarContext all
-!macroend
-
-; Creates a custom page dialog, aborting the whole installer if it cannot be created. A missing
-; dialog used to go unnoticed: nsDialogs::Show returns right away, so every page silently fell
-; through to the install itself with none of its variables ever set. The sentinel catches the
-; nsDialogs plugin failing to load at all, in which case nothing is pushed onto the stack.
-!macro CreatePageDialog RESOURCE
-	Push "!"
-	nsDialogs::Create ${RESOURCE}
-	Pop $0
-	${If} $0 == "!"
-	${OrIf} $0 == "error"
-	${OrIf} $0 == ""
-		MessageBox MB_OK|MB_ICONSTOP "$(SetupError)" /SD IDOK
-		Quit
-	${EndIf}
-	Pop $1
-!macroend
-!define CreatePageDialog "!insertmacro CreatePageDialog"
 
 ; Install
 ; --------------------------------------
@@ -589,21 +520,6 @@ FunctionEnd
 	Delete "$INSTDIR\RestartRainmeter.exe"
 !macroend
 
-!macro RemoveStartMenuShortcuts STARTMENUPATH
-	Delete "${STARTMENUPATH}\Rainmeter.lnk"
-	Delete "${STARTMENUPATH}\Rainmeter Help.lnk"
-	Delete "${STARTMENUPATH}\Rainmeter Help.URL"
-	Delete "${STARTMENUPATH}\Remove Rainmeter.lnk"
-	Delete "${STARTMENUPATH}\RainThemes.lnk"
-	Delete "${STARTMENUPATH}\RainThemes Help.lnk"
-	Delete "${STARTMENUPATH}\RainBrowser.lnk"
-	Delete "${STARTMENUPATH}\RainBackup.lnk"
-	Delete "${STARTMENUPATH}\Rainstaller.lnk"
-	Delete "${STARTMENUPATH}\Skin Installer.lnk"
-	Delete "${STARTMENUPATH}\Rainstaller Help.lnk"
-	RMDir "${STARTMENUPATH}"
-!macroend
-
 Section
 	${If} $INSTDIR == ""
 		MessageBox MB_OK|MB_ICONSTOP "$(SetupError)" /SD IDOK
@@ -762,6 +678,10 @@ SkipIniMove:
 	SetOutPath "$INSTDIR"
 
 	${If} $InstallPortable <> 1
+!ifdef INCLUDEFILES
+		File /oname=uninst.exe "..\..\BuildOut\Installer\uninst.exe"
+!endif
+
 		ReadRegStr $0 HKLM "SOFTWARE\Rainmeter" ""
 		WriteRegStr HKLM "SOFTWARE\Rainmeter" "" "$INSTDIR"
 		WriteRegStr HKLM "SOFTWARE\Rainmeter" "Language" "$LANGUAGE"
@@ -833,8 +753,6 @@ SkipIniMove:
 		Call RemoveStartMenuShortcuts
 
 		!insertmacro UAC_AsUser_Call Function RemoveStartMenuShortcuts ${UAC_SYNCREGISTERS}
-
-		WriteUninstaller "$INSTDIR\uninst.exe"
 	${Else}
 		WriteRegStr HKCU "SOFTWARE\Rainmeter" "PortableInstallPath" "$INSTDIR"
 
@@ -922,118 +840,4 @@ FunctionEnd
 Function FinishRun
 	; Explorer launches Rainmeter with the desktop user's token instead of the elevated installer's token.
 	ExecShell "" "$WINDIR\explorer.exe" '$\"$INSTDIR\Rainmeter.exe$\"'
-FunctionEnd
-
-
-; Uninstall
-; --------------------------------------
-Function un.onInit
-	!insertmacro Elevate
-
-	ReadRegStr $0 HKLM "SOFTWARE\Rainmeter" "Language"
-	${If} $0 != ""
-		StrCpy $LANGUAGE $0
-	${EndIf}
-FunctionEnd
-
-Function un.PageOptions
-	!insertmacro MUI_HEADER_TEXT "$(UninstallOptions)" "$(UninstallOptionsDescription)"
-	${CreatePageDialog} 1018
-	nsDialogs::SetRTL $(^RTL)
-
-	${NSD_CreateCheckbox} 0 0u 95% 12u "$(UninstallRainmeter)"
-	Pop $0
-	EnableWindow $0 0
-	${NSD_Check} $0
-
-	${NSD_CreateCheckbox} 0 15u 70% 12u "$(UninstallSettings)"
-	Pop $R0
-
-	${NSD_CreateLabel} 16 26u 95% 12u "$(UninstallSettingsDescription)"
-
-	nsDialogs::Show
-FunctionEnd
-
-Function un.GetOptions
-	${NSD_GetState} $R0 $un.DeleteAll
-FunctionEnd
-
-Section Uninstall
-	; Close Rainmeter (and wait up to five seconds)
-	${ForEach} $0 10 0 - 1
-		FindWindow $1 "DummyRainWClass" "Rainmeter control window"
-		ClearErrors
-		Delete "$INSTDIR\Rainmeter.exe"
-		${If} $1 = 0
-		${AndIfNot} ${Errors}
-			${Break}
-		${EndIf}
-
-		SendMessage $1 ${WM_CLOSE} 0 0
-
-		${If} $0 = 0
-			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RainmeterCloseError)" /SD IDRETRY IDRETRY Retry
-			!insertmacro LOG_ERROR ${ERROR_CLOSEFAIL}
-			Quit
-		${EndIf}
-
-Retry:
-		Sleep 500
-	${Next}
-
-	; Old stuff
-	RMDir /r "$INSTDIR\Addons"
-	RMDir /r "$INSTDIR\Fonts"
-
-	RMDir /r "$INSTDIR\Defaults"
-	RMDir /r "$INSTDIR\Languages"
-	RMDir /r "$INSTDIR\Plugins"
-	RMDir /r "$INSTDIR\Runtime"
-	RMDir /r "$INSTDIR\Skins"
-	RMDir /r "$INSTDIR\VisualElements"
-	Delete "$INSTDIR\Rainmeter.dll"
-	Delete "$INSTDIR\Rainmeter.exe"
-	Delete "$INSTDIR\Rainmeter.exe.config"
-	Delete "$INSTDIR\Rainmeter.VisualElementsManifest.xml"
-	Delete "$INSTDIR\RestartRainmeter.exe"
-	Delete "$INSTDIR\SkinInstaller.exe"
-	Delete "$INSTDIR\SkinInstaller.dll"
-	Delete "$INSTDIR\uninst.exe"
-
-	RMDir "$INSTDIR"
-
-	SetShellVarContext all
-	RMDir /r "$APPDATA\Rainstaller"
-
-	SetShellVarContext current
-	Call un.RemoveShortcuts
-	${If} $un.DeleteAll = 1
-		RMDir /r "$APPDATA\Rainmeter"
-		RMDir /r "$DOCUMENTS\Rainmeter\Skins"
-		RMDir "$DOCUMENTS\Rainmeter"
-	${EndIf}
-	
-	!insertmacro UAC_AsUser_Call Function un.RemoveShortcuts ${UAC_SYNCREGISTERS}
-	${If} $un.DeleteAll = 1
-		RMDir /r "$APPDATA\Rainmeter"
-		RMDir /r "$DOCUMENTS\Rainmeter\Skins"
-		RMDir "$DOCUMENTS\Rainmeter"
-	${EndIf}
-
-	SetShellVarContext all
-	Call un.RemoveShortcuts
-	Delete "$SMPROGRAMS\Rainmeter.lnk"
-
-	DeleteRegKey HKLM "SOFTWARE\Rainmeter"
-	DeleteRegKey HKCR ".rmskin"
-	DeleteRegKey HKCR "Rainmeter.SkinInstaller"
-	DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter"
-	${RefreshShellIcons}
-SectionEnd
-
-Function un.RemoveShortcuts
-	!insertmacro RemoveStartMenuShortcuts "$SMPROGRAMS\Rainmeter"
-	Delete "$SMSTARTUP\Rainmeter.lnk"
-	Delete "$DESKTOP\Rainmeter.lnk"
-	DeleteRegValue HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "Rainmeter"
 FunctionEnd

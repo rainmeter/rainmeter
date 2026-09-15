@@ -3,7 +3,7 @@
 Builds Rainmeter release artifacts.
 
 .PARAMETER BuildType
-The build target to run. Valid values are full, rainmeter-32, rainmeter-64, test-64, languages, plugin-api, and installer.
+The build target to run. Valid values are full, rainmeter-32, rainmeter-64, test-64, languages, plugin-api, uninstaller, and installer.
 
 .PARAMETER Version
 The release version in major.minor.subminor.revision format. Required for all build types except test-64.
@@ -155,6 +155,7 @@ switch ($BuildType) {
 	'test-64' {}
 	'languages' { $Version = '0.0.0.0' }
 	'plugin-api' {}
+	'uninstaller' {}
 	'installer' {}
 	default { Write-UsageError 'Unknown build type' }
 }
@@ -245,15 +246,13 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'plugin-api') {
 	Copy-Item (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.h'), (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.cs') $pluginApiDir
 }
 
-if ($BuildType -eq 'full' -or $BuildType -eq 'languages' -or $BuildType -eq 'installer') {
+if ($BuildType -eq 'full' -or $BuildType -eq 'languages' -or $BuildType -eq 'uninstaller') {
 	Write-Host '* Building languages'
 	Invoke-NativeCommand 'powershell.exe' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '.\GenerateLanguages.ps1') -ErrorMessage 'Language build failed'
 }
 
-if ($BuildType -eq 'full' -or $BuildType -eq 'installer') {
+if ($BuildType -eq 'full' -or $BuildType -eq 'uninstaller' -or $BuildType -eq 'installer') {
 	Install-SignedInstallerPlugins
-
-	Write-Host '* Building installer'
 
 	$makeNsis = Join-Path $env:ProgramFiles 'NSIS\MakeNSIS.exe'
 	if (-not (Test-Path -LiteralPath $makeNsis -PathType Leaf)) {
@@ -264,9 +263,7 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'installer') {
 		exit 1
 	}
 
-	$installerPath = "Rainmeter-$versionFull.exe"
-	$installerDefines = @(
-		"/DOUTFILE=$installerPath",
+	$nsisDefines = @(
 		"/DVERSION_FULL=$versionFull",
 		"/DVERSION_SHORT=$versionShort",
 		"/DVERSION_REVISION=$versionRevision",
@@ -274,8 +271,29 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'installer') {
 		"/DVERSION_MINOR=$versionMinor",
 		"/DBUILD_YEAR=$buildYear"
 	)
+	$uninstallerPath = Join-Path $PSScriptRoot '..\BuildOut\Installer\uninst.exe'
 
-	Invoke-NativeCommand $makeNsis ($installerDefines + @('/WX', '.\Installer\Installer.nsi')) -ErrorMessage 'Installer build failed'
+	if ($BuildType -eq 'full' -or $BuildType -eq 'uninstaller') {
+		Write-Host '* Building uninstaller'
+		Invoke-NativeCommand $makeNsis ($nsisDefines + @('/WX', '.\Installer\Uninstaller.nsi')) -ErrorMessage 'Uninstaller build failed'
+
+		$uninstallerGenerator = Join-Path $PSScriptRoot '..\BuildOut\Installer\UninstallerGenerator.exe'
+		Invoke-NativeCommand $uninstallerGenerator @('/S') -ErrorMessage 'Uninstaller generation failed'
+		Remove-Item -LiteralPath $uninstallerGenerator -Force
+		if (-not (Test-Path -LiteralPath $uninstallerPath -PathType Leaf)) {
+			throw 'Uninstaller generation did not produce uninst.exe'
+		}
+	}
+
+	if ($BuildType -eq 'full' -or $BuildType -eq 'installer') {
+		if (-not (Test-Path -LiteralPath $uninstallerPath -PathType Leaf)) {
+			throw 'Build the uninstaller before building the installer'
+		}
+
+		Write-Host '* Building installer'
+		$installerPath = "Rainmeter-$versionFull.exe"
+		Invoke-NativeCommand $makeNsis (@("/DOUTFILE=$installerPath") + $nsisDefines + @('/WX', '.\Installer\Installer.nsi')) -ErrorMessage 'Installer build failed'
+	}
 }
 
 Write-Host
