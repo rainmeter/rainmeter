@@ -102,73 +102,41 @@ void Mouse::ReadOptions(ConfigParser& parser, ConfigParser::OptionReader& reader
 		}
 	};
 
-	if (*mouseCursor == L'\0')  // meters' default
-	{
-		inheritSkinDefault();
-	}
-	else if (_wcsicmp(mouseCursor, L"HAND") == 0)  // skin's default
-	{
-		m_CursorType = MOUSECURSOR_HAND;
-	}
-	else if (_wcsicmp(mouseCursor, L"TEXT") == 0)
-	{
-		m_CursorType = MOUSECURSOR_TEXT;
-	}
-	else if (_wcsicmp(mouseCursor, L"HELP") == 0)
-	{
-		m_CursorType = MOUSECURSOR_HELP;
-	}
-	else if (_wcsicmp(mouseCursor, L"BUSY") == 0)
-	{
-		m_CursorType = MOUSECURSOR_BUSY;
-	}
-	else if (_wcsicmp(mouseCursor, L"CROSS") == 0)
-	{
-		m_CursorType = MOUSECURSOR_CROSS;
-	}
-	else if (_wcsicmp(mouseCursor, L"PEN") == 0)
-	{
-		m_CursorType = MOUSECURSOR_PEN;
-	}
-	else if (_wcsicmp(mouseCursor, L"NO") == 0)
-	{
-		m_CursorType = MOUSECURSOR_NO;
-	}
-	else if (_wcsicmp(mouseCursor, L"SIZE_ALL") == 0)
-	{
-		m_CursorType = MOUSECURSOR_SIZE_ALL;
-	}
-	else if (_wcsicmp(mouseCursor, L"SIZE_NESW") == 0)
-	{
-		m_CursorType = MOUSECURSOR_SIZE_NESW;
-	}
-	else if (_wcsicmp(mouseCursor, L"SIZE_NS") == 0)
-	{
-		m_CursorType = MOUSECURSOR_SIZE_NS;
-	}
-	else if (_wcsicmp(mouseCursor, L"SIZE_NWSE") == 0)
-	{
-		m_CursorType = MOUSECURSOR_SIZE_NWSE;
-	}
-	else if (_wcsicmp(mouseCursor, L"SIZE_WE") == 0)
-	{
-		m_CursorType = MOUSECURSOR_SIZE_WE;
-	}
-	else if (_wcsicmp(mouseCursor, L"UPARROW") == 0)
-	{
-		m_CursorType = MOUSECURSOR_UPARROW;
-	}
-	else if (_wcsicmp(mouseCursor, L"WAIT") == 0)
-	{
-		m_CursorType = MOUSECURSOR_WAIT;
-	}
-	else if (wcschr(mouseCursor, L'.'))
+	if (wcschr(mouseCursor, L'.'))
 	{
 		m_CursorType = MOUSECURSOR_CUSTOM;
 	}
 	else
 	{
-		inheritSkinDefault();
+		static constexpr ConfigParser::EnumOption<MOUSECURSOR> s_Cursors[] =
+		{
+			{ L"HAND", MOUSECURSOR_HAND },
+			{ L"TEXT", MOUSECURSOR_TEXT },
+			{ L"HELP", MOUSECURSOR_HELP },
+			{ L"BUSY", MOUSECURSOR_BUSY },
+			{ L"CROSS", MOUSECURSOR_CROSS },
+			{ L"PEN", MOUSECURSOR_PEN },
+			{ L"NO", MOUSECURSOR_NO },
+			{ L"SIZE_ALL", MOUSECURSOR_SIZE_ALL },
+			{ L"SIZE_NESW", MOUSECURSOR_SIZE_NESW },
+			{ L"SIZE_NS", MOUSECURSOR_SIZE_NS },
+			{ L"SIZE_NWSE", MOUSECURSOR_SIZE_NWSE },
+			{ L"SIZE_WE", MOUSECURSOR_SIZE_WE },
+			{ L"UPARROW", MOUSECURSOR_UPARROW },
+			{ L"WAIT", MOUSECURSOR_WAIT },
+		};
+		m_CursorType = reader.ReadEnum<"MouseActionCursorName">(MOUSECURSOR_CUSTOM, s_Cursors);
+		if (m_CursorType == MOUSECURSOR_CUSTOM)
+		{
+			if (isSkinLevel && reader.GetLastDefaultUsed())
+			{
+				m_CursorType = MOUSECURSOR_HAND;
+			}
+			else
+			{
+				inheritSkinDefault();
+			}
+		}
 	}
 
 	if (m_CursorType == MOUSECURSOR_CUSTOM)
