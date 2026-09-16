@@ -238,63 +238,30 @@ const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& st
 	return nullptr;
 }
 
-// Gets the value of a section variable. Returns true if strValue is set.
-// The selector is stripped from strVariable.
-bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry)
+std::optional<std::wstring> ConfigParser::GetSectionVariable(std::wstring_view variableStr, void* logEntry)
 {
-	if (!m_Skin) return false;
+	if (!m_Skin) return std::nullopt;
 
-	const size_t firstParens = strVariable.find_first_of(L'(');  // Assume section names do not have a left parenthesis?
-	size_t colonPos = strVariable.find_last_of(L':', firstParens);
-	if (colonPos == std::wstring::npos)
-	{
-		return false;
-	}
+	StringParser strParser(variableStr);
+	std::wstring_view section = strParser.ConsumeUntilLast(L':', L'(');
+	if (section.empty()) return std::nullopt;
 
-	const std::wstring selector = strVariable.substr(colonPos + 1);
-	const WCHAR* selectorSz = selector.c_str();
-	strVariable.resize(colonPos);
-
-	bool isKeySelector = (!selector.empty() && iswalpha(selectorSz[0]));
+	const std::wstring_view selector = strParser.Remaining();
+	const bool isKeySelector = !selector.empty() && iswalpha(selector.front());
 
 	if (isKeySelector)
 	{
 		// [Meter:X], [Meter:Y], [Meter:W], [Meter:H]
-		Meter* meter = m_Skin->GetMeter(strVariable);
+		Meter* meter = m_Skin->GetMeter(section);
 		if (meter)
 		{
-			WCHAR buffer[16] = { 0 };
-			if (_wcsicmp(selectorSz, L"X") == 0)
-			{
-				_itow_s(meter->GetX(), buffer, 10);
-			}
-			else if (_wcsicmp(selectorSz, L"Y") == 0)
-			{
-				_itow_s(meter->GetY(), buffer, 10);
-			}
-			else if (_wcsicmp(selectorSz, L"W") == 0)
-			{
-				_itow_s(meter->GetW(), buffer, 10);
-			}
-			else if (_wcsicmp(selectorSz, L"H") == 0)
-			{
-				_itow_s(meter->GetH(), buffer, 10);
-			}
-			else if (_wcsicmp(selectorSz, L"XW") == 0)
-			{
-				_itow_s(meter->GetX() + meter->GetW(), buffer, 10);
-			}
-			else if (_wcsicmp(selectorSz, L"YH") == 0)
-			{
-				_itow_s(meter->GetY() + meter->GetH(), buffer, 10);
-			}
-			else
-			{
-				return false;
-			}
-
-			strValue = buffer;
-			return true;
+			if (strParser.ConsumeRest(L"X")) return fmt::to_wstring(meter->GetX());
+			if (strParser.ConsumeRest(L"Y")) return fmt::to_wstring(meter->GetY());
+			if (strParser.ConsumeRest(L"W")) return fmt::to_wstring(meter->GetW());
+			if (strParser.ConsumeRest(L"H")) return fmt::to_wstring(meter->GetH());
+			if (strParser.ConsumeRest(L"XW")) return fmt::to_wstring(meter->GetX() + meter->GetW());
+			if (strParser.ConsumeRest(L"YH")) return fmt::to_wstring(meter->GetY() + meter->GetH());
+			return std::nullopt;
 		}
 	}
 
@@ -318,145 +285,120 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		EscapeRegExp,
 		EncodeUrl,
 		TimeStamp,
-		Script,
-		Plugin
 	} valueType = ValueType::Raw;
 
 	if (isKeySelector)
 	{
-		if (_wcsicmp(selectorSz, L"MaxValue") == 0)
+		if (strParser.ConsumeRest(L"MaxValue"))
 		{
 			valueType = ValueType::Max;
 		}
-		else if (_wcsicmp(selectorSz, L"MinValue") == 0)
+		else if (strParser.ConsumeRest(L"MinValue"))
 		{
 			valueType = ValueType::Min;
 		}
-		else if (_wcsicmp(selectorSz, L"EscapeRegExp") == 0)
+		else if (strParser.ConsumeRest(L"EscapeRegExp"))
 		{
 			valueType = ValueType::EscapeRegExp;
 		}
-		else if (_wcsicmp(selectorSz, L"EncodeUrl") == 0)
+		else if (strParser.ConsumeRest(L"EncodeUrl"))
 		{
 			valueType = ValueType::EncodeUrl;
 		}
-		else if (_wcsicmp(selectorSz, L"TimeStamp") == 0)
+		else if (strParser.ConsumeRest(L"TimeStamp"))
 		{
 			valueType = ValueType::TimeStamp;
 		}
 		else
 		{
 			// Check if calling a Script/Plugin measure
-			Measure* measure = m_Skin->GetMeasure(strVariable);
-			if (!measure) return false;
+			Measure* measure = m_Skin->GetMeasure(section);
+			if (!measure) return std::nullopt;
 
-			bool retValue = false;
+			std::wstring value;
 			const auto type = measure->GetTypeID();
 			if (type == TypeID<MeasureScript>())
 			{
-				valueType = ValueType::Script;  // Needed?
+				const std::wstring command(selector);
 				MeasureScript* script = (MeasureScript*)measure;
-				retValue = script->CommandWithReturn(selectorSz, strValue, logEntry);
+				if (script->CommandWithReturn(command, value, logEntry)) return value;
 			}
 			else if (type == TypeID<MeasurePlugin>())
 			{
-				valueType = ValueType::Plugin;  // Needed?
+				const std::wstring command(selector);
 				MeasurePlugin* plugin = (MeasurePlugin*)measure;
-				retValue = plugin->CommandWithReturn(selectorSz, strValue, logEntry);
+				if (plugin->CommandWithReturn(command, value, logEntry)) return value;
 			}
 
-			return retValue;
+			return std::nullopt;
 		}
-
-		selectorSz = L"";
 	}
 	else
 	{
-		colonPos = strVariable.find_last_of(L':');
-		if (colonPos != std::wstring::npos)
+		const size_t keyColonPos = section.find_last_of(L':');
+		if (keyColonPos != std::wstring_view::npos)
 		{
-			do
+			const std::wstring_view keySelector = section.substr(keyColonPos + 1);
+			if (StringUtil::EqualsIgnoreCase(keySelector, L"MaxValue"))
 			{
-				const WCHAR* keySelectorSz = strVariable.c_str() + colonPos + 1;
-
-				if (_wcsicmp(keySelectorSz, L"MaxValue") == 0)
-				{
-					valueType = ValueType::Max;
-				}
-				else if (_wcsicmp(keySelectorSz, L"MinValue") == 0)
-				{
-					valueType = ValueType::Min;
-				}
-				else
-				{
-					// Section name contains ':' ?
-					break;
-				}
-
-				strVariable.resize(colonPos);
+				valueType = ValueType::Max;
+				section = section.substr(0, keyColonPos);
 			}
-			while (0);
+			else if (StringUtil::EqualsIgnoreCase(keySelector, L"MinValue"))
+			{
+				valueType = ValueType::Min;
+				section = section.substr(0, keyColonPos);
+			}
 		}
 	}
 
-	Measure* measure = m_Skin->GetMeasure(strVariable);
+	Measure* measure = m_Skin->GetMeasure(section);
 	if (measure)
 	{
 		if (valueType == ValueType::EscapeRegExp)
 		{
-			strValue = measure->GetStringValue().value_or(L"");
-			StringUtil::EscapeRegExp(strValue);
-			return true;
+			std::wstring value(measure->GetStringValue().value_or(L""));
+			StringUtil::EscapeRegExp(value);
+			return value;
 		}
 		else if (valueType == ValueType::EncodeUrl)
 		{
-			strValue = measure->GetStringValue().value_or(L"");
-			StringUtil::EncodeUrl(strValue);
-			return true;
+			std::wstring value(measure->GetStringValue().value_or(L""));
+			StringUtil::EncodeUrl(value);
+			return value;
 		}
 		else if (measure->GetTypeID() == TypeID<MeasureTime>() && valueType == ValueType::TimeStamp)
 		{
 			MeasureTime* time = (MeasureTime*)measure;
-			strValue = std::to_wstring(time->GetTimeStamp().QuadPart / 10000000);
-			return true;
+			return std::to_wstring(time->GetTimeStamp().QuadPart / 10000000);
 		}
 
 		int scale = 1;
-
-		const WCHAR* decimalsSz = wcschr(selectorSz, L',');
-		if (decimalsSz)
-		{
-			++decimalsSz;
-		}
-
-		if (*selectorSz == L'%')  // Percentual
+		const bool hasDecimals = strParser.Remaining().find(L',') != std::wstring_view::npos;
+		bool parseDecimals = false;
+		if (strParser.Consume(L'%'))  // Percentual
 		{
 			if (valueType == ValueType::Max || valueType == ValueType::Min)
 			{
 				// '%' cannot be used with Max/Min values.
-				return false;
+				return std::nullopt;
 			}
 
 			valueType = ValueType::Percentual;
 		}
-		else if (*selectorSz == L'/')  // Scale
+		else if (strParser.Consume(L'/'))  // Scale
 		{
-			errno = 0;
-			scale = _wtoi(selectorSz + 1);
-			if (errno == EINVAL || scale == 0)
+			scale = strParser.ConsumeInt(StringParser::SkipWhitespace).value_or(0);
+			if (scale == 0)
 			{
 				// Invalid scale value.
-				return false;
+				return std::nullopt;
 			}
 		}
 		else
 		{
-			if (decimalsSz)
-			{
-				return false;
-			}
-
-			decimalsSz = selectorSz;
+			if (hasDecimals) return std::nullopt;
+			parseDecimals = true;
 		}
 
 		const double value =
@@ -465,39 +407,38 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			(valueType == ValueType::Min)        ? measure->GetMinValue() / scale :
 			                                       measure->GetValue() / scale;
 		int decimals = 10;
-		if (decimalsSz)
+		bool decimalsSpecified = false;
+		if (hasDecimals)
 		{
-			while (iswspace(*decimalsSz)) ++decimalsSz;
-
-			if (*decimalsSz)
-			{
-				decimals = _wtoi(decimalsSz);
-				decimals = std::max(0, decimals);
-				decimals = std::min(32, decimals);
-			}
-			else
-			{
-				decimalsSz = nullptr;
-			}
+			strParser.ConsumeUntil(L',');
+			strParser.ConsumeWhitespace();
+			decimalsSpecified = !strParser.IsConsumed();
+			if (decimalsSpecified) decimals = strParser.ConsumeInt().value_or(0);
 		}
+		else if (parseDecimals)
+		{
+			strParser.ConsumeWhitespace();
+			decimalsSpecified = !strParser.IsConsumed();
+			if (decimalsSpecified) decimals = strParser.ConsumeInt().value_or(0);
+		}
+		decimals = std::clamp(decimals, 0, 32);
 
 		WCHAR format[32] = { 0 };
 		WCHAR buffer[128] = { 0 };
 		_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
 		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, format, value);
 
-		if (!decimalsSz)
+		if (!decimalsSpecified)
 		{
 			// Remove trailing zeros if decimal count was not specified.
 			measure->RemoveTrailingZero(buffer, bufferLen);
 			bufferLen = (int)wcslen(buffer);
 		}
 
-		strValue.assign(buffer, bufferLen);
-		return true;
+		return std::wstring(buffer, bufferLen);
 	}
 
-	return false;
+	return std::nullopt;
 }
 
 std::optional<std::wstring> ConfigParser::GetCurrentConfigVariable(std::wstring_view variableStr)
@@ -887,7 +828,7 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result, std::wstring_view curre
 			}
 			else
 			{
-				std::wstring section = result.substr(si, end - si);
+				const std::wstring_view section = std::wstring_view(result).substr(si, end - si);
 				Measure* measure = GetMeasure(section);
 				if (measure)
 				{
@@ -900,11 +841,10 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result, std::wstring_view curre
 				}
 				else
 				{
-					std::wstring value;
-					if (GetSectionVariable(section, value))
+					if (auto value = GetSectionVariable(section))
 					{
-						result.replace(start, end - start + 1, value);
-						start += value.length();
+						result.replace(start, end - start + 1, *value);
+						start += value->length();
 						replaced = true;
 					}
 					else
@@ -1036,11 +976,9 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, std::wstring_view c
 				}
 				else
 				{
-					std::wstring foundValue;
-					std::wstring sectionVariable(variable);
-					if (GetSectionVariable(sectionVariable, foundValue, &delayedLogEntry))
+					if (auto foundValue = GetSectionVariable(variable, &delayedLogEntry))
 					{
-						replaceFoundValue(std::move(foundValue));
+						replaceFoundValue(std::move(*foundValue));
 						break;
 					}
 				}
