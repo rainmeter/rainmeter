@@ -51,7 +51,11 @@ VIAddVersionKey "OriginalFilename" "${OUTFILE}"
 VIAddVersionKey "LegalCopyright" "${U+00A9} ${BUILD_YEAR} Rainmeter Team"
 VIProductVersion "${VERSION_FULL}"
 BrandingText " "
+!ifdef X64ONLY
+SetCompressor zlib
+!else
 SetCompressor /SOLID lzma
+!endif
 RequestExecutionLevel user
 InstallDirRegKey HKLM "SOFTWARE\Rainmeter" ""
 ShowInstDetails nevershow
