@@ -90,9 +90,9 @@ IfActions::~IfActions() = default;
 void IfActions::ReadOptions(ConfigParser::OptionReader& reader)
 {
 	std::wstring aboveAction, belowAction, equalAction;
-	reader.ReadString<"IfAboveAction">(aboveAction, L"", { .sectionVariables = false });
-	reader.ReadString<"IfBelowAction">(belowAction, L"", { .sectionVariables = false });
-	reader.ReadString<"IfEqualAction">(equalAction, L"", { .sectionVariables = false });
+	reader.ReadActionString<"IfAboveAction">(aboveAction);
+	reader.ReadActionString<"IfBelowAction">(belowAction);
+	reader.ReadActionString<"IfEqualAction">(equalAction);
 
 	if (aboveAction.empty() && belowAction.empty() && equalAction.empty())
 	{
@@ -131,8 +131,8 @@ void IfActions::ReadConditionOptions(ConfigParser::OptionReader& reader)
 
 	if (!condition.empty())
 	{
-		std::wstring tAction = reader.ReadString<"IfTrueAction">(L"", { .sectionVariables = false });
-		std::wstring fAction = reader.ReadString<"IfFalseAction">(L"", { .sectionVariables = false });
+		std::wstring tAction = reader.ReadActionString<"IfTrueAction">();
+		std::wstring fAction = reader.ReadActionString<"IfFalseAction">();
 		if (!tAction.empty() || !fAction.empty())
 		{
 			size_t i = 1;
@@ -155,9 +155,9 @@ void IfActions::ReadConditionOptions(ConfigParser::OptionReader& reader)
 				if (condition.empty()) break;
 
 				key = L"IfTrueAction" + num;
-				tAction = reader.ReadString(key.c_str(), L"", { .sectionVariables = false });
+				tAction = reader.ReadActionString(key.c_str());
 				key = L"IfFalseAction" + num;
-				fAction = reader.ReadString(key.c_str(), L"", { .sectionVariables = false });
+				fAction = reader.ReadActionString(key.c_str());
 			}
 			while (!tAction.empty() || !fAction.empty());
 
@@ -181,8 +181,8 @@ void IfActions::ReadConditionOptions(ConfigParser::OptionReader& reader)
 
 	if (!match.empty())
 	{
-		std::wstring tAction = reader.ReadString<"IfMatchAction">(L"", { .sectionVariables = false });
-		std::wstring fAction = reader.ReadString<"IfNotMatchAction">(L"", { .sectionVariables = false });
+		std::wstring tAction = reader.ReadActionString<"IfMatchAction">();
+		std::wstring fAction = reader.ReadActionString<"IfNotMatchAction">();
 		if (!tAction.empty() || !fAction.empty())
 		{
 			size_t i = 1;
@@ -205,9 +205,9 @@ void IfActions::ReadConditionOptions(ConfigParser::OptionReader& reader)
 				if (match.empty()) break;
 
 				key = L"IfMatchAction" + num;
-				tAction = reader.ReadString(key.c_str(), L"", { .sectionVariables = false });
+				tAction = reader.ReadActionString(key.c_str());
 				key = L"IfNotMatchAction" + num;
-				fAction = reader.ReadString(key.c_str(), L"", { .sectionVariables = false });
+				fAction = reader.ReadActionString(key.c_str());
 			} while (!tAction.empty() || !fAction.empty());
 
 			if (actions.matches.size() > (i - 1))

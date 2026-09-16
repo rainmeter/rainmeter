@@ -151,7 +151,7 @@ void Measure::ReadOptions(ConfigParser::OptionReader& reader)
 		m_IfActions.ReadConditionOptions(reader);
 	}
 
-	reader.ReadString<"OnChangeAction">(m_OnChangeAction, L"", { .sectionVariables = false });
+	reader.ReadActionString<"OnChangeAction">(m_OnChangeAction);
 
 	const UINT averageSize = reader.ReadUInt<"AverageSize">(0);
 	if (averageSize == 0)

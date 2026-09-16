@@ -1736,10 +1736,10 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		LogNoticeF(L"ConfigEditor: %s", m_SkinEditor.c_str());
 	}
 
-	reader.ReadString<"TrayExecuteR">(m_TrayExecuteR, L"", { .sectionVariables = false });
-	reader.ReadString<"TrayExecuteM">(m_TrayExecuteM, L"", { .sectionVariables = false });
-	reader.ReadString<"TrayExecuteDR">(m_TrayExecuteDR, L"", { .sectionVariables = false });
-	reader.ReadString<"TrayExecuteDM">(m_TrayExecuteDM, L"", { .sectionVariables = false });
+	reader.ReadActionString<"TrayExecuteR">(m_TrayExecuteR);
+	reader.ReadActionString<"TrayExecuteM">(m_TrayExecuteM);
+	reader.ReadActionString<"TrayExecuteDR">(m_TrayExecuteDR);
+	reader.ReadActionString<"TrayExecuteDM">(m_TrayExecuteDM);
 
 	m_DisableVersionCheck = reader.ReadBool<"DisableVersionCheck">(false);
 	m_DisableAutoUpdate = reader.ReadBool<"DisableAutoUpdate">(false);

@@ -2617,14 +2617,14 @@ bool Skin::ReadSkin()
 
 	m_Mouse.ReadOptions(m_Parser, reader, true);
 
-	reader.ReadString<"OnRefreshAction">(m_OnRefreshAction, L"", { .sectionVariables = false });
-	reader.ReadString<"OnCloseAction">(m_OnCloseAction, L"", { .sectionVariables = false });
-	reader.ReadString<"OnFocusAction">(m_OnFocusAction, L"", { .sectionVariables = false });
-	reader.ReadString<"OnUnfocusAction">(m_OnUnfocusAction, L"", { .sectionVariables = false });
-	reader.ReadString<"OnUpdateAction">(m_OnUpdateAction, L"", { .sectionVariables = false });
-	reader.ReadString<"OnWakeAction">(m_OnWakeAction, L"", { .sectionVariables = false });
-	reader.ReadString<"OnDisplayMetricsChange">(m_OnDisplayMetricsChangeAction, L"", { .sectionVariables = false });
-	reader.ReadString<"OnVisibilityChange">(m_OnVisibilityChangeAction, L"", { .sectionVariables = false });
+	reader.ReadActionString<"OnRefreshAction">(m_OnRefreshAction);
+	reader.ReadActionString<"OnCloseAction">(m_OnCloseAction);
+	reader.ReadActionString<"OnFocusAction">(m_OnFocusAction);
+	reader.ReadActionString<"OnUnfocusAction">(m_OnUnfocusAction);
+	reader.ReadActionString<"OnUpdateAction">(m_OnUpdateAction);
+	reader.ReadActionString<"OnWakeAction">(m_OnWakeAction);
+	reader.ReadActionString<"OnDisplayMetricsChange">(m_OnDisplayMetricsChangeAction);
+	reader.ReadActionString<"OnVisibilityChange">(m_OnVisibilityChangeAction);
 
 	ReadUpdateOption(reader);
 
@@ -4264,13 +4264,13 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			int position = (int)wParam - IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + 1;
 			if (position == 1)
 			{
-				reader.ReadString<"ContextAction">(action, L"", { .sectionVariables = false });
+				reader.ReadActionString<"ContextAction">(action);
 			}
 			else
 			{
 				WCHAR buffer[128] = { 0 };
 				_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", position);
-				reader.ReadString(action, buffer, L"", { .sectionVariables = false });
+				reader.ReadActionString(action, buffer);
 			}
 
 			if (!action.empty())

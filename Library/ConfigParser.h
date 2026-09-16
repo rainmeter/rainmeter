@@ -85,6 +85,13 @@ public:
 		const std::wstring& ReadString(std::wstring_view option, std::wstring_view defValue = {}, ReadOptions options = {}) { return ReadString(m_Parser.FindOptionID(option), defValue, options); }
 		template<FixedWString Name> const std::wstring& ReadString(std::wstring_view defValue = {}, ReadOptions options = {}) { return ReadString(IniNameRegistry::InternOption<Name>(), defValue, options); }
 
+		void ReadActionString(std::wstring& result, IniOptionID option, std::wstring_view defValue = {}) { ReadString(result, option, defValue, { .sectionVariables = false }); }
+		void ReadActionString(std::wstring& result, std::wstring_view option, std::wstring_view defValue = {}) { ReadActionString(result, m_Parser.FindOptionID(option), defValue); }
+		template<FixedWString Name> void ReadActionString(std::wstring& result, std::wstring_view defValue = {}) { ReadActionString(result, IniNameRegistry::InternOption<Name>(), defValue); }
+		const std::wstring& ReadActionString(IniOptionID option, std::wstring_view defValue = {}) { return ReadString(option, defValue, { .sectionVariables = false }); }
+		const std::wstring& ReadActionString(std::wstring_view option, std::wstring_view defValue = {}) { return ReadActionString(m_Parser.FindOptionID(option), defValue); }
+		template<FixedWString Name> const std::wstring& ReadActionString(std::wstring_view defValue = {}) { return ReadActionString(IniNameRegistry::InternOption<Name>(), defValue); }
+
 		template<typename T, size_t N> T ReadEnum(IniOptionID option, T defValue, const EnumOption<T> (&options)[N]) { return m_Parser.ReadEnum(*this, option, defValue, options); }
 		template<typename T, size_t N> T ReadEnum(std::wstring_view option, T defValue, const EnumOption<T> (&options)[N]) { return ReadEnum(m_Parser.FindOptionID(option), defValue, options); }
 		template<FixedWString Name, typename T, size_t N> T ReadEnum(T defValue, const EnumOption<T> (&options)[N]) { return ReadEnum(IniNameRegistry::InternOption<Name>(), defValue, options); }

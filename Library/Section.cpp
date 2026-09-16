@@ -39,7 +39,7 @@ void Section::ReadOptions(ConfigParser::OptionReader& reader)
 
 	m_DynamicVariables = reader.ReadBool<"DynamicVariables">(false);
 
-	reader.ReadString<"OnUpdateAction">(m_OnUpdateAction, L"", { .sectionVariables = false });
+	reader.ReadActionString<"OnUpdateAction">(m_OnUpdateAction);
 
 	const std::wstring& group = reader.ReadString<"Group">(L"");
 	InitializeGroup(group);

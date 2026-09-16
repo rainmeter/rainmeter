@@ -328,9 +328,9 @@ void MeterTextEdit::ReadOptions(ConfigParser::OptionReader& reader)
 
 	// Read without measure replacement so that it resolves when the action runs rather than when
 	// the option is read, which is what lets it reference [$Input].
-	reader.ReadString<"OnSubmitAction">(m_OnSubmitAction, L"", { .sectionVariables = false });
-	reader.ReadString<"OnFocusAction">(m_OnFocusAction, L"", { .sectionVariables = false });
-	reader.ReadString<"OnDismissAction">(m_OnDismissAction, L"", { .sectionVariables = false });
+	reader.ReadActionString<"OnSubmitAction">(m_OnSubmitAction);
+	reader.ReadActionString<"OnFocusAction">(m_OnFocusAction);
+	reader.ReadActionString<"OnDismissAction">(m_OnDismissAction);
 
 	m_FocusBorderColor = reader.ReadColor<"FocusBorderColor">(D2D1::ColorF(D2D1::ColorF::Black, 0.0f));
 	if (m_FocusBorderColor.a > 0.0f)

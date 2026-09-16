@@ -370,10 +370,10 @@ void MeasureWebParser::ReadOptions(ConfigParser::OptionReader& reader)
 			m_Expression.clear();
 		}
 	}
-	reader.ReadString<"FinishAction">(m_FinishAction, L"", { .sectionVariables = false });
-	reader.ReadString<"OnRegExpErrorAction">(m_OnRegExpErrAction, L"", { .sectionVariables = false });
-	reader.ReadString<"OnConnectErrorAction">(m_OnConnectErrAction, L"", { .sectionVariables = false });
-	reader.ReadString<"OnDownloadErrorAction">(m_OnDownloadErrAction, L"", { .sectionVariables = false });
+	reader.ReadActionString<"FinishAction">(m_FinishAction);
+	reader.ReadActionString<"OnRegExpErrorAction">(m_OnRegExpErrAction);
+	reader.ReadActionString<"OnConnectErrorAction">(m_OnConnectErrAction);
+	reader.ReadActionString<"OnDownloadErrorAction">(m_OnDownloadErrAction);
 	reader.ReadString<"ErrorString">(m_ErrorString, L"");
 	m_LogSubstringErrors = reader.ReadBool<"LogSubstringErrors">(true);
 

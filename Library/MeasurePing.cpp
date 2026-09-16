@@ -223,7 +223,7 @@ void MeasurePing::ReadOptions(ConfigParser::OptionReader& reader)
 	m_UpdateRate = reader.ReadUInt<"UpdateRate">(32);
 	m_Timeout = reader.ReadUInt<"Timeout">(30000);
 	m_TimeoutValue = reader.ReadFloat<"TimeoutValue">(30000.0);
-	reader.ReadString<"FinishAction">(m_FinishAction, L"", { .sectionVariables = false });
+	reader.ReadActionString<"FinishAction">(m_FinishAction);
 }
 
 void MeasurePing::UpdateValue()
