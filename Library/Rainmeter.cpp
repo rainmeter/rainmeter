@@ -28,7 +28,7 @@
 #include "MeasureUsageMonitor.h"
 #include "MeterStringBase.h"
 #include "UpdateCheck.h"
-#include "../Version.h"
+#include "VersionInfo.h"
 #include "resource.h"
 #include <bcrypt.h>
 
@@ -262,15 +262,19 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 	m_SettingsPath = PathUtil::GetFolderFromFilePath(m_IniFile);
 	CreateDirectory(m_SettingsPath.c_str(), nullptr);
 
-#ifdef COMMIT_HASH
-	m_BuildHash.assign(COMMIT_HASH, 8);
-#else
-	m_BuildHash = L"<local>";
-#endif
+	const auto commitHash = VersionInfo::GetCommitHash();
+	if (commitHash)
+	{
+		m_BuildHash.assign(commitHash, 8);
+	}
+	else
+	{
+		m_BuildHash = L"<local>";
+	}
 
 	CrashDump::Initialize(
 		m_SettingsPath + L"Crashes\\",
-		fmt::format(L"v{}.{} (commit {})", APPVERSION, revision_number, m_BuildHash));
+		fmt::format(L"v{}.{} (commit {})", VersionInfo::GetAppVersion(), VersionInfo::GetRevision(), m_BuildHash));
 
 	m_HardwareAccelerated = IniFile::ReadIntKey(m_IniFile, L"Rainmeter", L"HardwareAcceleration", 0) != 0;
 
@@ -478,12 +482,12 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 	// Ensure that the Skins directory is kept available locally in case it's in e.g. OneDrive.
 	FileUtil::SetFilePinnedAttribute(m_SkinPath.c_str());
 
-#ifdef BUILD_TIME
-	// Build.ps1 will write to the BUILD_TIME macro when the installer is created
-	m_BuildTime = BUILD_TIME;
-#else
-	// For local builds, just use the current date/time
-	if (m_BuildTime.empty())
+	const auto buildTime = VersionInfo::GetBuildTime();
+	if (buildTime)
+	{
+		m_BuildTime = buildTime;
+	}
+	else if (m_BuildTime.empty())
 	{
 		time_t now;
 		time(&now);
@@ -491,11 +495,10 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 		wcsftime(timestamp, MAX_PATH, L"%F %T", gmtime(&now));
 		m_BuildTime = timestamp;
 	}
-#endif // BUILD_TIME
 
 	WCHAR lang[LOCALE_NAME_MAX_LENGTH];
 	GetLocaleInfo(GetLanguage().GetLCID(), LOCALE_SENGLISHLANGUAGENAME, lang, _countof(lang));
-	LogNoticeF(L"Rainmeter %s.%i (%s)", APPVERSION, revision_number, APPBITS);
+	LogNoticeF(L"Rainmeter %s.%i (%s)", VersionInfo::GetAppVersion(), VersionInfo::GetRevision(), APPBITS);
 	LogNoticeF(L"Language: %s (%lu)", lang, GetLanguage().GetLCID());
 	LogNoticeF(L"Build time: %s", m_BuildTime.c_str());
 	LogNoticeF(L"Build commit: %s", m_BuildHash.c_str());

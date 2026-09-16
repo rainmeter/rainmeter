@@ -11,7 +11,6 @@
 #include "resource.h"
 #include "System.h"
 #include "Util.h"
-#include "../Version.h"
 
 #include "iowin32.h"
 

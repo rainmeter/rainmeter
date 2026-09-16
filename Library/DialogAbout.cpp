@@ -8,7 +8,7 @@
 #include "DialogAbout.h"
 #include "CommandHandler.h"
 #include "Util.h"
-#include "../Version.h"
+#include "VersionInfo.h"
 #include "../Common/Platform.h"
 
 WINDOWPLACEMENT DialogAbout::c_WindowPlacement = { 0 };
@@ -145,8 +145,8 @@ INT_PTR DialogAbout::OnCommand(WPARAM wParam, LPARAM lParam)
 				tmpSz,
 				_TRUNCATE,
 				L"Rainmeter %s.%i (%s)\nLanguage: %s (%lu)\nBuild time: %s\nBuild commit: %s\n",
-				APPVERSION,
-				revision_number,
+				VersionInfo::GetAppVersion(),
+				VersionInfo::GetRevision(),
 				APPBITS,
 				lang,
 				lcid,
@@ -244,7 +244,7 @@ void DialogAbout::Initialize()
 
 	WCHAR tmpSz[MAX_PATH];
 	_snwprintf_s(tmpSz, _TRUNCATE, L"Rainmeter %s.%i (%s)",
-		APPVERSION, revision_number, APPBITS);
+		VersionInfo::GetAppVersion(), VersionInfo::GetRevision(), APPBITS);
 	item = GetControl(Id_VersionLabel);
 	SetWindowText(item, tmpSz);
 

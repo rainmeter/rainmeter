@@ -158,6 +158,7 @@
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="Util.cpp" />
+    <ClCompile Include="VersionInfo.cpp" />
     <ClCompile Include="WindowOcclusionTracker.cpp" />
     <ClCompile Include="DialogNewSkin.cpp" />
     <ClCompile Include="GeneralImage.cpp" />
@@ -302,6 +303,7 @@
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="Util.h" />
+    <ClInclude Include="VersionInfo.h" />
     <ClInclude Include="WindowOcclusionTracker.h" />
     <ClInclude Include="DialogNewSkin.h" />
     <ClInclude Include="GeneralImage.h" />

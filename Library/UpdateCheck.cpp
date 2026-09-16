@@ -11,7 +11,7 @@
 #include "TrayIcon.h"
 #include "UpdateCheck.h"
 #include "Util.h"
-#include "../Version.h"
+#include "VersionInfo.h"
 
 #include <SoftPub.h>
 #include <bcrypt.h>
@@ -147,13 +147,13 @@ void Updater::StatusFetchResultCallback(const Net::FetchTask* fetchTask, void* r
 		return;
 	}
 
-	VersionHelper::Version rainmeterVersion(APPVERSION);
+	VersionHelper::Version rainmeterVersion(VersionInfo::GetAppVersion());
 	if (!rainmeterVersion.IsValid() || updater->m_AvailableVersion <= rainmeterVersion)
 	{
 		return;
 	}
 
-	const bool isDevBuild = !LOCAL_STATUS_FILE.empty() || RAINMETER_VERSION == 0;
+	const bool isDevBuild = !LOCAL_STATUS_FILE.empty() || VersionInfo::GetRainmeterVersion() == 0;
 	if (isDevBuild) return;
 
 	LogNoticeF(L"New Rainmeter version %s available", updater->m_AvailableVersion.Get().c_str());

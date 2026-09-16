@@ -17,7 +17,6 @@
 #include "DialogNewSkin.h"
 #include "GameMode.h"
 #include "UpdateCheck.h"
-#include "../Version.h"
 
 #define RAINMETER_LANGUAGE L"https://www.rainmeter.net/localization"
 
