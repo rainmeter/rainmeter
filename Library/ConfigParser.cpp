@@ -1197,19 +1197,12 @@ void ConfigParser::ReadStringInternal(std::wstring& result, OptionReader& reader
 
 		if (result.size() >= 3)
 		{
-			if (result.find(L'#') != std::wstring::npos)
+			// Make sure new-style variables are processed for the [Variables] section
+			const auto variablesID = IniNameRegistry::InternSection<"Variables">();
+			const bool runNewStyle = reader.GetSectionID() == variablesID;
+			if (ReplaceVariables(result, reader.GetSectionName(), reader.GetMonitorVariableMode(), runNewStyle))
 			{
-				// Make sure new-style variables are processed for the [Variables] section
-				const auto variablesID = IniNameRegistry::InternSection<"Variables">();
-				bool runNewStyle = reader.GetSectionID() == variablesID;
-				if (ReplaceVariables(result, reader.GetSectionName(), reader.GetMonitorVariableMode(), runNewStyle))
-				{
-					reader.MarkReplaced();
-				}
-			}
-			else
-			{
-				PathUtil::ExpandEnvironmentVariables(result);
+				reader.MarkReplaced();
 			}
 
 			if (options.sectionVariables && ReplaceMeasures(result, reader.GetSectionName(), reader.GetMonitorVariableMode()))
