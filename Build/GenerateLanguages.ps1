@@ -85,11 +85,15 @@ function Get-ResourceIds {
 $placeholderRegex = [regex]'%[0-9]|\{[0-9]+\}|\$\{[A-Za-z0-9_]+\}|\$[A-Za-z0-9_]+'
 $argumentPlaceholderRegex = [regex]'^(%[0-9]|\{[0-9]+\})$'
 
-# Returns the distinct placeholders of a string.
 function Get-Placeholder {
 	param([string]$Value)
 
-	return @($placeholderRegex.Matches($Value) | ForEach-Object { $_.Value } | Sort-Object -Unique)
+	$placeholders = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+	foreach ($match in $placeholderRegex.Matches($Value)) {
+		[void]$placeholders.Add($match.Value)
+	}
+
+	return ,$placeholders
 }
 
 # A translation that drops or misspells a placeholder leaves the text with an unsubstituted
@@ -106,14 +110,24 @@ function Assert-Placeholder {
 	$expected = Get-Placeholder -Value $BaseValue
 	$actual = Get-Placeholder -Value $Value
 
-	$missing = @($expected | Where-Object { $actual -notcontains $_ })
+	$missing = [System.Collections.Generic.List[string]]::new()
+	foreach ($placeholder in $expected) {
+		if (-not $actual.Contains($placeholder)) {
+			$missing.Add($placeholder)
+		}
+	}
 	if ($missing.Count -gt 0) {
-		throw "Missing placeholder $($missing -join ', ') for $Key in $Path"
+		throw "Missing placeholder $(($missing | Sort-Object) -join ', ') for $Key in $Path"
 	}
 
-	$unexpected = @($actual | Where-Object { $expected -notcontains $_ -and $argumentPlaceholderRegex.IsMatch($_) })
+	$unexpected = [System.Collections.Generic.List[string]]::new()
+	foreach ($placeholder in $actual) {
+		if (-not $expected.Contains($placeholder) -and $argumentPlaceholderRegex.IsMatch($placeholder)) {
+			$unexpected.Add($placeholder)
+		}
+	}
 	if ($unexpected.Count -gt 0) {
-		throw "Unexpected placeholder $($unexpected -join ', ') for $Key in $Path"
+		throw "Unexpected placeholder $(($unexpected | Sort-Object) -join ', ') for $Key in $Path"
 	}
 }
 
