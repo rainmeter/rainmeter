@@ -79,8 +79,8 @@ public:
 		void ReadString(std::wstring& result, std::wstring_view option, std::wstring_view defValue, ReadOptions options = {}) { ReadString(result, m_Parser.FindOptionID(option), defValue, options); }
 		template<FixedWString Name> void ReadString(std::wstring& result, std::wstring_view defValue = {}, ReadOptions options = {}) { ReadString(result, IniNameRegistry::InternOption<Name>(), defValue, options); }
 
-		// The returned reference is good only until the next ReadString() at the same nesting depth,
-		// which reuses the buffer. Copy it to keep it; no argument may point into it.
+		// The returned reference is good only until the next ReadString() at the same nesting depth
+		// or until parser values are modified. Copy it to keep it; no argument may point into it.
 		const std::wstring& ReadString(IniOptionID option, std::wstring_view defValue = {}, ReadOptions options = {}) { return m_Parser.ReadString(*this, option, defValue, options); }
 		const std::wstring& ReadString(std::wstring_view option, std::wstring_view defValue = {}, ReadOptions options = {}) { return ReadString(m_Parser.FindOptionID(option), defValue, options); }
 		template<FixedWString Name> const std::wstring& ReadString(std::wstring_view defValue = {}, ReadOptions options = {}) { return ReadString(IniNameRegistry::InternOption<Name>(), defValue, options); }
@@ -247,6 +247,8 @@ private:
 	bool ReplaceMeasures(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode);
 	bool ExpandSectionVariables(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0, size_t start = 0);
 
+	const std::wstring* FindReadStringValue(const OptionReader& reader, IniOptionID option) const;
+	void ProcessReadString(std::wstring& result, OptionReader& reader, ReadOptions options, size_t firstSpecialPos);
 	void ReadStringInternal(std::wstring& result, OptionReader& reader, IniOptionID option, std::wstring_view defValue, ReadOptions options);
 	const std::wstring& ReadStringInternal(OptionReader& reader, IniOptionID option, std::wstring_view defValue, ReadOptions options);
 	IniSectionID FindSectionID(std::wstring_view section) const;

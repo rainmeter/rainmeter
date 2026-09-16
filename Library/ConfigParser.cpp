@@ -1159,11 +1159,8 @@ void ConfigParser::ReadString(std::wstring& result, OptionReader& reader, IniOpt
 	ReadStringInternal(result, reader, option, defValue, options);
 }
 
-void ConfigParser::ReadStringInternal(std::wstring& result, OptionReader& reader, IniOptionID option, std::wstring_view defValue, ReadOptions options)
+const std::wstring* ConfigParser::FindReadStringValue(const OptionReader& reader, IniOptionID option) const
 {
-	// Clear last status
-	reader.ClearLastReadFlags();
-
 	const std::wstring* value = option.IsValid() ? GetValue(reader.GetSectionID(), option) : nullptr;
 	if (!value)
 	{
@@ -1173,41 +1170,47 @@ void ConfigParser::ReadStringInternal(std::wstring& result, OptionReader& reader
 			value = GetValue(*iter, option);
 			if (value) break;
 		}
+	}
 
-		if (!value)
-		{
-			result = defValue;
-			reader.MarkDefaultUsed();
-			return;
-		}
+	return value;
+}
+
+void ConfigParser::ProcessReadString(std::wstring& result, OptionReader& reader, ReadOptions options, size_t firstSpecialPos)
+{
+	// Make sure new-style variables are processed for the [Variables] section
+	const auto variablesID = IniNameRegistry::InternSection<"Variables">();
+	const bool runNewStyle = reader.GetSectionID() == variablesID;
+	if (ReplaceVariables(result, reader.GetSectionName(), reader.GetMonitorVariableMode(), runNewStyle, firstSpecialPos))
+	{
+		reader.MarkReplaced();
+	}
+
+	if (options.sectionVariables && ReplaceMeasures(result, reader.GetSectionName(), reader.GetMonitorVariableMode()))
+	{
+		reader.MarkReplaced();
+	}
+}
+
+void ConfigParser::ReadStringInternal(std::wstring& result, OptionReader& reader, IniOptionID option, std::wstring_view defValue, ReadOptions options)
+{
+	reader.ClearLastReadFlags();
+
+	const std::wstring* value = FindReadStringValue(reader, option);
+	if (!value)
+	{
+		result = defValue;
+		reader.MarkDefaultUsed();
+		return;
 	}
 
 	result = *value;
+	if (result.empty()) return;
 
-	if (!result.empty())
-	{
-		reader.MarkValueDefined();
+	reader.MarkValueDefined();
+	if (result.size() < 3) return;
 
-		if (result.size() >= 3)
-		{
-			const size_t firstSpecialPos = result.find_first_of(L"[%#");
-			if (firstSpecialPos != std::wstring::npos)
-			{
-				// Make sure new-style variables are processed for the [Variables] section
-				const auto variablesID = IniNameRegistry::InternSection<"Variables">();
-				const bool runNewStyle = reader.GetSectionID() == variablesID;
-				if (ReplaceVariables(result, reader.GetSectionName(), reader.GetMonitorVariableMode(), runNewStyle, firstSpecialPos))
-				{
-					reader.MarkReplaced();
-				}
-
-				if (options.sectionVariables && ReplaceMeasures(result, reader.GetSectionName(), reader.GetMonitorVariableMode()))
-				{
-					reader.MarkReplaced();
-				}
-			}
-		}
-	}
+	const size_t firstSpecialPos = result.find_first_of(L"[%#");
+	if (firstSpecialPos != std::wstring::npos) ProcessReadString(result, reader, options, firstSpecialPos);
 }
 
 const std::wstring& ConfigParser::ReadString(OptionReader& reader, IniOptionID option, std::wstring_view defValue, ReadOptions options)
@@ -1220,14 +1223,34 @@ const std::wstring& ConfigParser::ReadStringInternal(OptionReader& reader, IniOp
 	static size_t s_Depth = 0;
 	static std::deque<std::wstring> s_Results;
 
-	// Custom plugin/Lua functions can re-enter ReadString() while ExpandSectionVariables() is still
-	// working on an outer result, so each nested read needs its own buffer. A read into a caller's
-	// own string holds no buffer here, so it takes no depth.
-	std::wstring& result = (s_Depth == s_Results.size()) ? s_Results.emplace_back() : s_Results[s_Depth];
-	++s_Depth;
-	auto depthGuard = Scoped([&] { --s_Depth; });
+	reader.ClearLastReadFlags();
 
-	ReadStringInternal(result, reader, option, defValue, options);
+	const std::wstring* value = FindReadStringValue(reader, option);
+	if (value)
+	{
+		if (value->empty()) return *value;
+
+		reader.MarkValueDefined();
+
+		if (value->size() < 3) return *value;
+
+		const size_t firstSpecialPos = value->find_first_of(L"[%#");
+		if (firstSpecialPos == std::wstring::npos) return *value;
+
+		// Custom plugin/Lua functions can re-enter ReadString() while ExpandSectionVariables() is still
+		// working on an outer result, so each nested read needs its own buffer.
+		std::wstring& result = (s_Depth == s_Results.size()) ? s_Results.emplace_back() : s_Results[s_Depth];
+		++s_Depth;
+		auto depthGuard = Scoped([&] { --s_Depth; });
+
+		result = *value;
+		ProcessReadString(result, reader, options, firstSpecialPos);
+		return result;
+	}
+
+	std::wstring& result = (s_Depth == s_Results.size()) ? s_Results.emplace_back() : s_Results[s_Depth];
+	result = defValue;
+	reader.MarkDefaultUsed();
 	return result;
 }
 
