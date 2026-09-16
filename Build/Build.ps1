@@ -184,7 +184,6 @@ Add-VisualStudioBuildToolsToPath
 $msBuildArgs = @(
 	'/nologo',
 	"/p:ExcludeTests=$excludeTests",
-	'/p:TrackFileAccess=false',
 	'/p:Configuration=Release'
 )
 
