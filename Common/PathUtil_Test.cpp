@@ -58,6 +58,13 @@ public:
 		Assert::IsTrue(GetFolderFromFilePath(L"C:\\test.txt") == L"C:\\");
 	}
 
+	TEST_METHOD(TestGetFileNameWithoutExtension)
+	{
+		Assert::IsTrue(GetFileNameWithoutExtension(L"C:\\test.txt") == L"test");
+		Assert::IsTrue(GetFileNameWithoutExtension(L"C:/folder.name/test") == L"test");
+		Assert::IsTrue(GetFileNameWithoutExtension(L".gitignore").empty());
+	}
+
 	TEST_METHOD(TestGetVolume)
 	{
 		Assert::IsTrue(GetVolume(L"C:\\test.txt") == L"C:");

@@ -4,6 +4,7 @@
 
 #include <Windows.h>
 #include <string>
+#include <string_view>
 
 namespace PathUtil {
 
@@ -24,6 +25,8 @@ void RemoveTrailingBackslash(std::wstring& path);
 void RemoveLeadingAndTrailingBackslash(std::wstring& path);
 
 std::wstring GetFolderFromFilePath(const std::wstring& filePath);
+
+std::wstring_view GetFileNameWithoutExtension(std::wstring_view path);
 
 std::wstring GetVolume(const std::wstring& path);
 
