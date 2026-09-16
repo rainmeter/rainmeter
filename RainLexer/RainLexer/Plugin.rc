@@ -2,6 +2,8 @@
 #include "Version.h"
 #include <VerRsrc.h>
 
+#pragma code_page(1252)
+
 ///////////////////////////////////////////////////////////////
 //
 // Version
@@ -26,7 +28,7 @@ BEGIN
         BEGIN
             VALUE "FileDescription", "RainLexer - Notepad++ plugin"
             VALUE "FileVersion", RAINLEXER_VERSION_STRING
-            VALUE "LegalCopyright", "\u00A9 2026 Rainmeter Team"
+            VALUE "LegalCopyright", "\xA9 2026 Rainmeter Team"
             VALUE "OriginalFilename", "RainLexer.dll"
             VALUE "ProductVersion", RAINLEXER_VERSION_STRING
         END
