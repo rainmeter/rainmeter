@@ -248,7 +248,7 @@ private:
 	bool ExpandSectionVariables(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0, size_t start = 0);
 
 	const std::wstring* FindReadStringValue(const OptionReader& reader, IniOptionID option) const;
-	void ProcessReadString(std::wstring& result, OptionReader& reader, ReadOptions options, size_t firstSpecialPos);
+	void ProcessReadString(std::wstring& result, OptionReader& reader, ReadOptions options, size_t firstSpecialPos, bool runNewStyle);
 	void ReadStringInternal(std::wstring& result, OptionReader& reader, IniOptionID option, std::wstring_view defValue, ReadOptions options);
 	const std::wstring& ReadStringInternal(OptionReader& reader, IniOptionID option, std::wstring_view defValue, ReadOptions options);
 	IniSectionID FindSectionID(std::wstring_view section) const;
