@@ -2021,9 +2021,9 @@ void Rainmeter::UpdateFavorites(const std::wstring& folder, const std::wstring& 
 	ini.Save();
 }
 
-const std::vector<LPCWSTR>& Rainmeter::GetOldDefaultPlugins()
+const std::vector<std::wstring_view>& Rainmeter::GetOldDefaultPlugins()
 {
-	static const std::vector<LPCWSTR> s_OldPlugins =
+	static const std::vector<std::wstring_view> s_OldPlugins =
 	{
 		L"ActionTimer",
 		L"AdvancedCPU",

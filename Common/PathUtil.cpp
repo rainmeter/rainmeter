@@ -67,6 +67,17 @@ std::wstring GetFolderFromFilePath(const std::wstring& filePath)
 	return L".\\";
 }
 
+std::wstring_view GetFileNameWithoutExtension(std::wstring_view path)
+{
+	const auto fileNamePos = path.find_last_of(L"\\/");
+	if (fileNamePos != std::wstring_view::npos) path.remove_prefix(fileNamePos + 1);
+
+	const auto extensionPos = path.find_last_of(L'.');
+	if (extensionPos != std::wstring_view::npos) path.remove_suffix(path.size() - extensionPos);
+
+	return path;
+}
+
 // Extracts volume path from program path.
 // E.g.:
 //   "C:\path\" to "C:"

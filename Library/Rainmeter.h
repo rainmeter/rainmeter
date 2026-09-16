@@ -199,7 +199,7 @@ public:
 	const std::wstring& GetBuildTime() { return m_BuildTime; }
 	const std::wstring& GetBuildHash() { return m_BuildHash; }
 
-	static const std::vector<LPCWSTR>& GetOldDefaultPlugins();
+	static const std::vector<std::wstring_view>& GetOldDefaultPlugins();
 
 	friend class CommandHandler;
 	friend class ContextMenu;

@@ -2806,12 +2806,11 @@ bool Skin::ReadSkin()
 				//   Measure=Foo
 				if (_wcsicmp(measureName.c_str(), L"Plugin") == 0)
 				{
-					WCHAR* plugin = PathFindFileName(sectionScope.ReadString(L"Plugin", L"", { .sectionVariables = false }).c_str());
-					PathRemoveExtension(plugin);
-
+					const std::wstring_view pluginPath = sectionScope.ReadString(L"Plugin", L"", { .sectionVariables = false });
+					const std::wstring_view pluginName = PathUtil::GetFileNameWithoutExtension(pluginPath);
 					for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
 					{
-						if (_wcsicmp(plugin, oldDefaultPlugin) == 0)
+						if (StringUtil::EqualsIgnoreCase(pluginName, oldDefaultPlugin))
 						{
 							// Equality comparison is OK since oldDefaultPlugin from a string literal as well.
 							measureName =

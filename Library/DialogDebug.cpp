@@ -2719,10 +2719,10 @@ void DialogDebug::TabPlugins::Initialize()
 	for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
 	{
 		vitem.iItem = ListView_GetItemCount(item);
-		vitem.pszText = (LPWSTR)oldDefaultPlugin;
+		vitem.pszText = (LPWSTR)oldDefaultPlugin.data();
 		ListView_InsertItem(item, &vitem);
 
-		std::wstring name = oldDefaultPlugin;
+		std::wstring name(oldDefaultPlugin);
 		StringUtil::ToLowerCase(name);
 		listedPlugins.insert(std::move(name));
 	}
@@ -2829,7 +2829,7 @@ INT_PTR DialogDebug::TabPlugins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
 
 			for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
 			{
-				if (_wcsicmp(buffer, oldDefaultPlugin) == 0)
+				if (_wcsicmp(buffer, oldDefaultPlugin.data()) == 0)
 				{
 					lvcd->clrText = disabled;
 					SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NEWFONT);
