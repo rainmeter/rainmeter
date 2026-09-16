@@ -720,13 +720,13 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	return ReplaceVariables(result, {}, MonitorVariableMode::DEFAULT_LOGICAL, isNewStyle);
 }
 
-bool ConfigParser::ReplaceVariables(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle)
+bool ConfigParser::ReplaceVariables(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle, std::optional<size_t> firstSpecialPos)
 {
 	bool replaced = false;
-	const size_t firstSpecialPos = result.find_first_of(L"[]%#");
-	if (firstSpecialPos == std::wstring::npos) return false;
+	const size_t specialPos = firstSpecialPos ? *firstSpecialPos : result.find_first_of(L"[%#");
+	if (specialPos == std::wstring::npos) return false;
 
-	PathUtil::ExpandEnvironmentVariables(result, firstSpecialPos);
+	PathUtil::ExpandEnvironmentVariables(result, specialPos);
 
 	// Check for new-style variables ([#VAR])
 	// Note: Most new-style variables are parsed later (when section variables are parsed),
@@ -734,12 +734,12 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, std::wstring_view curr
 	//   section variables).
 	if (isNewStyle)
 	{
-		replaced = ExpandSectionVariables(result, currentSection, monitorVariableMode, VariableExpandMode::HashOnly, nullptr, 0, firstSpecialPos);
+		replaced = ExpandSectionVariables(result, currentSection, monitorVariableMode, VariableExpandMode::HashOnly, nullptr, 0, specialPos);
 	}
 	else if (!currentSection.empty())
 	{
 		// Special parsing for [#CURRENTSECTION] for use in actions
-		size_t start = firstSpecialPos;
+		size_t start = specialPos;
 		const std::wstring strVariable = L"[#CURRENTSECTION]";
 		const size_t length = strVariable.length();
 		while ((start = result.find(strVariable, start)) != std::wstring::npos)
@@ -751,7 +751,7 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, std::wstring_view curr
 	}
 
 	// Check for old-style variables (#VAR#)
-	size_t start = firstSpecialPos;
+	size_t start = specialPos;
 	size_t end = 0;
 	while ((start = result.find(L'#', start)) != std::wstring::npos)
 	{
@@ -792,17 +792,12 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 
 bool ConfigParser::ReplaceMeasures(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode)
 {
-	const size_t firstBracket = result.find_first_of(L"[]");
-	if (firstBracket == std::wstring::npos) return false;
+	size_t start = result.find(L'[');
+	if (start == std::wstring::npos) return false;
 
 	// Check for new-style measures (and section variables) [&Measure], [&Meter]
 	// Note: This also parses regular variables as well (in case of nested variable types) eg. [#Var[&Measure]]
-	bool replaced = false;
-	size_t start = result.find(L'[', firstBracket);
-	if (start != std::wstring::npos)
-	{
-		replaced = ExpandSectionVariables(result, currentSection, monitorVariableMode, VariableExpandMode::AllKeys, nullptr, 0, start);
-	}
+	bool replaced = ExpandSectionVariables(result, currentSection, monitorVariableMode, VariableExpandMode::AllKeys, nullptr, 0, start);
 
 	// Check for old-style measures and section variables. [Measure], [Meter:X], etc.
 	while ((start = result.find(L'[', start)) != std::wstring::npos)
@@ -1195,17 +1190,21 @@ void ConfigParser::ReadStringInternal(std::wstring& result, OptionReader& reader
 
 		if (result.size() >= 3)
 		{
-			// Make sure new-style variables are processed for the [Variables] section
-			const auto variablesID = IniNameRegistry::InternSection<"Variables">();
-			const bool runNewStyle = reader.GetSectionID() == variablesID;
-			if (ReplaceVariables(result, reader.GetSectionName(), reader.GetMonitorVariableMode(), runNewStyle))
+			const size_t firstSpecialPos = result.find_first_of(L"[%#");
+			if (firstSpecialPos != std::wstring::npos)
 			{
-				reader.MarkReplaced();
-			}
+				// Make sure new-style variables are processed for the [Variables] section
+				const auto variablesID = IniNameRegistry::InternSection<"Variables">();
+				const bool runNewStyle = reader.GetSectionID() == variablesID;
+				if (ReplaceVariables(result, reader.GetSectionName(), reader.GetMonitorVariableMode(), runNewStyle, firstSpecialPos))
+				{
+					reader.MarkReplaced();
+				}
 
-			if (options.sectionVariables && ReplaceMeasures(result, reader.GetSectionName(), reader.GetMonitorVariableMode()))
-			{
-				reader.MarkReplaced();
+				if (options.sectionVariables && ReplaceMeasures(result, reader.GetSectionName(), reader.GetMonitorVariableMode()))
+				{
+					reader.MarkReplaced();
+				}
 			}
 		}
 	}

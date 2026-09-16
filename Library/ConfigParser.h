@@ -243,7 +243,7 @@ private:
 	std::optional<std::wstring> GetMonitorVariable(std::wstring_view variableStr, MonitorVariableMode monitorVariableMode);
 
 	bool GetVariable(std::wstring_view strVariable, std::wstring& strValue, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle = false);
-	bool ReplaceVariables(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle = false);
+	bool ReplaceVariables(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle = false, std::optional<size_t> firstSpecialPos = std::nullopt);
 	bool ReplaceMeasures(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode);
 	bool ExpandSectionVariables(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0, size_t start = 0);
 
