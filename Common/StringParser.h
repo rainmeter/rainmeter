@@ -95,6 +95,10 @@ public:
 	// The delimiter and, when no delimiter is found, the rest of the range are consumed.
 	std::wstring_view ConsumeUntil(WCHAR delimiter, Option option = None);
 
+	// Returns the value before the last delimiter preceding |stop|. Searches the entire remaining
+	// range if |stop| is not present. The behavior on a missing delimiter matches ConsumeUntil.
+	std::wstring_view ConsumeUntilLast(WCHAR delimiter, WCHAR stop);
+
 	// Like ConsumeUntil, but returns the rest of the range if it contains no delimiter. Intended
 	// for tokenizing a delimited list until IsConsumed.
 	std::wstring_view ConsumeUntilOrRest(WCHAR delimiter, Option option = None);

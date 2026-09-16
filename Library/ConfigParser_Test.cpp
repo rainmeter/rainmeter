@@ -342,10 +342,23 @@ public:
 
 		AssertSectionVariableSelector(parser, L"Measure", L"%", L"50");
 		AssertSectionVariableSelector(parser, L"Measure", L"%,1", L"50.0");
+		AssertSectionVariableSelector(parser, L"Measure", L"", L"30");
+		AssertSectionVariableSelector(parser, L"Measure", L"2", L"30.00");
 		AssertSectionVariableSelector(parser, L"Measure", L"/5", L"6");
 		AssertSectionVariableSelector(parser, L"Measure", L"/5, 2", L"6.00");
 		AssertSectionVariableSelector(parser, L"Measure", L"MaxValue:/5", L"10");
+		AssertSectionVariableSelector(parser, L"Measure", L"MaxValue:/5, 2", L"10.00");
 		AssertInvalidSectionVariableSelector(parser, L"Measure", L"MaxValue:%");
+		AssertInvalidSectionVariableSelector(parser, L"Measure", L"/0");
+
+		TestMeasure colonMeasure(&skin, L"Measure:Colon");
+		parser.SetValue(L"Measure:Colon", L"MinValue", L"10");
+		parser.SetValue(L"Measure:Colon", L"MaxValue", L"50");
+		colonMeasure.Read(parser);
+		colonMeasure.SetTestValue(30.0);
+		parser.AddSection(&colonMeasure);
+
+		AssertSectionVariableSelector(parser, L"Measure:Colon", L"/5", L"6");
 	}
 
 	TEST_METHOD(TestMeterSectionVariableSelectors)

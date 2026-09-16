@@ -216,6 +216,30 @@ public:
 		Assert::IsTrue(parser.ConsumeRest(L"tail", StringParser::SkipWhitespace));
 	}
 
+	TEST_METHOD(TestConsumeUntilLastBeforeStop)
+	{
+		StringParser parser(L"Section:Function('a:b')");
+
+		AssertValue(L"Section", parser.ConsumeUntilLast(L':', L'('));
+		Assert::IsTrue(parser.ConsumeRest(L"Function('a:b')"));
+	}
+
+	TEST_METHOD(TestConsumeUntilLastWithoutStop)
+	{
+		StringParser parser(L"Section:MaxValue:/5");
+
+		AssertValue(L"Section:MaxValue", parser.ConsumeUntilLast(L':', L'('));
+		Assert::IsTrue(parser.ConsumeRest(L"/5"));
+	}
+
+	TEST_METHOD(TestConsumeUntilLastNoMatch)
+	{
+		StringParser parser(L"Value");
+
+		AssertValue(L"", parser.ConsumeUntilLast(L':', L'('));
+		Assert::IsTrue(parser.IsConsumed());
+	}
+
 	TEST_METHOD(TestConsumeUntilOrRest)
 	{
 		StringParser parser(L"first|second|third");

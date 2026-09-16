@@ -234,7 +234,7 @@ private:
 
 	void ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection = nullptr, int depth = 0);
 
-	bool GetSectionVariable(std::wstring& strVariable, std::wstring& strValue, void* logEntry = nullptr);
+	std::optional<std::wstring> GetSectionVariable(std::wstring_view variableStr, void* logEntry = nullptr);
 
 	std::optional<std::wstring> GetBuiltInVariable(std::wstring_view variableStr, std::wstring_view currentSection);
 	std::optional<std::wstring> GetCurrentConfigVariable(std::wstring_view variableStr);

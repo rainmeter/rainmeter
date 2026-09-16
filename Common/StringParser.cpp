@@ -310,6 +310,21 @@ std::wstring_view StringParser::ConsumeUntil(WCHAR delimiter, Option option)
 	return TrimValue(start, m_Current++, option);
 }
 
+std::wstring_view StringParser::ConsumeUntilLast(WCHAR delimiter, WCHAR stop)
+{
+	const std::wstring_view remaining = Remaining();
+	const size_t delimiterPos = remaining.find_last_of(delimiter, remaining.find_first_of(stop));
+	if (delimiterPos == std::wstring_view::npos)
+	{
+		m_Current = m_End;
+		return {};
+	}
+
+	const WCHAR* start = m_Current;
+	m_Current += delimiterPos + 1;
+	return std::wstring_view(start, delimiterPos);
+}
+
 std::wstring_view StringParser::ConsumeUntilOrRest(WCHAR delimiter, Option option)
 {
 	const WCHAR* start = ScanToDelimiter(delimiter, option);
