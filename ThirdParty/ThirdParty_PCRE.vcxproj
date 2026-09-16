@@ -20,7 +20,7 @@
       <DisableSpecificWarnings>4244;4334;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
-      <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">true</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release' and '$(EnableLTCG)'=='true'">true</LinkTimeCodeGeneration>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>

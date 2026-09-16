@@ -34,9 +34,9 @@ jobs:
         uses: actions/cache@v5
         with:
           path: BuildOut/Release${{ matrix.arch }}/Obj
-          key: rainmeter-msbuild-v2-release-${{ matrix.arch }}-${{ github.sha }}
+          key: rainmeter-msbuild-v3-release-${{ matrix.arch }}-${{ github.sha }}
           restore-keys: |
-            rainmeter-msbuild-v2-release-${{ matrix.arch }}-
+            rainmeter-msbuild-v3-release-${{ matrix.arch }}-
 
       - name: Prepare ${{ matrix.arch }}-bit build cache
         run: .\Build\PrepareBuildCache.ps1 "BuildOut\Release${{ matrix.arch }}\Obj"

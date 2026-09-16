@@ -14,6 +14,9 @@ Optional test file handling mode. Use include-tests to include unit tests in pro
 .PARAMETER MSBuildTarget
 Optional MSBuild target. Valid values are build and rebuild; defaults to rebuild.
 
+.PARAMETER LTCG
+Enables whole-program optimization and link-time code generation for release builds.
+
 .EXAMPLE
 .\Build.ps1 full 1.2.3.4
 
@@ -36,7 +39,9 @@ param(
 	[string]$TestMode,
 
 	[ValidateSet('build', 'rebuild')]
-	[string]$MSBuildTarget = 'rebuild'
+	[string]$MSBuildTarget = 'rebuild',
+
+	[switch]$LTCG
 )
 
 $ErrorActionPreference = 'Stop'
@@ -186,6 +191,9 @@ $msBuildArgs = @(
 	"/p:ExcludeTests=$excludeTests",
 	'/p:Configuration=Release'
 )
+if ($LTCG) {
+	$msBuildArgs += '/p:EnableLTCG=true'
+}
 
 if ($BuildType -ne 'test-64' -and $BuildType -ne 'languages' -and $BuildType -ne 'installer') {
 	Write-Host "* Starting $BuildType build for $versionFull"
