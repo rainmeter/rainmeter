@@ -30,6 +30,14 @@ jobs:
           fi
         shell: bash
 
+      - name: Cache ${{ matrix.arch }}-bit build
+        uses: actions/cache@v5
+        with:
+          path: BuildOut/Release${{ matrix.arch }}/Obj
+          key: rainmeter-msbuild-release-${{ matrix.arch }}-${{ github.sha }}
+          restore-keys: |
+            rainmeter-msbuild-release-${{ matrix.arch }}-
+
       - name: Build ${{ matrix.arch }}-bit Rainmeter
         run: .\Build\Build.ps1 rainmeter-${{ matrix.arch }} "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER" include-tests -MSBuildTarget build
         shell: pwsh
