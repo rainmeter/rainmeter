@@ -16,7 +16,7 @@ int GetRevision()
 	return revision_number;
 }
 
-int GetRainmeterVersion()
+unsigned int GetRainmeterVersion()
 {
 	return RAINMETER_VERSION;
 }
