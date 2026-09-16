@@ -10,6 +10,7 @@ interface IAudioClient;
 interface IMMDevice;
 interface IMMDeviceEnumerator;
 class AudioLevelDeviceNotificationClient;
+class AudioLevelSessionMonitor;
 
 class MeasureAudioLevel : public Measure
 {
@@ -97,7 +98,10 @@ private:
 	double m_FreqMin;
 	double m_FreqMax;
 	double m_Sensitivity;
+	std::wstring m_OnAudioStartAction;
+	std::wstring m_OnAudioEndAction;
 	MeasureAudioLevel* m_Parent;
+	AudioLevelSessionMonitor* m_SessionMonitor;
 	IMMDeviceEnumerator* m_Enum;
 	AudioLevelDeviceNotificationClient* m_NotificationClient;
 	IMMDevice* m_Dev;

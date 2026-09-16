@@ -6,11 +6,17 @@
 #include "Logger.h"
 #include "Skin.h"
 #include "Rainmeter.h"
+#include "../Common/CriticalSection.h"
 
 #include <AudioClient.h>
+#include <AudioPolicy.h>
 #include <FunctionDiscoveryKeys_devpkey.h>
 #include <MMDeviceApi.h>
 #include <numbers>
+#include <process.h>
+#include <utility>
+#include <vector>
+#include <wrl/client.h>
 
 // Overview: Audio level measurement from the Window Core Audio API
 // See: http://msdn.microsoft.com/en-us/library/windows/desktop/dd370800%28v=vs.85%29.aspx
@@ -102,6 +108,276 @@ private:
 	std::atomic<bool> m_DefaultDeviceChanged = false;
 };
 
+class AudioLevelSessionMonitor final : public IAudioSessionNotification, public IAudioSessionEvents
+{
+	using SessionPtr = Microsoft::WRL::ComPtr<IAudioSessionControl>;
+
+public:
+	AudioLevelSessionMonitor() :
+		m_Skin(nullptr),
+		m_AudioActive(false),
+		m_StateInitialized(false),
+		m_Thread(nullptr),
+		m_StopEvent(CreateEvent(nullptr, TRUE, FALSE, nullptr)),
+		m_SessionEvent(CreateEvent(nullptr, FALSE, FALSE, nullptr))
+	{
+	}
+
+	~AudioLevelSessionMonitor()
+	{
+		Stop();
+		if (m_SessionEvent) CloseHandle(m_SessionEvent);
+		if (m_StopEvent) CloseHandle(m_StopEvent);
+	}
+
+	bool Start(const std::wstring& deviceId, Skin* skin, const std::wstring& startAction, const std::wstring& endAction)
+	{
+		if (!m_StopEvent || !m_SessionEvent) return false;
+
+		m_DeviceId = deviceId;
+		m_Skin = skin;
+		m_StartAction = startAction;
+		m_EndAction = endAction;
+		m_StateInitialized = false;
+		m_Stopping = false;
+		ResetEvent(m_StopEvent);
+
+		const uintptr_t thread = _beginthreadex(nullptr, 0, [](void* context) -> unsigned
+		{
+			static_cast<AudioLevelSessionMonitor*>(context)->Run();
+			return 0;
+		}, this, 0, nullptr);
+		if (!thread) return false;
+
+		m_Thread = reinterpret_cast<HANDLE>(thread);
+		return true;
+	}
+
+	void Stop()
+	{
+		if (m_Thread)
+		{
+			m_Stopping = true;
+			SetEvent(m_StopEvent);
+			WaitForSingleObject(m_Thread, INFINITE);
+			CloseHandle(m_Thread);
+			m_Thread = nullptr;
+		}
+		m_Skin = nullptr;
+	}
+
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** object) override
+	{
+		if (!object) return E_POINTER;
+
+		if (riid == __uuidof(IUnknown) || riid == __uuidof(IAudioSessionNotification))
+		{
+			*object = static_cast<IAudioSessionNotification*>(this);
+		}
+		else if (riid == __uuidof(IAudioSessionEvents))
+		{
+			*object = static_cast<IAudioSessionEvents*>(this);
+		}
+		else
+		{
+			*object = nullptr;
+			return E_NOINTERFACE;
+		}
+
+		AddRef();
+		return S_OK;
+	}
+
+	ULONG STDMETHODCALLTYPE AddRef() override
+	{
+		return ++m_RefCount;
+	}
+
+	ULONG STDMETHODCALLTYPE Release() override
+	{
+		const ULONG refCount = --m_RefCount;
+		if (refCount == 0) delete this;
+		return refCount;
+	}
+
+	HRESULT STDMETHODCALLTYPE OnSessionCreated(IAudioSessionControl* session) override
+	{
+		if (!session || m_Stopping) return S_OK;
+
+		SessionPtr sessionPtr(session);
+		{
+			CriticalSectionLock lock(m_CriticalSection);
+			if (!m_Stopping) m_PendingSessions.push_back(std::move(sessionPtr));
+		}
+
+		if (!m_Stopping) SetEvent(m_SessionEvent);
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE OnStateChanged(AudioSessionState) override
+	{
+		if (!m_Stopping) SetEvent(m_SessionEvent);
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE OnSessionDisconnected(AudioSessionDisconnectReason) override
+	{
+		if (!m_Stopping) SetEvent(m_SessionEvent);
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE OnDisplayNameChanged(LPCWSTR, LPCGUID) override { return S_OK; }
+	HRESULT STDMETHODCALLTYPE OnIconPathChanged(LPCWSTR, LPCGUID) override { return S_OK; }
+	HRESULT STDMETHODCALLTYPE OnSimpleVolumeChanged(float, BOOL, LPCGUID) override { return S_OK; }
+	HRESULT STDMETHODCALLTYPE OnChannelVolumeChanged(DWORD, float[], DWORD, LPCGUID) override { return S_OK; }
+	HRESULT STDMETHODCALLTYPE OnGroupingParamChanged(LPCGUID, LPCGUID) override { return S_OK; }
+
+private:
+	void RegisterSession(SessionPtr session, std::vector<SessionPtr>& sessions)
+	{
+		if (!session) return;
+
+		Microsoft::WRL::ComPtr<IAudioSessionControl2> session2;
+		DWORD processId = 0;
+		if (session.As(&session2) == S_OK) session2->GetProcessId(&processId);
+		// Do not treat AudioLevel's own loopback session as active playback.
+		if (processId == GetCurrentProcessId()) return;
+
+		Microsoft::WRL::ComPtr<IUnknown> identity;
+		if (session.As(&identity) == S_OK)
+		{
+			for (const auto& registeredSession : sessions)
+			{
+				Microsoft::WRL::ComPtr<IUnknown> registeredIdentity;
+				if (registeredSession.As(&registeredIdentity) == S_OK && identity.Get() == registeredIdentity.Get()) return;
+			}
+		}
+
+		if (session->RegisterAudioSessionNotification(this) == S_OK) sessions.push_back(std::move(session));
+	}
+
+	void RegisterPendingSessions(std::vector<SessionPtr>& sessions)
+	{
+		std::vector<SessionPtr> pendingSessions;
+		{
+			CriticalSectionLock lock(m_CriticalSection);
+			pendingSessions.swap(m_PendingSessions);
+		}
+
+		for (auto& session : pendingSessions)
+		{
+			RegisterSession(std::move(session), sessions);
+		}
+	}
+
+	void ClearPendingSessions()
+	{
+		std::vector<SessionPtr> pendingSessions;
+		CriticalSectionLock lock(m_CriticalSection);
+		pendingSessions.swap(m_PendingSessions);
+	}
+
+	void UpdateAudioState(const std::vector<SessionPtr>& sessions)
+	{
+		bool audioActive = false;
+		for (const auto& session : sessions)
+		{
+			AudioSessionState state;
+			if (session->GetState(&state) == S_OK && state == AudioSessionStateActive)
+			{
+				audioActive = true;
+				break;
+			}
+		}
+
+		if (!m_StateInitialized)
+		{
+			m_StateInitialized = true;
+			m_AudioActive = audioActive;
+			if (!audioActive) return;
+		}
+		else if (audioActive == m_AudioActive)
+		{
+			return;
+		}
+		else
+		{
+			m_AudioActive = audioActive;
+		}
+
+		const std::wstring& action = audioActive ? m_StartAction : m_EndAction;
+		if (!action.empty() && m_Skin) GetRainmeter().DelayedExecuteCommand(action.c_str(), m_Skin);
+	}
+
+	void Run()
+	{
+		const HRESULT initializeResult = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+		if (FAILED(initializeResult)) return;
+
+		Microsoft::WRL::ComPtr<IMMDeviceEnumerator> deviceEnumerator;
+		Microsoft::WRL::ComPtr<IMMDevice> device;
+		Microsoft::WRL::ComPtr<IAudioSessionManager2> manager;
+		Microsoft::WRL::ComPtr<IAudioSessionEnumerator> sessionEnumerator;
+		std::vector<SessionPtr> sessions;
+		bool notificationRegistered = false;
+
+		if (CoCreateInstance(CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL, IID_PPV_ARGS(deviceEnumerator.GetAddressOf())) == S_OK &&
+			deviceEnumerator->GetDevice(m_DeviceId.c_str(), device.GetAddressOf()) == S_OK &&
+			device->Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, nullptr, reinterpret_cast<void**>(manager.GetAddressOf())) == S_OK &&
+			manager->GetSessionEnumerator(sessionEnumerator.GetAddressOf()) == S_OK &&
+			manager->RegisterSessionNotification(this) == S_OK)
+		{
+			notificationRegistered = true;
+
+			int count = 0;
+			if (sessionEnumerator->GetCount(&count) == S_OK)
+			{
+				for (int i = 0; i < count; ++i)
+				{
+					SessionPtr session;
+					if (sessionEnumerator->GetSession(i, session.GetAddressOf()) == S_OK) RegisterSession(std::move(session), sessions);
+				}
+			}
+			UpdateAudioState(sessions);
+
+			HANDLE events[] = { m_StopEvent, m_SessionEvent };
+			while (WaitForMultipleObjects(_countof(events), events, FALSE, INFINITE) == WAIT_OBJECT_0 + 1)
+			{
+				RegisterPendingSessions(sessions);
+				UpdateAudioState(sessions);
+			}
+		}
+
+		if (notificationRegistered) manager->UnregisterSessionNotification(this);
+		ClearPendingSessions();
+		for (const auto& session : sessions)
+		{
+			session->UnregisterAudioSessionNotification(this);
+		}
+		sessions.clear();
+		sessionEnumerator.Reset();
+		manager.Reset();
+		device.Reset();
+		deviceEnumerator.Reset();
+
+		CoUninitialize();
+	}
+
+	std::atomic<ULONG> m_RefCount = 1;
+	std::atomic<bool> m_Stopping = false;
+	Skin* m_Skin;
+	bool m_AudioActive;
+	bool m_StateInitialized;
+	HANDLE m_Thread;
+	HANDLE m_StopEvent;
+	HANDLE m_SessionEvent;
+	CriticalSection m_CriticalSection;
+	std::wstring m_DeviceId;
+	std::wstring m_StartAction;
+	std::wstring m_EndAction;
+	std::vector<SessionPtr> m_PendingSessions;
+};
+
 MeasureAudioLevel::MeasureAudioLevel(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Port(PORT_OUTPUT),
 	m_Channel(CHANNEL_SUM),
@@ -118,6 +394,7 @@ MeasureAudioLevel::MeasureAudioLevel(Skin* skin, const WCHAR* name) : Measure(sk
 	m_FreqMax(20000.0),
 	m_Sensitivity(35.0),
 	m_Parent(nullptr),
+	m_SessionMonitor(nullptr),
 	m_Enum(nullptr),
 	m_NotificationClient(nullptr),
 	m_Dev(nullptr),
@@ -276,6 +553,11 @@ void MeasureAudioLevel::ReadOptions(ConfigParser::OptionReader& reader)
 	if (!m_Initialized)
 	{
 		ResolveParent(reader);
+		if (!m_Parent)
+		{
+			reader.ReadString<"OnAudioStartAction">(m_OnAudioStartAction, L"", { .sectionVariables = false });
+			reader.ReadString<"OnAudioEndAction">(m_OnAudioEndAction, L"", { .sectionVariables = false });
+		}
 
 		static constexpr ConfigParser::EnumOption<Port> s_Ports[] =
 		{
@@ -1080,6 +1362,21 @@ HRESULT MeasureAudioLevel::DeviceInit()
 	// initialize the watchdog timer
 	QueryPerformanceCounter(&m_PcFill);
 
+	if (m_Port == PORT_OUTPUT && (!m_OnAudioStartAction.empty() || !m_OnAudioEndAction.empty()))
+	{
+		LPWSTR deviceId = nullptr;
+		if (m_Dev->GetId(&deviceId) == S_OK && deviceId)
+		{
+			m_SessionMonitor = new AudioLevelSessionMonitor();
+			if (!m_SessionMonitor->Start(deviceId, m_Skin, m_OnAudioStartAction, m_OnAudioEndAction))
+			{
+				m_SessionMonitor->Release();
+				m_SessionMonitor = nullptr;
+			}
+			CoTaskMemFree(deviceId);
+		}
+	}
+
 	return S_OK;
 
 Exit:
@@ -1093,6 +1390,13 @@ Exit:
  */
 void MeasureAudioLevel::DeviceRelease()
 {
+	if (m_SessionMonitor)
+	{
+		m_SessionMonitor->Stop();
+		m_SessionMonitor->Release();
+		m_SessionMonitor = nullptr;
+	}
+
 	if (m_ClAudio)
 	{
 		if (!m_Parent) LogDebugF(this, L"Releasing audio device.");
