@@ -56,9 +56,9 @@ if (Test-Path -LiteralPath $manifestPath -PathType Leaf) {
 			}
 		}
 	}
-	Write-Host "* Prepared build cache with $changedFiles changed files"
+	Write-Host "Prepared build cache with $changedFiles changed files"
 } else {
-	Write-Host '* No reusable build cache found'
+	Write-Host 'No reusable build cache found'
 }
 
 New-Item -ItemType Directory -Path $cacheDirectoryPath -Force | Out-Null
