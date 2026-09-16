@@ -97,7 +97,7 @@ void MeterButton::ReadOptions(ConfigParser::OptionReader& reader)
 		m_Image.ReadOptions(parser, reader);
 	}
 
-	reader.ReadString<"ButtonCommand">(m_Command, L"", { .sectionVariables = false });
+	reader.ReadActionString<"ButtonCommand">(m_Command);
 
 	if (m_Initialized)
 	{

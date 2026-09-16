@@ -555,8 +555,8 @@ void MeasureAudioLevel::ReadOptions(ConfigParser::OptionReader& reader)
 		ResolveParent(reader);
 		if (!m_Parent)
 		{
-			reader.ReadString<"OnAudioStartAction">(m_OnAudioStartAction, L"", { .sectionVariables = false });
-			reader.ReadString<"OnAudioEndAction">(m_OnAudioEndAction, L"", { .sectionVariables = false });
+			reader.ReadActionString<"OnAudioStartAction">(m_OnAudioStartAction);
+			reader.ReadActionString<"OnAudioEndAction">(m_OnAudioEndAction);
 		}
 
 		static constexpr ConfigParser::EnumOption<Port> s_Ports[] =

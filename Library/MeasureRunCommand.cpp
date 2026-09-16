@@ -456,7 +456,7 @@ void MeasureRunCommand::ReadOptions(ConfigParser::OptionReader& reader)
 	Measure::ReadOptions(reader);
 
 	reader.ReadString<"Parameter">(m_Parameter, L"");
-	reader.ReadString<"FinishAction">(m_FinishAction, L"", { .sectionVariables = false });
+	reader.ReadActionString<"FinishAction">(m_FinishAction);
 	reader.ReadString<"OutputFile">(m_OutputFile, L"");
 	m_Skin->MakePathAbsolute(m_OutputFile);
 

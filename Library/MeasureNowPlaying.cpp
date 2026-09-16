@@ -264,7 +264,7 @@ void MeasureNowPlaying::ReadOptions(ConfigParser::OptionReader& reader)
 
 		m_Parent->player->AddInstance();
 		reader.ReadString<"PlayerPath">(m_Parent->playerPath, L"");
-		reader.ReadString<"TrackChangeAction">(m_Parent->trackChangeAction, L"", { .sectionVariables = false });
+		reader.ReadActionString<"TrackChangeAction">(m_Parent->trackChangeAction);
 		m_Parent->disableLeadingZero = reader.ReadBool<"DisableLeadingZero">(false);
 
 		if (oldPlayer)

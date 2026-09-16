@@ -744,7 +744,7 @@ void MeasureInputText::Command(const std::wstring& command)
 			if (!value.empty()) ApplyOption(m_Options, parser, entry.option, value);
 		}
 
-		reader.ReadString<"OnDismissAction">(m_DismissAction, L"", { .sectionVariables = false });
+		reader.ReadActionString<"OnDismissAction">(m_DismissAction);
 		hasSteps = ReadSteps(reader, command);
 	}
 
@@ -800,7 +800,7 @@ bool MeasureInputText::ReadSteps(ConfigParser::OptionReader& reader, const std::
 	{
 		std::wstring name = L"Command";
 		name += std::to_wstring(i);
-		const auto& line = reader.ReadString(name, L"", { .sectionVariables = false });
+		const auto& line = reader.ReadActionString(name);
 		if (line.empty()) break;
 
 		Step& step = m_Steps.emplace_back();

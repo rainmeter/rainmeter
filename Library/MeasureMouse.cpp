@@ -224,12 +224,12 @@ void MeasureMouse::ReadOptions(ConfigParser::OptionReader& reader)
 
 	m_Mouse.ReadOptions(parser, reader);
 
-	reader.ReadString<"MouseMoveAction">(m_MouseMoveAction, L"", { .sectionVariables = false });
-	reader.ReadString<"LeftMouseDragAction">(m_LeftDragAction, L"", { .sectionVariables = false });
-	reader.ReadString<"MiddleMouseDragAction">(m_MiddleDragAction, L"", { .sectionVariables = false });
-	reader.ReadString<"RightMouseDragAction">(m_RightDragAction, L"", { .sectionVariables = false });
-	reader.ReadString<"X1MouseDragAction">(m_X1DragAction, L"", { .sectionVariables = false });
-	reader.ReadString<"X2MouseDragAction">(m_X2DragAction, L"", { .sectionVariables = false });
+	reader.ReadActionString<"MouseMoveAction">(m_MouseMoveAction);
+	reader.ReadActionString<"LeftMouseDragAction">(m_LeftDragAction);
+	reader.ReadActionString<"MiddleMouseDragAction">(m_MiddleDragAction);
+	reader.ReadActionString<"RightMouseDragAction">(m_RightDragAction);
+	reader.ReadActionString<"X1MouseDragAction">(m_X1DragAction);
+	reader.ReadActionString<"X2MouseDragAction">(m_X2DragAction);
 
 	m_RelativeToSkin = reader.ReadBool<"RelativeToSkin">(true);
 	m_RequireDragging = reader.ReadBool<"RequireDragging">(false);

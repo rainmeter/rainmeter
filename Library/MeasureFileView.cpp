@@ -449,7 +449,7 @@ void MeasureFileView::ReadOptions(ConfigParser::OptionReader& reader)
 
 		reader.ReadString<"WildcardSearch">(m_Parent->wildcardSearch, L"*");
 
-		reader.ReadString<"FinishAction">(m_Parent->finishAction, L"", { .sectionVariables = false });
+		reader.ReadActionString<"FinishAction">(m_Parent->finishAction);
 	}
 
 	SetParent(m_Parent);
