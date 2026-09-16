@@ -12,7 +12,7 @@
 #include "../Common/ShellDialog.h"
 #include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
-#include "../Version.h"
+#include "VersionInfo.h"
 
 #include "iowin32.h"
 
@@ -98,7 +98,7 @@ static std::wstring GetLocalTimeString()
 static std::wstring GetCurrentRainmeterVersion()
 {
 	WCHAR buffer[32] = { 0 };
-	_snwprintf_s(buffer, _TRUNCATE, L"%s.%i", APPVERSION, revision_number);
+	_snwprintf_s(buffer, _TRUNCATE, L"%s.%i", VersionInfo::GetAppVersion(), VersionInfo::GetRevision());
 	return buffer;
 }
 

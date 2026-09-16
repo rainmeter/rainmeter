@@ -28,7 +28,7 @@
 #include "MeasureScript.h"
 #include "MeasureSysInfo.h"
 #include "GeneralImage.h"
-#include "../Version.h"
+#include "VersionInfo.h"
 #include "../Common/DpiUtil.h"
 #include "../Common/PathUtil.h"
 #include "../Common/ScopedFunction.h"
@@ -2550,7 +2550,7 @@ bool Skin::ReadSkin()
 
 	// Check the version
 	UINT appVersion = reader.ReadUInt<"AppVersion">(0);
-	if (appVersion > RAINMETER_VERSION)
+	if (appVersion > VersionInfo::GetRainmeterVersion())
 	{
 		if (appVersion % 1000 != 0)
 		{

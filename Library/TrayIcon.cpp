@@ -13,7 +13,6 @@
 #include "System.h"
 #include "RainmeterQuery.h"
 #include "resource.h"
-#include "../Version.h"
 #include <ole2.h>  // For Gdiplus.h.
 
 // Gdiplus.h calls min() and max() unqualified, which NOMINMAX removes along with the rest
