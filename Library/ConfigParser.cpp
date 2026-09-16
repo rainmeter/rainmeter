@@ -736,25 +736,29 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, std::wstring_view curr
 	{
 		replaced = ExpandSectionVariables(result, currentSection, monitorVariableMode, VariableExpandMode::HashOnly, nullptr, 0, specialPos);
 	}
-	else if (!currentSection.empty())
-	{
-		// Special parsing for [#CURRENTSECTION] for use in actions
-		size_t start = specialPos;
-		const std::wstring strVariable = L"[#CURRENTSECTION]";
-		const size_t length = strVariable.length();
-		while ((start = result.find(strVariable, start)) != std::wstring::npos)
-		{
-			result.replace(start, length, currentSection);
-			start += currentSection.length();
-			replaced = true;
-		}
-	}
 
 	// Check for old-style variables (#VAR#)
+	constexpr std::wstring_view currentSectionVariable = L"[#CURRENTSECTION]";
 	size_t start = specialPos;
 	size_t end = 0;
 	while ((start = result.find(L'#', start)) != std::wstring::npos)
 	{
+		// This is a backward-compatibility hack for actions, which need [#CURRENTSECTION] even when
+		// section-variable replacement is disabled. The token has only one '#', so handle it before
+		// looking for the closing '#' of an old-style #VAR# variable. The match is intentionally
+		// case-sensitive to preserve the old special-case behavior.
+		if (!currentSection.empty() && start != 0)
+		{
+			const size_t variableStart = start - 1;
+			if (std::wstring_view(result).substr(variableStart).starts_with(currentSectionVariable))
+			{
+				result.replace(variableStart, currentSectionVariable.length(), currentSection);
+				start = variableStart + currentSection.length();
+				replaced = true;
+				continue;
+			}
+		}
+
 		size_t si = start + 1;
 		end = result.find(L'#', si);
 		if (end == std::wstring::npos) break;
