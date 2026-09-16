@@ -150,6 +150,12 @@ Function .onInit
 	${If} ${RunningX64}
 		${EnableX64FSRedirection}
 	${EndIf}
+!ifdef X64ONLY
+		${IfNot} ${RunningX64}
+			MessageBox MB_OK|MB_ICONSTOP "This installer requires 64-bit Windows." /SD IDOK
+			Quit
+		${EndIf}
+!endif
 
 	${IfNot} ${UAC_IsInnerInstance}
 		${IfNot} ${AtLeastWin10}
@@ -299,6 +305,9 @@ Function .onInit
 		StrCpy $LANGUAGE $5
 		StrCpy $INSTDIR $6
 	${EndIf}
+!ifdef X64ONLY
+		StrCpy $Install64Bit 1
+!endif
 FunctionEnd
 
 Function ExchangeSettings
@@ -424,6 +433,7 @@ Function PageOptions
 	StrCpy $1 0
 
 	StrCpy $R2 0
+!ifndef X64ONLY
 	${If} ${RunningX64}
 		${If} $InstallPortable = 1
 		${OrIf} $INSTDIR == ""
@@ -433,6 +443,7 @@ Function PageOptions
 			StrCpy $1 30u
 		${EndIf}
 	${EndIf}
+!endif
 
 	${If} $InstallPortable <> 1
 		${If} $1 = 0
@@ -568,6 +579,9 @@ Function PageOptionsOnLeave
 	${If} $R2 != 0
 		${NSD_GetState} $R2 $Install64Bit
 	${EndIf}
+!ifdef X64ONLY
+		StrCpy $Install64Bit 1
+!endif
 
 	${If} $R3 != 0
 		${NSD_GetState} $R3 $AutoStartup
@@ -739,15 +753,23 @@ SkipIniMove:
 !ifdef INCLUDEFILES
 	File "..\..\Application\Rainmeter.exe.config"
 
+!ifdef X64ONLY
+		!insertmacro InstallFiles "BuildOut\Release64" "x64"
+!else
 	${If} $instArc == "x86"
 		!insertmacro InstallFiles "BuildOut\Release32" "x86"
 	${Else}
 		!insertmacro InstallFiles "BuildOut\Release64" "x64"
 	${EndIf}
+!endif
 
 	RMDir /r "$INSTDIR\Languages"
 	SetOutPath "$INSTDIR\Languages"
+!ifdef X64ONLY
+	File "..\..\BuildOut\Release64\Languages\*.rmlang"
+!else
 	File "..\..\BuildOut\Release32\Languages\*.rmlang"
+!endif
 
 	SetOutPath "$INSTDIR\Defaults\Skins"
 	File /r "..\Skins\*.*"
