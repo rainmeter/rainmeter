@@ -17,6 +17,9 @@ Optional MSBuild target. Valid values are build and rebuild; defaults to rebuild
 .PARAMETER LTCG
 Enables whole-program optimization and link-time code generation for release builds.
 
+.PARAMETER X64Only
+Builds an installer containing only 64-bit files.
+
 .EXAMPLE
 .\Build.ps1 full 1.2.3.4
 
@@ -41,7 +44,9 @@ param(
 	[ValidateSet('build', 'rebuild')]
 	[string]$MSBuildTarget = 'rebuild',
 
-	[switch]$LTCG
+	[switch]$LTCG,
+
+	[switch]$X64Only
 )
 
 $ErrorActionPreference = 'Stop'
@@ -281,6 +286,9 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'installer') {
 		"/DVERSION_MINOR=$versionMinor",
 		"/DBUILD_YEAR=$buildYear"
 	)
+	if ($X64Only) {
+		$installerDefines += '/DX64ONLY'
+	}
 
 	Invoke-NativeCommand $makeNsis ($installerDefines + @('/WX', '.\Installer\Installer.nsi')) -ErrorMessage 'Installer build failed'
 }
