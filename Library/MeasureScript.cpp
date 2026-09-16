@@ -187,7 +187,7 @@ void MeasureScript::Command(const std::wstring& command)
 	}
 }
 
-bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry)
+bool MeasureScript::CommandWithReturn(std::wstring_view command, std::wstring& strValue, void* delayedLogEntry)
 {
 	// Scripts need to be initialized so that any variables declared in
 	// the Initialize() function in the lua script file are accessible.
@@ -208,7 +208,7 @@ bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring&
 		if (funcName.empty() || !parser.ConsumeSuffixFromLast(L')'))
 		{
 			WCHAR errMsg[MAX_LINE_LENGTH];
-			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %s", command.c_str());
+			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %.*s", (int)command.length(), command.data());
 			if (delayedLogEntry)
 			{
 				std::wstring source = m_Skin->GetSkinPath();
@@ -240,7 +240,7 @@ bool MeasureScript::CommandWithReturn(const std::wstring& command, std::wstring&
 			parser.ConsumeWhitespace();
 		}
 
-		if (!m_LuaScript.RunCustomFunction(std::wstring(funcName), args, strValue))
+		if (!m_LuaScript.RunCustomFunction(funcName, args, strValue))
 		{
 			if (!strValue.empty())
 			{

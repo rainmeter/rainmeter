@@ -315,17 +315,20 @@ LuaResult LuaScript::RunString(const std::wstring& str)
 	return LuaResult::Success();
 }
 
-bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vector<std::wstring_view>& args, std::wstring& strValue)
+bool LuaScript::RunCustomFunction(std::wstring_view funcName, const std::vector<std::wstring_view>& args, std::wstring& strValue)
 {
 	if (!IsInitialized()) return false;
 
 	auto L = GetState();
 
 	const std::string nFuncName = m_Unicode ?
-		StringUtil::NarrowUTF8(funcName) : StringUtil::Narrow(funcName);
+		StringUtil::NarrowUTF8(funcName.data(), (int)funcName.length()) :
+		StringUtil::Narrow(funcName.data(), (int)funcName.length());
 	if (!IsFunction(nFuncName.c_str()))
 	{
-		strValue = L"Not a valid function name: \"" + funcName + L"\"";
+		strValue = L"Not a valid function name: \"";
+		strValue.append(funcName.data(), funcName.length());
+		strValue += L'"';
 		return false;
 	}
 
@@ -459,7 +462,7 @@ bool LuaScript::RunCustomFunction(const std::wstring& funcName, const std::vecto
 	return result;
 }
 
-bool LuaScript::GetLuaVariable(const std::wstring& varName, std::wstring& strValue)
+bool LuaScript::GetLuaVariable(std::wstring_view varName, std::wstring& strValue)
 {
 	if (!IsInitialized()) return false;
 
@@ -468,7 +471,8 @@ bool LuaScript::GetLuaVariable(const std::wstring& varName, std::wstring& strVal
 	bool result = true;
 
 	const std::string nVarName = m_Unicode ?
-		StringUtil::NarrowUTF8(varName) : StringUtil::Narrow(varName);
+		StringUtil::NarrowUTF8(varName.data(), (int)varName.length()) :
+		StringUtil::Narrow(varName.data(), (int)varName.length());
 
 	// Stack: []
 	lua_rawgeti(L, LUA_GLOBALSINDEX, m_Ref);

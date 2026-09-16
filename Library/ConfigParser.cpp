@@ -319,15 +319,13 @@ std::optional<std::wstring> ConfigParser::GetSectionVariable(std::wstring_view v
 			const auto type = measure->GetTypeID();
 			if (type == TypeID<MeasureScript>())
 			{
-				const std::wstring command(selector);
 				MeasureScript* script = (MeasureScript*)measure;
-				if (script->CommandWithReturn(command, value, logEntry)) return value;
+				if (script->CommandWithReturn(selector, value, logEntry)) return value;
 			}
 			else if (type == TypeID<MeasurePlugin>())
 			{
-				const std::wstring command(selector);
 				MeasurePlugin* plugin = (MeasurePlugin*)measure;
-				if (plugin->CommandWithReturn(command, value, logEntry)) return value;
+				if (plugin->CommandWithReturn(selector, value, logEntry)) return value;
 			}
 
 			return std::nullopt;
