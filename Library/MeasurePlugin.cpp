@@ -249,7 +249,7 @@ void MeasurePlugin::Command(const std::wstring& command)
 	}
 }
 
-bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring& strValue, void* delayedLogEntry)
+bool MeasurePlugin::CommandWithReturn(std::wstring_view command, std::wstring& strValue, void* delayedLogEntry)
 {
 	if (!m_Initialized)
 	{
@@ -265,7 +265,7 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 		if (funcName.empty() || !parser.ConsumeSuffixFromLast(L')'))
 		{
 			WCHAR errMsg[MAX_LINE_LENGTH];
-			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %s", command.c_str());
+			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %.*s", (int)command.length(), command.data());
 			if (delayedLogEntry)
 			{
 				std::wstring source = m_Skin->GetSkinPath();
@@ -327,12 +327,12 @@ bool MeasurePlugin::CommandWithReturn(const std::wstring& command, std::wstring&
 			}
 			else
 			{
-				LogErrorF(this, L"Invalid return type in function: %s", std::wstring(funcName).c_str());
+				LogErrorF(this, L"Invalid return type in function: %.*s", (int)funcName.length(), funcName.data());
 			}
 		}
 		else
 		{
-			LogErrorF(this, L"Cannot find function: %s", std::wstring(funcName).c_str());
+			LogErrorF(this, L"Cannot find function: %.*s", (int)funcName.length(), funcName.data());
 		}
 	}
 
