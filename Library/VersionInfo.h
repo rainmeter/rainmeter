@@ -6,7 +6,7 @@ namespace VersionInfo {
 
 const wchar_t* GetAppVersion();
 int GetRevision();
-int GetRainmeterVersion();
+unsigned int GetRainmeterVersion();
 const wchar_t* GetBuildTime();
 const wchar_t* GetCommitHash();
 
