@@ -46,6 +46,21 @@ jobs:
         run: .\Build\Build.ps1 test-64
         shell: pwsh
 
+      - name: Install NSIS
+        uses: ./.github/actions/install-nsis
+
+      - name: Build installer
+        run: .\Build\Build.ps1 installer "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER" -X64Only
+        shell: pwsh
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v7
+        id: upload-installer
+        with:
+          path: Build/Rainmeter-*.exe
+          archive: false
+          if-no-files-found: error
+
       - name: Upload 64-bit build
         uses: actions/upload-artifact@v7
         with:
@@ -60,19 +75,4 @@ jobs:
         with:
           name: DebugSymbols-Release64
           path: BuildOut/**/*.pdb
-          if-no-files-found: error
-
-      - name: Install NSIS
-        uses: ./.github/actions/install-nsis
-
-      - name: Build installer
-        run: .\Build\Build.ps1 installer "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER" -X64Only
-        shell: pwsh
-
-      - name: Upload installer
-        uses: actions/upload-artifact@v7
-        id: upload-installer
-        with:
-          path: Build/Rainmeter-*.exe
-          archive: false
           if-no-files-found: error
