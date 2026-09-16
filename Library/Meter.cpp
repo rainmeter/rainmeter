@@ -280,26 +280,26 @@ void Meter::ReadOptions(ConfigParser::OptionReader& reader)
 	BindMeasures(reader);
 
 	int oldX = m_X;
-	std::wstring& x = (std::wstring&)reader.ReadString<"X">(L"0");
+	std::wstring_view x = reader.ReadString<"X">(L"0");
 	if (!x.empty())
 	{
-		WCHAR lastChar = x[x.size() - 1];
+		WCHAR lastChar = x.back();
 		if (lastChar == L'r')
 		{
 			m_RelativeX = POSITION_RELATIVE_TL;
-			x.pop_back();
+			x.remove_suffix(1);
 		}
 		else if (lastChar == L'R')
 		{
 			m_RelativeX = POSITION_RELATIVE_BR;
-			x.pop_back();
+			x.remove_suffix(1);
 		}
 		else
 		{
 			m_RelativeX = POSITION_ABSOLUTE;
 		}
 
-		m_X = parser.ParseInt(x.c_str(), 0);
+		m_X = parser.ParseInt(x, 0);
 	}
 	else
 	{
@@ -308,26 +308,26 @@ void Meter::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 
 	int oldY = m_Y;
-	std::wstring& y = (std::wstring&)reader.ReadString<"Y">(L"0");
+	std::wstring_view y = reader.ReadString<"Y">(L"0");
 	if (!y.empty())
 	{
-		WCHAR lastChar = y[y.size() - 1];
+		WCHAR lastChar = y.back();
 		if (lastChar == L'r')
 		{
 			m_RelativeY = POSITION_RELATIVE_TL;
-			y.pop_back();
+			y.remove_suffix(1);
 		}
 		else if (lastChar == L'R')
 		{
 			m_RelativeY = POSITION_RELATIVE_BR;
-			y.pop_back();
+			y.remove_suffix(1);
 		}
 		else
 		{
 			m_RelativeY = POSITION_ABSOLUTE;
 		}
 
-		m_Y = parser.ParseInt(y.c_str(), 0);
+		m_Y = parser.ParseInt(y, 0);
 	}
 	else
 	{
