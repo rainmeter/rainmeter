@@ -7,7 +7,8 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
-    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <WholeProgramOptimization Condition="'$(EnableLTCG)'=='true'">true</WholeProgramOptimization>
+    <WholeProgramOptimization Condition="'$(EnableLTCG)'!='true'">false</WholeProgramOptimization>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -98,13 +99,15 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <Optimization>MaxSpeed</Optimization>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <WholeProgramOptimization Condition="'$(EnableLTCG)'=='true'">true</WholeProgramOptimization>
+      <WholeProgramOptimization Condition="'$(EnableLTCG)'!='true'">false</WholeProgramOptimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <AdditionalOptions>/Gw %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration Condition="'$(EnableLTCG)'=='true'">UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration Condition="'$(EnableLTCG)'!='true'">Default</LinkTimeCodeGeneration>
       <MergeSections>.rdata=.text</MergeSections>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

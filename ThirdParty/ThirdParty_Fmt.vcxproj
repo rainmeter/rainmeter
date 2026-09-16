@@ -19,7 +19,7 @@
       <PreprocessorDefinitions>_LIB;FMT_UNICODE=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
-      <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">true</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release' and '$(EnableLTCG)'=='true'">true</LinkTimeCodeGeneration>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
