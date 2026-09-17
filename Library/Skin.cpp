@@ -2813,7 +2813,7 @@ bool Skin::ReadSkin()
 						if (StringUtil::EqualsIgnoreCase(pluginName, oldDefaultPlugin))
 						{
 							// Equality comparison is OK since oldDefaultPlugin from a string literal as well.
-							measureName =
+							const WCHAR* adjustedName =
 								oldDefaultPlugin == L"Drag&Drop" ? L"DragDrop" :
 								oldDefaultPlugin == L"iTunesPlugin" ? L"iTunes" :
 								oldDefaultPlugin == L"PingPlugin" ? L"Ping" :
@@ -2822,7 +2822,15 @@ bool Skin::ReadSkin()
 								oldDefaultPlugin == L"SpeedFanPlugin" ? L"SpeedFan" :
 								oldDefaultPlugin == L"Win7AudioPlugin" ? L"Audio" :
 								oldDefaultPlugin == L"WindowMessagePlugin" ? L"WindowMessage" :
-								plugin;
+								nullptr;
+							if (adjustedName)
+							{
+								measureName = adjustedName;
+							}
+							else
+							{
+								measureName = pluginName;
+							}
 							break;
 						}
 					}
