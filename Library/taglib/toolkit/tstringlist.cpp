@@ -116,8 +116,8 @@ StringList &StringList::append(const StringList &l)
 // related functions
 ////////////////////////////////////////////////////////////////////////////////
 
-std::ostream &operator<<(std::ostream &s, const StringList &l)
-{
-  s << l.toString();
-  return s;
-}
+// std::ostream &operator<<(std::ostream &s, const StringList &l)
+// {
+//   s << l.toString();
+//   return s;
+// }
