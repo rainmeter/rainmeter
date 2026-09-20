@@ -31,7 +31,7 @@
 #include "tbytevectorlist.h"
 #include "taglib_export.h"
 
-#include <iostream>
+#include <iosfwd>
 
 namespace TagLib {
 
@@ -110,6 +110,6 @@ namespace TagLib {
  * \related TagLib::StringList
  * Send the StringList to an output stream.
  */
-std::ostream TAGLIB_EXPORT &operator<<(std::ostream &s, const TagLib::StringList &l);
+// std::ostream TAGLIB_EXPORT &operator<<(std::ostream &s, const TagLib::StringList &l);
 
 #endif

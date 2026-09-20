@@ -30,7 +30,7 @@
 #include "taglib_export.h"
 
 #include <vector>
-#include <iostream>
+#include <iosfwd>
 
 namespace TagLib {
 
@@ -630,6 +630,6 @@ namespace TagLib {
  * \relates TagLib::ByteVector
  * Streams the ByteVector \a v to the output stream \a s.
  */
-TAGLIB_EXPORT std::ostream &operator<<(std::ostream &s, const TagLib::ByteVector &v);
+// TAGLIB_EXPORT std::ostream &operator<<(std::ostream &s, const TagLib::ByteVector &v);
 
 #endif

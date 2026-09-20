@@ -23,7 +23,6 @@
  *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
-#include <iostream>
 
 #include "id3v2synchdata.h"
 

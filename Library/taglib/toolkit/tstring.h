@@ -31,7 +31,7 @@
 #include "tbytevector.h"
 
 #include <string>
-#include <iostream>
+#include <iosfwd>
 
 /*!
  * \relates TagLib::String
@@ -575,6 +575,6 @@ TAGLIB_EXPORT TagLib::String operator+(const TagLib::String &s1, const char *s2)
  *
  * Send the string to an output stream.
  */
-TAGLIB_EXPORT std::ostream &operator<<(std::ostream &s, const TagLib::String &str);
+// TAGLIB_EXPORT std::ostream &operator<<(std::ostream &s, const TagLib::String &str);
 
 #endif

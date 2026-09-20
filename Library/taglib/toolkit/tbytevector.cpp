@@ -24,7 +24,6 @@
  ***************************************************************************/
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
 #include <cmath>
 #include <cstdio>
@@ -1030,9 +1029,9 @@ void ByteVector::detach()
 // related functions
 ////////////////////////////////////////////////////////////////////////////////
 
-std::ostream &operator<<(std::ostream &s, const TagLib::ByteVector &v)
-{
-  for(unsigned int i = 0; i < v.size(); i++)
-    s << v[i];
-  return s;
-}
+// std::ostream &operator<<(std::ostream &s, const TagLib::ByteVector &v)
+// {
+//   for(unsigned int i = 0; i < v.size(); i++)
+//     s << v[i];
+//   return s;
+// }

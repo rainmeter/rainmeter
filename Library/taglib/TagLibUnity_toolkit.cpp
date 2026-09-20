@@ -9,8 +9,10 @@
 #include "toolkit\tbytevector.cpp"
 #include "toolkit\tbytevectorlist.cpp"
 #include "toolkit\tbytevectorstream.cpp"
+#if !defined(NDEBUG) || defined(TRACE_IN_RELEASE)
 #include "toolkit\tdebug.cpp"
 #include "toolkit\tdebuglistener.cpp"
+#endif
 #include "toolkit\tfilestream.cpp"
 #include "toolkit\tiostream.cpp"
 #include "toolkit\tpropertymap.cpp"
