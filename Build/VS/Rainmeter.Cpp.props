@@ -106,6 +106,8 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ucrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>libucrt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <LinkTimeCodeGeneration Condition="'$(EnableLTCG)'=='true'">UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <LinkTimeCodeGeneration Condition="'$(EnableLTCG)'!='true'">Default</LinkTimeCodeGeneration>
       <MergeSections>.rdata=.text</MergeSections>

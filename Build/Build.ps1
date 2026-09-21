@@ -113,9 +113,7 @@ function Verify-RuntimeDependencies {
 		$unexpected = @($dependencies | Where-Object { $_ -match '(?i)\b(?:MSVCP|VCRUNTIME)[^\s]*\.dll\b' })
 		if ($unexpected.Count -gt 0) {
 			$names = $unexpected | ForEach-Object { $_.Trim() }
-			$message = "$($binary.FullName) links to runtime DLL(s): $([string]::Join(', ', $names))"
-			Write-Host $message
-			Write-Host "::warning file=$($binary.FullName)::$message"
+			throw "$($binary.FullName) links to disallowed runtime DLL(s): $([string]::Join(', ', $names))"
 		}
 	}
 }
