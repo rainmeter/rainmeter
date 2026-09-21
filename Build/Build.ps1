@@ -100,6 +100,26 @@ function Invoke-NativeCommand {
 	}
 }
 
+function Verify-RuntimeDependencies {
+	param([string]$ReleaseDirectory)
+
+	$binaries = Get-ChildItem -LiteralPath $ReleaseDirectory -Recurse -File |
+		Where-Object { $_.Extension -match '(?i)^\.(?:dll|exe)$' }
+	foreach ($binary in $binaries) {
+		$dependencies = & dumpbin.exe /dependents $binary.FullName 2>&1
+		if ($LASTEXITCODE -ne 0) {
+			throw "Could not inspect DLL dependencies for '$($binary.FullName)'."
+		}
+		$unexpected = @($dependencies | Where-Object { $_ -match '(?i)\b(?:MSVCP|VCRUNTIME)[^\s]*\.dll\b' })
+		if ($unexpected.Count -gt 0) {
+			$names = $unexpected | ForEach-Object { $_.Trim() }
+			$message = "$($binary.FullName) links to runtime DLL(s): $([string]::Join(', ', $names))"
+			Write-Host $message
+			Write-Host "::warning file=$($binary.FullName)::$message"
+		}
+	}
+}
+
 function Write-Utf8File {
 	param(
 		[string]$Path,
@@ -225,11 +245,13 @@ if ($BuildType -ne 'test-64' -and $BuildType -ne 'languages' -and $BuildType -ne
 if ($BuildType -eq 'full' -or $BuildType -eq 'rainmeter-32') {
 	Write-Host '* Building 32-bit projects'
 	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$MSBuildTarget", '/p:Platform=Win32', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '32-bit project build failed'
+	Verify-RuntimeDependencies (Join-Path $PSScriptRoot '..\BuildOut\Release32')
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'rainmeter-64') {
 	Write-Host '* Building 64-bit projects'
 	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$MSBuildTarget", '/p:Platform=x64', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '64-bit project build failed'
+	Verify-RuntimeDependencies (Join-Path $PSScriptRoot '..\BuildOut\Release64')
 }
 
 if ($BuildType -eq 'full' -or $BuildType -eq 'test-64') {
