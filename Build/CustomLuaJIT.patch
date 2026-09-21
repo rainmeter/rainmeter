@@ -16,6 +16,8 @@ The patch:
 - Restores Lua 5.1 handling for unknown string escape sequences.
 - Restores the Lua 5.1 LUA_COMPAT_VARARG behavior, i.e. the implicit 'arg'
   table in vararg functions which do not use '...'.
+- Removes _CRT_STDIO_INLINE from the MSVC flags so Rainmeter.dll does not
+  export CRT stdio functions such as printf.
 
 ---
 
@@ -381,7 +383,8 @@ diff --git a/src/msvcbuild.bat b/src/msvcbuild.bat
 @@ -18,6 +18,9 @@
  @rem Add more debug flags here, e.g. DEBUGCFLAGS=/DLUA_USE_ASSERT
  @set DEBUGCFLAGS=
- @set LJCOMPILE=cl /nologo /c /O2 /W3 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_STDIO_INLINE=__declspec(dllexport)__inline
+-@set LJCOMPILE=cl /nologo /c /O2 /W3 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_STDIO_INLINE=__declspec(dllexport)__inline
++@set LJCOMPILE=cl /nologo /c /O2 /W3 /D_CRT_SECURE_NO_DEPRECATE
 +@set DASMFFI=-D FFI
 +@if defined LUAJIT_DISABLE_FFI set LJCOMPILE=%LJCOMPILE% /DLUAJIT_DISABLE_FFI
 +@if defined LUAJIT_DISABLE_FFI set DASMFFI=
