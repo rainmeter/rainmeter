@@ -23,22 +23,23 @@ jobs:
         run: .\Build\Build.ps1 rainmeter-${{ matrix.arch }} $env:BUILD_VERSION.Substring(1) -LTCG
         shell: pwsh
 
-      - name: Upload ${{ matrix.arch }}-bit build
-        uses: actions/upload-artifact@v7
-        with:
-          name: BuildOut-Release${{ matrix.arch }}
-          path: |
-            BuildOut/Release${{ matrix.arch }}
-            !BuildOut/Release${{ matrix.arch }}/Obj
-          if-no-files-found: error
+      - parallel:
+          - name: Upload ${{ matrix.arch }}-bit build
+            uses: actions/upload-artifact@v7
+            with:
+              name: BuildOut-Release${{ matrix.arch }}
+              path: |
+                BuildOut/Release${{ matrix.arch }}
+                !BuildOut/Release${{ matrix.arch }}/Obj
+              if-no-files-found: error
 
-      - name: Upload 64-bit debug symbols
-        if: ${{ matrix.arch == 64 }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: DebugSymbols-Release${{ matrix.arch }}
-          path: BuildOut/**/*.pdb
-          if-no-files-found: error
+          - name: Upload 64-bit debug symbols
+            if: ${{ matrix.arch == 64 }}
+            uses: actions/upload-artifact@v7
+            with:
+              name: DebugSymbols-Release${{ matrix.arch }}
+              path: BuildOut/**/*.pdb
+              if-no-files-found: error
 
   installer:
     environment:

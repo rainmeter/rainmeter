@@ -61,26 +61,26 @@ jobs:
         run: .\Build\Build.ps1 installer "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER" -X64Only -SkipLanguages
         shell: pwsh
 
-      - name: Upload installer
-        uses: actions/upload-artifact@v7
-        id: upload-installer
-        with:
-          path: Build/Rainmeter-*.exe
-          archive: false
-          if-no-files-found: error
+      - parallel:
+          - name: Upload installer
+            uses: actions/upload-artifact@v7
+            with:
+              path: Build/Rainmeter-*.exe
+              archive: false
+              if-no-files-found: error
 
-      - name: Upload 64-bit build
-        uses: actions/upload-artifact@v7
-        with:
-          name: BuildOut-Release64
-          path: |
-            BuildOut/Release64
-            !BuildOut/Release64/Obj
-          if-no-files-found: error
+          - name: Upload 64-bit build
+            uses: actions/upload-artifact@v7
+            with:
+              name: BuildOut-Release64
+              path: |
+                BuildOut/Release64
+                !BuildOut/Release64/Obj
+              if-no-files-found: error
 
-      - name: Upload 64-bit debug symbols
-        uses: actions/upload-artifact@v7
-        with:
-          name: DebugSymbols-Release64
-          path: BuildOut/**/*.pdb
-          if-no-files-found: error
+          - name: Upload 64-bit debug symbols
+            uses: actions/upload-artifact@v7
+            with:
+              name: DebugSymbols-Release64
+              path: BuildOut/**/*.pdb
+              if-no-files-found: error
