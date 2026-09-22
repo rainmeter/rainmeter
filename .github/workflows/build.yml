@@ -35,7 +35,7 @@ jobs:
         background: true
 
       - name: Cache 64-bit build
-        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: BuildOut/Release64/Obj
           key: rainmeter-msbuild-v3-release-64-${{ github.sha }}
@@ -49,6 +49,14 @@ jobs:
       - name: Build 64-bit Rainmeter
         run: .\Build\Build.ps1 rainmeter-64 "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER" include-tests -MSBuildTarget build
         shell: pwsh
+
+      - name: Save 64-bit build cache
+        id: save-build-cache
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: BuildOut/Release64/Obj
+          key: rainmeter-msbuild-v3-release-64-${{ github.sha }}
+        background: true
 
       - name: Test 64-bit Rainmeter
         run: .\Build\Build.ps1 test-64
@@ -92,4 +100,4 @@ jobs:
           if-no-files-found: error
 
       - name: Wait for build uploads
-        wait: [upload-build, upload-debug-symbols]
+        wait: [upload-build, upload-debug-symbols, save-build-cache]
