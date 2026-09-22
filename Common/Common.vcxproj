@@ -30,6 +30,7 @@
     <ClCompile Include="CrashDump.cpp" />
     <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
+    <ClCompile Include="DateTimeParser.cpp" />
     <ClCompile Include="DpiUtil.cpp" />
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="Gfx\Canvas.cpp" />
@@ -67,6 +68,7 @@
     <ClInclude Include="CrashDump.h" />
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="DirectoryWatcher.h" />
+    <ClInclude Include="DateTimeParser.h" />
     <ClInclude Include="DpiUtil.h" />
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="Gfx\Canvas.h" />
