@@ -54,33 +54,42 @@ jobs:
         run: .\Build\Build.ps1 test-64
         shell: pwsh
 
-      - name: Wait for installer prerequisites
-        wait: [install-nsis, generate-languages]
+      - name: Wait for language generation
+        wait: generate-languages
+
+      - name: Upload 64-bit build
+        id: upload-build
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: BuildOut-Release64
+          path: |
+            BuildOut/Release64
+            !BuildOut/Release64/Obj
+          if-no-files-found: error
+        background: true
+
+      - name: Upload 64-bit debug symbols
+        id: upload-debug-symbols
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: DebugSymbols-Release64
+          path: BuildOut/**/*.pdb
+          if-no-files-found: error
+        background: true
+
+      - name: Wait for NSIS installation
+        wait: install-nsis
 
       - name: Build installer
         run: .\Build\Build.ps1 installer "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER" -X64Only -SkipLanguages
         shell: pwsh
 
-      - parallel:
-          - name: Upload installer
-            uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-            with:
-              path: Build/Rainmeter-*.exe
-              archive: false
-              if-no-files-found: error
+      - name: Upload installer
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          path: Build/Rainmeter-*.exe
+          archive: false
+          if-no-files-found: error
 
-          - name: Upload 64-bit build
-            uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-            with:
-              name: BuildOut-Release64
-              path: |
-                BuildOut/Release64
-                !BuildOut/Release64/Obj
-              if-no-files-found: error
-
-          - name: Upload 64-bit debug symbols
-            uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-            with:
-              name: DebugSymbols-Release64
-              path: BuildOut/**/*.pdb
-              if-no-files-found: error
+      - name: Wait for build uploads
+        wait: [upload-build, upload-debug-symbols]
