@@ -3,7 +3,6 @@
 #include "StdAfx.h"
 #include "MeterShape.h"
 #include "Logger.h"
-#include "../Common/StringUtil.h"
 #include "../Common/Gfx/Util/D2DUtil.h"
 #include "../Common/Gfx/Shape.h"
 
@@ -138,7 +137,7 @@ void MeterShape::ReadOptions(ConfigParser::OptionReader& reader)
 	bool shapeOptionsChanged = m_ShapeOptions.empty();
 	for (auto& option : m_ShapeOptions)
 	{
-		const auto& value = reader.ReadString(option.first.c_str(), L"");
+		const auto& value = reader.ReadString(option.first, L"");
 		if (value != option.second) shapeOptionsChanged = true;
 		option.second = value;
 	}
@@ -202,15 +201,14 @@ void MeterShape::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 }
 
-std::wstring MeterShape::ReadShapeOption(ConfigParser::OptionReader& reader, std::wstring key)
+std::wstring MeterShape::ReadShapeOption(ConfigParser::OptionReader& reader, std::wstring_view key)
 {
-	StringUtil::ToUpperCase(key);
-
-	auto iter = m_ShapeOptions.find(key);
+	const auto option = IniNameRegistry::InternOption(key);
+	auto iter = m_ShapeOptions.find(option);
 	if (iter != m_ShapeOptions.end()) return iter->second;
 
-	const auto& value = reader.ReadString(key.c_str(), L"");
-	m_ShapeOptions.emplace(std::move(key), value);
+	const auto& value = reader.ReadString(option, L"");
+	m_ShapeOptions.emplace(option, value);
 	return value;
 }
 
