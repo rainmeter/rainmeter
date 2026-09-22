@@ -3,9 +3,8 @@
 #include "StdAfx.h"
 #include "MeasureTime.h"
 #include "Rainmeter.h"
-#include <locale>
-#include <sstream>
-#include <iomanip>
+#include "../Common/DateTimeParser.h"
+#include "../Common/StringUtil.h"
 
 const double LOCAL_TIMEZONE = DBL_MIN;
 
@@ -389,66 +388,47 @@ void MeasureTime::ReadOptions(ConfigParser::OptionReader& reader)
 			// The |TimeStamp| is formatted, parse it and convert to a Windows timestamp
 			m_TimeStampType = FIXED;
 
-			std::wstring localeStr = reader.ReadString<"TimeStampLocale">(L"C");
-
-			// Because exceptions are disabled, constructing std::locale with an invalid locale will
-			// call abort(). To fail gracefully, we need to check if the locale exists first.
-			std::locale locale;
-			if (_locale_t cLocale = _wcreate_locale(LC_TIME, localeStr.c_str()))
+			bool useSystemLocale = false;
+			if (StringUtil::EqualsIgnoreCase(tsformat, L"locale-date"))
 			{
-				locale = std::locale(StringUtil::Narrow(localeStr), std::locale::time);
-				_free_locale(cLocale);
+				tsformat = L"%x";
+				useSystemLocale = true;
 			}
-			else
+			else if (StringUtil::EqualsIgnoreCase(tsformat, L"locale-time"))
 			{
-				LogErrorF(this, L"Invalid TimeStampLocale: %s", localeStr.c_str());
-				locale = std::locale("C");
+				tsformat = L"%X";
+				useSystemLocale = true;
 			}
 
-			std::tm time = { 0 };
-			time.tm_mday = 1;	// "Day of month" cannot be 0.
-
-			std::basic_istringstream<wchar_t> is(timeStamp);
-			is.imbue(locale);
-			is >> std::get_time(&time, tsformat.c_str());
-
-			if (is.fail())
+			const auto& configuredLocale = reader.ReadString<"TimeStampLocale">(L"C");
+			const std::wstring_view locale = useSystemLocale ? L"local" : std::wstring_view(configuredLocale);
+			const auto result = DateTimeParser::Parse(timeStamp, tsformat, locale);
+			if (!result)
 			{
-				LogErrorF(this, L"Invalid TimeStampFormat: %s", tsformat.c_str());
+				switch (result.error)
+				{
+				case DateTimeParser::ParseError::InvalidLocale:
+					LogErrorF(this, L"Invalid TimeStampLocale: %s", configuredLocale.c_str());
+					break;
+				case DateTimeParser::ParseError::InvalidTimeZone:
+					LogErrorF(this, L"Invalid time zone in TimeStamp: %s", timeStamp.c_str());
+					break;
+				case DateTimeParser::ParseError::InvalidDate:
+					LogErrorF(this, L"Parsing error: %s", tsformat.c_str());
+					break;
+				default:
+					LogErrorF(this, L"Invalid TimeStampFormat: %s", tsformat.c_str());
+					break;
+				}
+
 				m_TimeStamp = 0;
 			}
 			else
 			{
-				// Convert std::tm -> SYSTEMTIME -> FILETIME -> LARGE_INTEGER
-				SYSTEMTIME st = { 0 };
-				st.wDay = time.tm_mday;
-				st.wDayOfWeek = time.tm_wday;
-				st.wHour = time.tm_hour;
-				st.wMilliseconds = 0;
-				st.wMinute = time.tm_min;
-				st.wMonth = time.tm_mon + 1;
-				st.wSecond = time.tm_sec;
-				st.wYear = time.tm_year + 1900;
-
-				// Fix known overflow bug when using %p.
-				// TODO: VS2015 has *apparently* fixed this (and other bugs with this).
-				// https://connect.microsoft.com/VisualStudio/feedback/details/808162
-				st.wHour %= 24;
-
-				FILETIME ft;
-				if (!SystemTimeToFileTime(&st, &ft))
-				{
-					LogErrorF(this, L"Parsing error: %s", tsformat.c_str());
-					m_TimeStamp = 0;
-				}
-				else
-				{
-					LARGE_INTEGER li = { 0 };
-					li.HighPart = ft.dwHighDateTime;
-					li.LowPart = ft.dwLowDateTime;
-
-					m_TimeStamp = (double)(li.QuadPart / 10000000);
-				}
+				LARGE_INTEGER timestamp = {};
+				timestamp.HighPart = result.timestamp.dwHighDateTime;
+				timestamp.LowPart = result.timestamp.dwLowDateTime;
+				m_TimeStamp = (double)(timestamp.QuadPart / 10000000);
 			}
 		}
 	}
