@@ -59,11 +59,12 @@ jobs:
         background: true
 
       - name: Test 64-bit Rainmeter
+        id: test-64
         run: .\Build\Build.ps1 test-64
         shell: pwsh
+        background: true
 
-      - name: Wait for language generation
-        wait: generate-languages
+      - wait: generate-languages
 
       - name: Upload 64-bit build
         id: upload-build
@@ -85,19 +86,23 @@ jobs:
           if-no-files-found: error
         background: true
 
-      - name: Wait for NSIS installation
-        wait: install-nsis
+      - wait: install-nsis
 
       - name: Build installer
         run: .\Build\Build.ps1 installer "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER" -X64Only -SkipLanguages
         shell: pwsh
+        id: build-installer
+        background: true
+
+      - wait: build-installer
 
       - name: Upload installer
+        id: upload-installer
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: Build/Rainmeter-*.exe
           archive: false
           if-no-files-found: error
+        background: true
 
-      - name: Wait for build uploads
-        wait: [upload-build, upload-debug-symbols, save-build-cache]
+      - wait: [test-64, upload-build, upload-debug-symbols, upload-installer, save-build-cache]
