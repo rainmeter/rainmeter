@@ -16,7 +16,7 @@
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>_LIB;FMT_UNICODE=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release' and '$(EnableLTCG)'=='true'">true</LinkTimeCodeGeneration>
