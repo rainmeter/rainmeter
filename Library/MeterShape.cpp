@@ -92,6 +92,15 @@ size_t ReadShapeId(StringParser& shape)
 	return id < 0 ? (size_t)0 : (size_t)id;
 }
 
+const WCHAR* GetShapeName(size_t shapeId)
+{
+	if (shapeId == 0) return L"Shape";
+
+	static WCHAR name[32];
+	_snwprintf_s(name, _TRUNCATE, L"Shape%zu", shapeId + 1);
+	return name;
+}
+
 }  // namespace
 
 MeterShape::MeterShape(Skin* skin, const WCHAR* name) : Meter(skin, name),
@@ -161,7 +170,7 @@ void MeterShape::ReadOptions(ConfigParser::OptionReader& reader)
 			}
 			else
 			{
-				ParseModifiers(m_Shapes[i - 1], options, parser, reader);
+				ParseModifiers(m_Shapes[i - 1], options, parser, reader, false, i - 1);
 			}
 		}
 
@@ -273,8 +282,7 @@ bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
 			return true;
 		}
 
-		std::wstring id = keyId == 0 ? L"" : std::to_wstring(keyId);
-		LogErrorF(this, L"Could not create shape: Shape%s", id.c_str());
+		LogErrorF(this, L"Could not create shape: %s", GetShapeName(keyId));
 		return false;
 	};
 
@@ -285,7 +293,7 @@ bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
 		if (!ReadValue(parser, values, x) || !ReadValue(parser, values, y) ||
 			!ReadValue(parser, values, w) || !ReadValue(parser, values, h))
 		{
-			LogErrorF(this, L"Rectangle has too few parameters");
+			LogErrorF(this, L"%s: Rectangle has too few parameters", GetShapeName(keyId));
 			return false;
 		}
 
@@ -306,7 +314,7 @@ bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
 		if (!ReadValue(parser, values, x) || !ReadValue(parser, values, y) ||
 			!ReadValue(parser, values, xRadius))
 		{
-			LogErrorF(this, L"Ellipse has too few parameters");
+			LogErrorF(this, L"%s: Ellipse has too few parameters", GetShapeName(keyId));
 			return false;
 		}
 
@@ -321,7 +329,7 @@ bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
 		if (!ReadValue(parser, values, x1) || !ReadValue(parser, values, y1) ||
 			!ReadValue(parser, values, x2) || !ReadValue(parser, values, y2))
 		{
-			LogErrorF(this, L"Line has too few parameters");
+			LogErrorF(this, L"%s: Line has too few parameters", GetShapeName(keyId));
 			return false;
 		}
 
@@ -333,7 +341,7 @@ bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
 		if (!ReadValue(parser, values, x1) || !ReadValue(parser, values, y1) ||
 			!ReadValue(parser, values, x2) || !ReadValue(parser, values, y2))
 		{
-			LogErrorF(this, L"Arc has too few parameters");
+			LogErrorF(this, L"%s: Arc has too few parameters", GetShapeName(keyId));
 			return false;
 		}
 
@@ -372,7 +380,7 @@ bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
 			!ReadValue(parser, values, x2) || !ReadValue(parser, values, y2) ||
 			!ReadValue(parser, values, cx1) || !ReadValue(parser, values, cy1))
 		{
-			LogErrorF(this, L"Curve has too few parameters");
+			LogErrorF(this, L"%s: Curve has too few parameters", GetShapeName(keyId));
 			return false;
 		}
 
@@ -413,9 +421,9 @@ bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
 	{
 		values.ConsumeWhitespace();
 		auto opt = ReadShapeOption(reader, std::wstring(values.Remaining()));
-		if (opt.empty() || !ParsePath(parser, opt, D2D1_FILL_MODE_WINDING))
+		if (opt.empty() || !ParsePath(parser, opt, D2D1_FILL_MODE_WINDING, keyId))
 		{
-			LogErrorF(this, L"Path shape has invalid parameters: %s", opt.c_str());
+			LogErrorF(this, L"%s: Path shape has invalid parameters: %s", GetShapeName(keyId), opt.c_str());
 			return false;
 		}
 
@@ -425,9 +433,9 @@ bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
 	{
 		values.ConsumeWhitespace();
 		auto opt = ReadShapeOption(reader, std::wstring(values.Remaining()));
-		if (opt.empty() || !ParsePath(parser, opt, D2D1_FILL_MODE_ALTERNATE))
+		if (opt.empty() || !ParsePath(parser, opt, D2D1_FILL_MODE_ALTERNATE, keyId))
 		{
-			LogErrorF(this, L"Path shape has invalid parameters: %s", opt.c_str());
+			LogErrorF(this, L"%s: Path shape has invalid parameters: %s", GetShapeName(keyId), opt.c_str());
 			return false;
 		}
 
@@ -442,7 +450,7 @@ bool MeterShape::CreateShape(std::wstring_view definition, ConfigParser& parser,
 		return addShape(std::move(shape));
 	}
 
-	LogErrorF(this, L"Invalid shape: %s", std::wstring(definition).c_str());
+	LogErrorF(this, L"%s: Invalid shape: %s", GetShapeName(keyId), std::wstring(definition).c_str());
 	return false;
 }
 
@@ -510,7 +518,7 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 		else if (option.Consume(L"Exclude")) mode = D2D1_COMBINE_MODE_EXCLUDE;
 		else
 		{
-			if (ParseTransformModifers(parser, m_Shapes[shapeId], option)) continue;
+			if (ParseTransformModifers(parser, m_Shapes[shapeId], option, shapeId)) continue;
 
 			showError(L"definition contains invalid combine: ", option.Remaining());
 			return false;
@@ -547,9 +555,9 @@ bool MeterShape::CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::
 	return true;
 }
 
-void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, ConfigParser& parser, ConfigParser::OptionReader& reader, bool recursive)
+void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, ConfigParser& parser, ConfigParser::OptionReader& reader, bool recursive, size_t shapeId)
 {
-	auto parseCap = [this](StringParser& cap) -> D2D1_CAP_STYLE
+	auto parseCap = [this, shapeId](StringParser& cap) -> D2D1_CAP_STYLE
 	{
 		if (cap.Consume(L"Flat", StringParser::SkipWhitespace)) return D2D1_CAP_STYLE_FLAT;
 		else if (cap.Consume(L"Square", StringParser::SkipWhitespace)) return D2D1_CAP_STYLE_SQUARE;
@@ -558,7 +566,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 		else
 		{
 			const std::wstring style(cap.ConsumeRest(StringParser::SkipWhitespace));
-			if (!style.empty()) LogErrorF(this, L"Invalid cap style: %s", style.c_str());
+			if (!style.empty()) LogErrorF(this, L"%s: Invalid cap style: %s", GetShapeName(shapeId), style.c_str());
 			return D2D1_CAP_STYLE_FLAT;
 		}
 	};
@@ -569,7 +577,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 		auto opt = ReadShapeOption(reader, std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)));
 		if (opt.empty() || !ParseGradient(shape, parser, type, opt, altGamma, isStroke))
 		{
-			LogErrorF(this, L"%s has invalid parameters: %s", name, opt.c_str());
+			LogErrorF(this, L"%s: %s has invalid parameters: %s", GetShapeName(shapeId), name, opt.c_str());
 		}
 	};
 
@@ -602,7 +610,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 			}
 			else
 			{
-				LogErrorF(this, L"Fill has invalid parameters: %s",
+				LogErrorF(this, L"%s: Fill has invalid parameters: %s", GetShapeName(shapeId),
 					std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)).c_str());
 			}
 		}
@@ -612,7 +620,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 			ReadValue(parser, option, width);
 			if (width < 0.0f)
 			{
-				LogWarningF(this, L"StrokeWidth must not be negative");
+				LogWarningF(this, L"%s: StrokeWidth must not be negative", GetShapeName(shapeId));
 				width = 0.0f;
 			}
 
@@ -635,7 +643,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 			const auto style = ConsumeValue(option);
 			if (!style)
 			{
-				LogWarningF(this, L"StrokeLineJoin has too few parameters");
+				LogWarningF(this, L"%s: StrokeLineJoin has too few parameters", GetShapeName(shapeId));
 				continue;
 			}
 
@@ -647,14 +655,14 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 			else if (joinStyle.ConsumeRest(L"MiterOrBevel")) join = D2D1_LINE_JOIN_MITER_OR_BEVEL;
 			else
 			{
-				LogWarningF(this, L"Invalid line join style: %s", std::wstring(*style).c_str());
+				LogWarningF(this, L"%s: Invalid line join style: %s", GetShapeName(shapeId), std::wstring(*style).c_str());
 			}
 
 			FLOAT limit = 10.0f;
 			ReadValue(parser, option, limit, 10.0);
 			if (limit < 0.0f)
 			{
-				LogWarningF(this, L"Miter limit must be positive");
+				LogWarningF(this, L"%s: Miter limit must be positive", GetShapeName(shapeId));
 				limit = 10.0f;
 			}
 
@@ -678,7 +686,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 			FLOAT dashOffset = (FLOAT)parser.ParseDouble(modifier, 0.0);
 			if (dashOffset < 0.0f)
 			{
-				LogWarningF(this, L"Invalid stroke dash offset: %s", modifier.c_str());
+				LogWarningF(this, L"%s: Invalid stroke dash offset: %s", GetShapeName(shapeId), modifier.c_str());
 				dashOffset = 0.0f;
 			}
 
@@ -708,7 +716,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 			}
 			else
 			{
-				LogErrorF(this, L"Stroke has invalid parameters: %s",
+				LogErrorF(this, L"%s: Stroke has invalid parameters: %s", GetShapeName(shapeId),
 					std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)).c_str());
 			}
 		}
@@ -716,7 +724,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 		{
 			if (recursive)
 			{
-				LogNoticeF(this, L"Extend cannot be used recursively");
+				LogNoticeF(this, L"%s: Extend cannot be used recursively", GetShapeName(shapeId));
 				continue;
 			}
 
@@ -728,13 +736,13 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 				if (!key.empty())
 				{
 					StringParser extendedModifiers(key);
-					ParseModifiers(shape, extendedModifiers, parser, reader, true);
+					ParseModifiers(shape, extendedModifiers, parser, reader, true, shapeId);
 				}
 			}
 		}
-		else if (!ParseTransformModifers(parser, shape, option))
+		else if (!ParseTransformModifers(parser, shape, option, shapeId))
 		{
-			LogErrorF(this, L"Invalid shape modifier: %s",
+			LogErrorF(this, L"%s: Invalid shape modifier: %s", GetShapeName(shapeId),
 				std::wstring(option.ConsumeRest(StringParser::SkipWhitespace)).c_str());
 		}
 	}
@@ -746,7 +754,7 @@ void MeterShape::ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, Conf
 	}
 }
 
-bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape, StringParser& transform)
+bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape, StringParser& transform, size_t shapeId)
 {
 	if (transform.Consume(L"Offset"))
 	{
@@ -758,7 +766,7 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape,
 		}
 		else
 		{
-			LogWarningF(this, L"Offset has too few parameters");
+			LogWarningF(this, L"%s: Offset has too few parameters", GetShapeName(shapeId));
 		}
 
 		return true;
@@ -776,7 +784,7 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape,
 		}
 		else
 		{
-			LogWarningF(this, L"Rotate has too few parameters");
+			LogWarningF(this, L"%s: Rotate has too few parameters", GetShapeName(shapeId));
 		}
 
 		return true;
@@ -795,7 +803,7 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape,
 		}
 		else
 		{
-			LogWarningF(this, L"Scale has too few parameters");
+			LogWarningF(this, L"%s: Scale has too few parameters", GetShapeName(shapeId));
 		}
 
 		return true;
@@ -814,7 +822,7 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape,
 		}
 		else
 		{
-			LogWarningF(this, L"Skew has too few parameters");
+			LogWarningF(this, L"%s: Skew has too few parameters", GetShapeName(shapeId));
 		}
 
 		return true;
@@ -842,11 +850,11 @@ bool MeterShape::ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape,
 			else if (transformType.Consume(L"Skew")) type = Gfx::TransformType::Skew;
 			else if (transformType.Consume(L"Offset")) type = Gfx::TransformType::Offset;
 
-			if (type == Gfx::TransformType::Invalid) LogWarningF(this, L"Invalid transform type: %s", std::wstring(*value).c_str());
-			else if (!shape.AddToTransformOrder(type)) LogWarningF(this, L"TransformOrder cannot have duplicates");
+			if (type == Gfx::TransformType::Invalid) LogWarningF(this, L"%s: Invalid transform type: %s", GetShapeName(shapeId), std::wstring(*value).c_str());
+			else if (!shape.AddToTransformOrder(type)) LogWarningF(this, L"%s: TransformOrder cannot have duplicates", GetShapeName(shapeId));
 		}
 
-		if (!ordered) LogWarningF(this, L"TransformOrder has too few parameters");
+		if (!ordered) LogWarningF(this, L"%s: TransformOrder has too few parameters", GetShapeName(shapeId));
 
 		return true;
 	}
@@ -953,7 +961,7 @@ bool MeterShape::ParseGradient(Gfx::Shape& shape, ConfigParser& parser, Gfx::Bru
 	return false;
 }
 
-bool MeterShape::ParsePath(ConfigParser& parser, std::wstring_view options, D2D1_FILL_MODE fillMode)
+bool MeterShape::ParsePath(ConfigParser& parser, std::wstring_view options, D2D1_FILL_MODE fillMode, size_t shapeId)
 {
 	auto createSegmentFlags = [](bool stroke, bool round) -> D2D1_PATH_SEGMENT
 	{
@@ -1068,7 +1076,7 @@ bool MeterShape::ParsePath(ConfigParser& parser, std::wstring_view options, D2D1
 		}
 		else
 		{
-			LogErrorF(this, L"Invalid Path type: %s", std::wstring(*param).c_str());
+			LogErrorF(this, L"%s: Invalid Path type: %s", GetShapeName(shapeId), std::wstring(*param).c_str());
 			error = true;
 			break;
 		}
