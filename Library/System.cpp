@@ -10,6 +10,7 @@
 #include "Skin.h"
 #include "MeasureNet.h"
 #include "WindowOcclusionTracker.h"
+#include "../Common/DateTimeParser.h"
 #include "../Common/DpiUtil.h"
 #include "../Common/PathUtil.h"
 #include <TlHelp32.h>
@@ -686,6 +687,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		if (uMsg == WM_SETTINGCHANGE && lParam && _wcsicmp((const WCHAR*)lParam, L"intl") == 0)
 		{
 			LogNotice(L"System: Regional settings changed");
+			DateTimeParser::RefreshNativeDigits();
 			LocaleUtil::RefreshNumberFormat();
 		}
 
