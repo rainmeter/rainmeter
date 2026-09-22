@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Clone repo
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
 
       - name: Build ${{ matrix.arch }}-bit Rainmeter
         run: .\Build\Build.ps1 rainmeter-${{ matrix.arch }} $env:BUILD_VERSION.Substring(1) -LTCG
@@ -50,6 +52,8 @@ jobs:
     steps:
       - name: Clone repo
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
 
       - name: Download 32-bit build
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
