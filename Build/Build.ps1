@@ -20,6 +20,9 @@ Enables whole-program optimization and link-time code generation for release bui
 .PARAMETER X64Only
 Builds an installer containing only 64-bit files.
 
+.PARAMETER SkipLanguages
+Skips generating language files when building the full release or installer.
+
 .EXAMPLE
 .\Build.ps1 full 1.2.3.4
 
@@ -46,7 +49,9 @@ param(
 
 	[switch]$LTCG,
 
-	[switch]$X64Only
+	[switch]$X64Only,
+
+	[switch]$SkipLanguages
 )
 
 $ErrorActionPreference = 'Stop'
@@ -277,7 +282,7 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'plugin-api') {
 	Copy-Item (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.h'), (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.cs') $pluginApiDir
 }
 
-if ($BuildType -eq 'full' -or $BuildType -eq 'languages' -or $BuildType -eq 'installer') {
+if (-not $SkipLanguages -and ($BuildType -eq 'full' -or $BuildType -eq 'languages' -or $BuildType -eq 'installer')) {
 	Write-Host '* Building languages'
 	Invoke-NativeCommand 'powershell.exe' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '.\GenerateLanguages.ps1') -ErrorMessage 'Language build failed'
 }

@@ -16,7 +16,13 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v5
 
-      - name: Validate language files
+      - name: Install NSIS
+        id: install-nsis
+        uses: ./.github/actions/install-nsis
+        background: true
+
+      - name: Validate and generate language files
+        id: generate-languages
         run: |
           ./Language/UpdateLanguageFiles.sh
           if ! git diff --quiet -- Language; then
@@ -24,7 +30,9 @@ jobs:
             git diff -- Language
             exit 1
           fi
+          pwsh -File ./Build/Build.ps1 languages
         shell: bash
+        background: true
 
       - name: Cache 64-bit build
         uses: actions/cache@v5
@@ -46,11 +54,11 @@ jobs:
         run: .\Build\Build.ps1 test-64
         shell: pwsh
 
-      - name: Install NSIS
-        uses: ./.github/actions/install-nsis
+      - name: Wait for installer prerequisites
+        wait: [install-nsis, generate-languages]
 
       - name: Build installer
-        run: .\Build\Build.ps1 installer "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER" -X64Only
+        run: .\Build\Build.ps1 installer "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER" -X64Only -SkipLanguages
         shell: pwsh
 
       - name: Upload installer
