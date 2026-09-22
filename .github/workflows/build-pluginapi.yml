@@ -8,8 +8,6 @@ on:
       - 'PluginAPI/**'
       - 'Library/Exports.def'
       - 'Library/RainmeterAPI.*'
-      - 'Build/Build.ps1'
-      - 'Build/VS/**'
       - '.github/workflows/*pluginapi*'
 
 jobs:
