@@ -11,14 +11,14 @@ jobs:
     runs-on: windows-2025-vs2026
     steps:
       - name: Clone repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       - name: Build NSIS plugins
         run: .\Build\BuildInstallerPlugins.ps1
         shell: pwsh
 
       - name: Upload NSIS plugins
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         id: upload-plugins
         with:
           name: NSISPlugins-unsigned

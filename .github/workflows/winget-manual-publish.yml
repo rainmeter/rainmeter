@@ -16,7 +16,7 @@ jobs:
   publish:
     runs-on: windows-latest
     steps:
-      - uses:  vedantmgoyal9/winget-releaser@main
+      - uses: vedantmgoyal9/winget-releaser@a8fff44b123f115ce4c21543edf8b677376fc7e0 # main
         with:
           identifier: Rainmeter.Rainmeter
           version: ${{ inputs.version }}

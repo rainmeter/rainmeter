@@ -9,12 +9,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           fetch-depth: 0 # Mandatory to use the extract version from tag action
 
       - name: Extract version from tag
-        uses: damienaicheh/extract-version-from-tag-action@v1.3.0
+        uses: damienaicheh/extract-version-from-tag-action@6149ecb457f5cc873728d346557f50c67ade8dc2 # v1.3.0
 
       - name: Verify version information
         if: ${{ env.MAJOR == '' || env.MINOR == '' || env.PATCH == '' }}
@@ -23,7 +23,7 @@ jobs:
           exit 1
 
       - name: Publish to WinGet
-        uses: vedantmgoyal9/winget-releaser@main
+        uses: vedantmgoyal9/winget-releaser@a8fff44b123f115ce4c21543edf8b677376fc7e0 # main
         with:
           identifier: Rainmeter.Rainmeter
           version: ${{ env.MAJOR}}.${{ env.MINOR }}.${{ env.PATCH }}
