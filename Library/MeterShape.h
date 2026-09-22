@@ -34,10 +34,10 @@ private:
 	bool CreateShape(std::wstring_view definition, ConfigParser& parser, ConfigParser::OptionReader& reader, bool& isCombined, size_t keyId);
 	bool CreateCombinedShape(ConfigParser& parser, size_t shapeId, std::wstring& options);
 
-	void ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, ConfigParser& parser, ConfigParser::OptionReader& reader, bool recursive = false);
-	bool ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape, StringParser& transform);
+	void ParseModifiers(Gfx::Shape& shape, StringParser& modifiers, ConfigParser& parser, ConfigParser::OptionReader& reader, bool recursive, size_t shapeId);
+	bool ParseTransformModifers(ConfigParser& parser, Gfx::Shape& shape, StringParser& transform, size_t shapeId);
 	bool ParseGradient(Gfx::Shape& shape, ConfigParser& parser, Gfx::BrushType type, std::wstring_view options, bool altGamma, bool isStroke);
-	bool ParsePath(ConfigParser& parser, std::wstring_view options, D2D1_FILL_MODE fillMode);
+	bool ParsePath(ConfigParser& parser, std::wstring_view options, D2D1_FILL_MODE fillMode, size_t shapeId);
 	std::wstring ReadShapeOption(ConfigParser::OptionReader& reader, std::wstring key);
 
 	std::vector<Gfx::Shape> m_Shapes;
