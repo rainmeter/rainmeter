@@ -2,14 +2,14 @@
 .SYNOPSIS
 Builds Rainmeter release artifacts.
 
-.PARAMETER BuildType
-The build target to run. Valid values are full, rainmeter-32, rainmeter-64, test-64, languages, plugin-api, and installer.
+.PARAMETER BuildTargets
+Comma-separated build targets to run. Valid values are full, rainmeter-32, rainmeter-64, test-64, languages, plugin-api, and installer. The full target expands to all targets.
 
 .PARAMETER Version
-The release version in major.minor.subminor.revision format. Required for all build types except test-64.
+The release version in major.minor.subminor.revision format. Required for rainmeter-32, rainmeter-64, and installer targets.
 
-.PARAMETER TestMode
-Optional test file handling mode. Use include-tests to include unit tests in project builds; omitted by default.
+.PARAMETER IncludeTests
+Includes unit tests in project builds; omitted by default.
 
 .PARAMETER MSBuildTarget
 Optional MSBuild target. Valid values are build and rebuild; defaults to rebuild.
@@ -17,44 +17,45 @@ Optional MSBuild target. Valid values are build and rebuild; defaults to rebuild
 .PARAMETER LTCG
 Enables whole-program optimization and link-time code generation for release builds.
 
-.PARAMETER X64Only
-With the full target, skips 32-bit builds and creates an installer containing only 64-bit files.
+.EXAMPLE
+.\Build.ps1 full 1.2.3.4 -IncludeTests
 
-.PARAMETER SkipLanguages
-Skips generating language files when building the full release or installer.
+Builds all Rainmeter components and creates the installer.
 
 .EXAMPLE
-.\Build.ps1 full 1.2.3.4
-
-Builds 32-bit Rainmeter, 64-bit Rainmeter, runs 64-bit tests, builds languages, and creates the installer.
-
-.EXAMPLE
-.\Build.ps1 rainmeter-64 1.2.3.4 include-tests
+.\Build.ps1 rainmeter-64 1.2.3.4 -IncludeTests
 
 Builds only 64-bit Rainmeter and includes unit tests in the project build.
 #>
 [CmdletBinding()]
 param(
 	[Parameter(Position = 0)]
-	[string]$BuildType,
+	[string]$BuildTargets,
 
 	[Parameter(Position = 1)]
 	[string]$Version,
 
-	[Parameter(Position = 2)]
-	[string]$TestMode,
+	[switch]$IncludeTests,
 
 	[ValidateSet('build', 'rebuild')]
 	[string]$MSBuildTarget = 'rebuild',
 
-	[switch]$LTCG,
-
-	[switch]$X64Only,
-
-	[switch]$SkipLanguages
+	[switch]$LTCG
 )
 
 $ErrorActionPreference = 'Stop'
+
+$fullBuildTypes = @('rainmeter-32', 'rainmeter-64', 'test-64', 'plugin-api', 'languages', 'installer')
+$BuildTypes = @(
+	foreach ($buildTarget in ($BuildTargets -split ',')) {
+		$buildTarget = $buildTarget.Trim()
+		if ($buildTarget -eq 'full') {
+			$fullBuildTypes
+		} else {
+			$buildTarget
+		}
+	}
+)
 
 . (Join-Path $PSScriptRoot 'VisualStudioBuildTools.ps1')
 
@@ -171,28 +172,24 @@ function Install-SignedInstallerPlugins {
 	}
 }
 
-$excludeTests = 'true'
+$excludeTests = if ($IncludeTests) { 'false' } else { 'true' }
 
-if ($TestMode) {
-	if ($TestMode -eq 'include-tests') {
-		$excludeTests = 'false'
-	} else {
-		Write-UsageError 'Unknown test mode'
+foreach ($buildType in $BuildTypes) {
+	switch ($buildType) {
+		'rainmeter-32' {}
+		'rainmeter-64' {}
+		'test-64' {}
+		'languages' {}
+		'plugin-api' {}
+		'installer' {}
+		default { Write-UsageError "Unknown build type '$buildType'" }
 	}
 }
 
-switch ($BuildType) {
-	'full' {}
-	'rainmeter-32' {}
-	'rainmeter-64' {}
-	'test-64' {}
-	'languages' { $Version = '0.0.0.0' }
-	'plugin-api' {}
-	'installer' {}
-	default { Write-UsageError 'Unknown build type' }
-}
+$versionedBuildTypes = @('rainmeter-32', 'rainmeter-64', 'installer')
+$requiresVersion = @($BuildTypes | Where-Object { $versionedBuildTypes -contains $_ }).Count -gt 0
 
-if ($BuildType -ne 'test-64' -and $BuildType -ne 'plugin-api') {
+if ($requiresVersion) {
 	if ([string]::IsNullOrWhiteSpace($Version)) {
 		Write-UsageError 'Invalid version'
 	}
@@ -223,8 +220,8 @@ if ($LTCG) {
 	$msBuildArgs += '/p:EnableLTCG=true'
 }
 
-if ($BuildType -ne 'test-64' -and $BuildType -ne 'languages' -and $BuildType -ne 'installer') {
-	Write-Host "* Starting $BuildType build for $versionFull"
+if ($BuildTypes -contains 'rainmeter-32' -or $BuildTypes -contains 'rainmeter-64') {
+	Write-Host "* Starting $BuildTargets build for $versionFull"
 
 	$versionHeaderLines = @(
 		'#pragma once',
@@ -245,24 +242,24 @@ if ($BuildType -ne 'test-64' -and $BuildType -ne 'languages' -and $BuildType -ne
 	Write-Utf8File (Join-Path $PSScriptRoot '..\Version.h') $versionHeaderLines
 }
 
-if ($BuildType -eq 'rainmeter-32' -or ($BuildType -eq 'full' -and -not $X64Only)) {
+if ($BuildTypes -contains 'rainmeter-32') {
 	Write-Host '* Building 32-bit projects'
 	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$MSBuildTarget", '/p:Platform=Win32', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '32-bit project build failed'
 	Verify-RuntimeDependencies (Join-Path $PSScriptRoot '..\BuildOut\Release32')
 }
 
-if ($BuildType -eq 'full' -or $BuildType -eq 'rainmeter-64') {
+if ($BuildTypes -contains 'rainmeter-64') {
 	Write-Host '* Building 64-bit projects'
 	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$MSBuildTarget", '/p:Platform=x64', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '64-bit project build failed'
 	Verify-RuntimeDependencies (Join-Path $PSScriptRoot '..\BuildOut\Release64')
 }
 
-if ($BuildType -eq 'full' -or $BuildType -eq 'test-64') {
+if ($BuildTypes -contains 'test-64') {
 	Write-Host '* Testing 64-bit projects'
 	Invoke-NativeCommand 'vstest.console.exe' @('..\BuildOut\Release64\Obj\Common_Test\Common_Test.dll', '..\BuildOut\Release64\Rainmeter.dll', '/Platform:x64') -ErrorMessage '64-bit tests failed'
 }
 
-if ($BuildType -eq 'full' -or $BuildType -eq 'plugin-api') {
+if ($BuildTypes -contains 'plugin-api') {
 	Write-Host '* Building plugin API'
 
 	$pluginApiDir = Join-Path $PSScriptRoot '..\BuildOut\PluginAPI\API'
@@ -270,12 +267,7 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'plugin-api') {
 
 	# The import libraries come from the PluginAPI stub rather than from Exports.def directly,
 	# since lib.exe cannot tell how the __stdcall functions are decorated from a name alone.
-	$architectures = if ($BuildType -eq 'full' -and $X64Only) {
-		[ordered]@{ x64 = 'x64' }
-	} else {
-		[ordered]@{ x32 = 'Win32'; x64 = 'x64' }
-	}
-	foreach ($arch in $architectures.GetEnumerator()) {
+	foreach ($arch in ([ordered]@{ x32 = 'Win32'; x64 = 'x64' }).GetEnumerator()) {
 		Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @('/t:rebuild', "/p:Platform=$($arch.Value)", "/p:SolutionDir=$solutionDir", '/v:q', '..\PluginAPI\PluginAPI.vcxproj')) -ErrorMessage "$($arch.Key) Plugin API build failed"
 
 		$libDir = Join-Path $pluginApiDir $arch.Key
@@ -287,12 +279,12 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'plugin-api') {
 	Copy-Item (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.h'), (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.cs') $pluginApiDir
 }
 
-if (-not $SkipLanguages -and ($BuildType -eq 'full' -or $BuildType -eq 'languages' -or $BuildType -eq 'installer')) {
+if ($BuildTypes -contains 'languages') {
 	Write-Host '* Building languages'
 	Invoke-NativeCommand 'powershell.exe' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '.\GenerateLanguages.ps1') -ErrorMessage 'Language build failed'
 }
 
-if ($BuildType -eq 'full' -or $BuildType -eq 'installer') {
+if ($BuildTypes -contains 'installer') {
 	Install-SignedInstallerPlugins
 
 	Write-Host '* Building installer'
@@ -316,7 +308,9 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'installer') {
 		"/DVERSION_MINOR=$versionMinor",
 		"/DBUILD_YEAR=$buildYear"
 	)
-	if ($X64Only) {
+	$release32Directory = Join-Path $PSScriptRoot '..\BuildOut\Release32'
+	$x64OnlyInstaller = $BuildTypes -contains 'rainmeter-64' -and $BuildTypes -notcontains 'rainmeter-32'
+	if ($x64OnlyInstaller -or -not (Test-Path -LiteralPath $release32Directory -PathType Container)) {
 		$installerDefines += '/DX64ONLY'
 	}
 
