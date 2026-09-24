@@ -478,7 +478,7 @@ void MeasureAudioLevel::Initialize()
 		// Init the device. It is OK if it fails; UpdateValue() keeps checking. Subsequent
 		// attempts are not logged since losing the device (e.g. an unplugged microphone) is
 		// normal and would otherwise spam the log.
-		const HRESULT hr = DeviceInit();
+		const HRESULT hr = m_Disabled ? S_OK : DeviceInit();
 		if (FAILED(hr) && GetRainmeter().GetDebug())
 		{
 			LogWarningF(this, L"Unable to initialize audio %s device '%s' (error 0x%08x).",
@@ -489,6 +489,12 @@ void MeasureAudioLevel::Initialize()
 	}
 
 	SAFE_RELEASE(m_Enum);
+}
+
+void MeasureAudioLevel::Disable()
+{
+	DeviceRelease();
+	Measure::Disable();
 }
 
 void MeasureAudioLevel::ResolveParent(ConfigParser::OptionReader& reader)

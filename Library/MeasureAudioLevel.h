@@ -24,6 +24,7 @@ public:
 	UINT GetTypeID() override { return TypeID<MeasureAudioLevel>(); }
 
 	void Initialize() override;
+	void Disable() override;
 	std::optional<std::wstring_view> GetStringValue() override;
 
 protected:
