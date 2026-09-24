@@ -22,7 +22,7 @@ jobs:
           persist-credentials: false
 
       - name: Build ${{ matrix.arch }}-bit Rainmeter
-        run: .\Build\Build.ps1 rainmeter-${{ matrix.arch }} $env:BUILD_VERSION.Substring(1) -LTCG
+        run: .\Build\Build.ps1 rainmeter-${{ matrix.arch }} $env:BUILD_VERSION.Substring(1) -LTCG -Rebuild
         shell: pwsh
 
       - parallel:
