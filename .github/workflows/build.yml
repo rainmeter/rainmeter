@@ -49,7 +49,7 @@ jobs:
         shell: pwsh
 
       - name: Build 64-bit Rainmeter
-        run: .\Build\Build.ps1 rainmeter-64 "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER" -IncludeTests -MSBuildTarget build
+        run: .\Build\Build.ps1 rainmeter-64 "$(Get-Date -Format 'yyyy.M.d').$env:GITHUB_RUN_NUMBER" -IncludeTests
         shell: pwsh
 
       - name: Save 64-bit build cache

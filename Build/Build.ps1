@@ -11,8 +11,8 @@ The release version in major.minor.subminor.revision format. Required for rainme
 .PARAMETER IncludeTests
 Includes unit tests in project builds; omitted by default.
 
-.PARAMETER MSBuildTarget
-Optional MSBuild target. Valid values are build and rebuild; defaults to rebuild.
+.PARAMETER Rebuild
+Rebuilds projects instead of building them incrementally; off by default.
 
 .PARAMETER LTCG
 Enables whole-program optimization and link-time code generation for release builds.
@@ -37,13 +37,14 @@ param(
 
 	[switch]$IncludeTests,
 
-	[ValidateSet('build', 'rebuild')]
-	[string]$MSBuildTarget = 'rebuild',
+	[switch]$Rebuild,
 
 	[switch]$LTCG
 )
 
 $ErrorActionPreference = 'Stop'
+
+$msBuildTarget = if ($Rebuild) { 'rebuild' } else { 'build' }
 
 $fullBuildTypes = @('rainmeter-32', 'rainmeter-64', 'test-64', 'plugin-api', 'languages', 'installer')
 $BuildTypes = @(
@@ -246,13 +247,13 @@ if ($BuildTypes -contains 'rainmeter-32' -or $BuildTypes -contains 'rainmeter-64
 
 if ($BuildTypes -contains 'rainmeter-32') {
 	Write-Host '* Building 32-bit projects'
-	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$MSBuildTarget", '/p:Platform=Win32', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '32-bit project build failed'
+	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$msBuildTarget", '/p:Platform=Win32', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '32-bit project build failed'
 	Verify-RuntimeDependencies (Join-Path $PSScriptRoot '..\BuildOut\Release32')
 }
 
 if ($BuildTypes -contains 'rainmeter-64') {
 	Write-Host '* Building 64-bit projects'
-	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$MSBuildTarget", '/p:Platform=x64', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '64-bit project build failed'
+	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$msBuildTarget", '/p:Platform=x64', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '64-bit project build failed'
 	Verify-RuntimeDependencies (Join-Path $PSScriptRoot '..\BuildOut\Release64')
 }
 
