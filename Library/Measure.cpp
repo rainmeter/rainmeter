@@ -202,7 +202,7 @@ void Measure::Disable()
 	m_Disabled = true;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	m_Skin->GetParser().SetValue(m_Name, L"Disabled", L"1");
+	m_Skin->GetParser().SetValue(m_ID, IniNameRegistry::InternOption<"Disabled">(), L"1");
 }
 
 void Measure::Enable()
@@ -210,7 +210,7 @@ void Measure::Enable()
 	m_Disabled = false;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	m_Skin->GetParser().SetValue(m_Name, L"Disabled", L"0");
+	m_Skin->GetParser().SetValue(m_ID, IniNameRegistry::InternOption<"Disabled">(), L"0");
 }
 
 void Measure::Pause()
@@ -218,7 +218,7 @@ void Measure::Pause()
 	m_Paused = true;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	m_Skin->GetParser().SetValue(m_Name, L"Paused", L"1");
+	m_Skin->GetParser().SetValue(m_ID, IniNameRegistry::InternOption<"Paused">(), L"1");
 }
 
 void Measure::Unpause()
@@ -226,7 +226,7 @@ void Measure::Unpause()
 	m_Paused = false;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	m_Skin->GetParser().SetValue(m_Name, L"Paused", L"0");
+	m_Skin->GetParser().SetValue(m_ID, IniNameRegistry::InternOption<"Paused">(), L"0");
 }
 
 // Substitutes text using a straight find and replace method

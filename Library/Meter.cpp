@@ -120,7 +120,7 @@ void Meter::SetX(int x)
 
 	WCHAR buffer[16] = { 0 };
 	_itow_s(x, buffer, 10);
-	m_Skin->GetParser().SetValue(m_Name, L"X", buffer);
+	m_Skin->GetParser().SetValue(m_ID, IniNameRegistry::InternOption<"X">(), buffer);
 }
 
 void Meter::SetY(int y)
@@ -130,7 +130,7 @@ void Meter::SetY(int y)
 
 	WCHAR buffer[16] = { 0 };
 	_itow_s(y, buffer, 10);
-	m_Skin->GetParser().SetValue(m_Name, L"Y", buffer);
+	m_Skin->GetParser().SetValue(m_ID, IniNameRegistry::InternOption<"Y">(), buffer);
 }
 
 RECT Meter::GetMeterRect()
@@ -147,7 +147,7 @@ void Meter::SetW(int w)
 
 	WCHAR buffer[16] = { 0 };
 	_itow_s(w - GetWidthPadding(), buffer, 10);
-	m_Skin->GetParser().SetValue(m_Name, L"W", buffer);
+	m_Skin->GetParser().SetValue(m_ID, IniNameRegistry::InternOption<"W">(), buffer);
 
 	m_Skin->RequestWindowSizeCheck();
 }
@@ -159,7 +159,7 @@ void Meter::SetH(int h)
 
 	WCHAR buffer[16] = { 0 };
 	_itow_s(h - GetHeightPadding(), buffer, 10);
-	m_Skin->GetParser().SetValue(m_Name, L"H", buffer);
+	m_Skin->GetParser().SetValue(m_ID, IniNameRegistry::InternOption<"H">(), buffer);
 
 	m_Skin->RequestWindowSizeCheck();
 }
@@ -247,7 +247,7 @@ void Meter::Show()
 	m_Hidden = false;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	m_Skin->GetParser().SetValue(m_Name, L"Hidden", L"0");
+	m_Skin->GetParser().SetValue(m_ID, IniNameRegistry::InternOption<"Hidden">(), L"0");
 
 	HWND tooltip = GetToolTipWindow();
 	if (tooltip && !m_ToolTip->hidden)
@@ -261,7 +261,7 @@ void Meter::Hide()
 	m_Hidden = true;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	m_Skin->GetParser().SetValue(m_Name, L"Hidden", L"1");
+	m_Skin->GetParser().SetValue(m_ID, IniNameRegistry::InternOption<"Hidden">(), L"1");
 
 	HWND tooltip = GetToolTipWindow();
 	if (tooltip)
