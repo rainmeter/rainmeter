@@ -597,8 +597,7 @@ void DialogManage::TabSkins::CreateImageList()
 	HICON icon = GetIconBySize(IDI_FOLDER, iconSize);
 	ImageList_AddIcon(imageList, icon);
 
-	HMODULE shell = GetModuleHandle(L"shell32");
-	icon = (HICON)LoadImage(shell, MAKEINTRESOURCE(151), IMAGE_ICON, iconSize, iconSize, LR_SHARED);
+	icon = GetIconBySize(IDI_INI, iconSize);
 	ImageList_AddIcon(imageList, icon);
 
 	DestroyImageList();
