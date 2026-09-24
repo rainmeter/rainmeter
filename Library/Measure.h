@@ -57,7 +57,7 @@ public:
 
 	bool Update(bool rereadOptions = false);
 
-	void Disable();
+	virtual void Disable();
 	void Enable();
 	bool IsDisabled() { return m_Disabled; }
 
