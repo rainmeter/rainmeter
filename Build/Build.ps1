@@ -18,7 +18,7 @@ Optional MSBuild target. Valid values are build and rebuild; defaults to rebuild
 Enables whole-program optimization and link-time code generation for release builds.
 
 .PARAMETER X64Only
-Builds an installer containing only 64-bit files.
+With the full target, skips 32-bit builds and creates an installer containing only 64-bit files.
 
 .PARAMETER SkipLanguages
 Skips generating language files when building the full release or installer.
@@ -245,7 +245,7 @@ if ($BuildType -ne 'test-64' -and $BuildType -ne 'languages' -and $BuildType -ne
 	Write-Utf8File (Join-Path $PSScriptRoot '..\Version.h') $versionHeaderLines
 }
 
-if ($BuildType -eq 'full' -or $BuildType -eq 'rainmeter-32') {
+if ($BuildType -eq 'rainmeter-32' -or ($BuildType -eq 'full' -and -not $X64Only)) {
 	Write-Host '* Building 32-bit projects'
 	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$MSBuildTarget", '/p:Platform=Win32', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '32-bit project build failed'
 	Verify-RuntimeDependencies (Join-Path $PSScriptRoot '..\BuildOut\Release32')
@@ -270,7 +270,12 @@ if ($BuildType -eq 'full' -or $BuildType -eq 'plugin-api') {
 
 	# The import libraries come from the PluginAPI stub rather than from Exports.def directly,
 	# since lib.exe cannot tell how the __stdcall functions are decorated from a name alone.
-	foreach ($arch in ([ordered]@{ x32 = 'Win32'; x64 = 'x64' }).GetEnumerator()) {
+	$architectures = if ($BuildType -eq 'full' -and $X64Only) {
+		[ordered]@{ x64 = 'x64' }
+	} else {
+		[ordered]@{ x32 = 'Win32'; x64 = 'x64' }
+	}
+	foreach ($arch in $architectures.GetEnumerator()) {
 		Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @('/t:rebuild', "/p:Platform=$($arch.Value)", "/p:SolutionDir=$solutionDir", '/v:q', '..\PluginAPI\PluginAPI.vcxproj')) -ErrorMessage "$($arch.Key) Plugin API build failed"
 
 		$libDir = Join-Path $pluginApiDir $arch.Key
