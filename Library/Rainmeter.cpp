@@ -133,7 +133,7 @@ int RainmeterMain(LPWSTR cmdLine)
 
 	g_CmdLine = cmdLine;
 
-	const WCHAR* iniFile = (*cmdLine && !layout && !startupCommand) ? cmdLine : nullptr;
+	const WCHAR* iniFile = (*cmdLine && !layout && !startupCommand && !wcschr(cmdLine, L'!')) ? cmdLine : nullptr;
 
 	auto& rainmeter = GetRainmeter();
 	int ret = rainmeter.Initialize(iniFile, layout, startupCommand);
