@@ -22,6 +22,8 @@ Then open `Rainmeter.sln` to build and run Rainmeter.
 
 ### Building the installer
 
-In PowerShell, run e.g. `.\Build\Build.ps1 full 1.2.3.4` to build all components with the version 1.2.3.4.
+Run the following PowerShell command, replacing `1.2.3.4` with the release version:
 
-Run `Get-Help .\Build\Build.ps1 -Detailed` to see the available parameters.
+    .\Build\Build.ps1 full 1.2.3.4 -IncludeTests
+
+For more control, check `Get-Help .\Build\Build.ps1 -Detailed` to see the available parameters.

@@ -95,7 +95,7 @@ jobs:
         uses: ./.github/actions/install-nsis
 
       - name: Build installer
-        run: .\Build\Build.ps1 installer $env:BUILD_VERSION.Substring(1)
+        run: .\Build\Build.ps1 languages,installer $env:BUILD_VERSION.Substring(1)
         shell: pwsh
 
       - name: Upload installer
