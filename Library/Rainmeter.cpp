@@ -73,12 +73,11 @@ int RainmeterMain(LPWSTR cmdLine)
 		while (*cmdLine == L' ') ++cmdLine;
 	}
 
-	constexpr WCHAR launchOption[] = L"/Launch";
-	constexpr size_t launchOptionLength = _countof(launchOption) - 1;
-	if (_wcsnicmp(cmdLine, launchOption, launchOptionLength) == 0 &&
-		(!cmdLine[launchOptionLength] || iswspace(cmdLine[launchOptionLength])))
+	constexpr WCHAR launchBang[] = L"[!Launch]";
+	constexpr size_t launchBangLength = _countof(launchBang) - 1;
+	if (_wcsnicmp(cmdLine, launchBang, launchBangLength) == 0)
 	{
-		startupCommand = cmdLine + launchOptionLength;
+		startupCommand = cmdLine + launchBangLength;
 		while (iswspace(*startupCommand)) ++startupCommand;
 	}
 
