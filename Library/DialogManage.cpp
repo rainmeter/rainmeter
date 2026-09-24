@@ -363,7 +363,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 			0, 0, 134, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Icon(Id_NewSkinButton, 0,
-			138, 0, 18, 14,
+			138, -1, 18, 16,
 			WS_VISIBLE | WS_TABSTOP | SS_ICON | SS_CENTERIMAGE | SS_NOTIFY, 0),
 		Control::TreeView(Id_SkinsTreeView, 0,
 			0, 18, 155, 221,
@@ -536,15 +536,11 @@ void DialogManage::TabSkins::Initialize()
 	item = GetControl(Id_DisplayMonitorButton);
 	Dialog::SetMenuButton(item);
 
-	CreateImageList();
+	HandleDpiChange();
 
 	// Populate tree
 	item = GetControl(Id_SkinsTreeView);
 	Update(nullptr, false);
-
-	// Apply icon to new skin button
-	HICON hIcon = GetIcon(IDI_ADDFOLDER);
-	SendDlgItemMessage(m_Window, Id_NewSkinButton, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
 
 	// Get rid of the EDITTEXT control border
 	item = GetControl(Id_DescriptionLabel);
@@ -583,9 +579,11 @@ void DialogManage::TabSkins::Initialize()
 
 void DialogManage::TabSkins::HandleDpiChange()
 {
-	CreateImageList();
-	HICON icon = GetIcon(IDI_ADDFOLDER);
+	const int iconSize = MulDiv(20, (int)System::GetDpiForWindow(m_Window), USER_DEFAULT_SCREEN_DPI);
+	HICON icon = GetIconBySize(IDI_ADDFOLDER, iconSize);
 	SendDlgItemMessage(m_Window, Id_NewSkinButton, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)icon);
+
+	CreateImageList();
 }
 
 void DialogManage::TabSkins::CreateImageList()
