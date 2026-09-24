@@ -30,7 +30,7 @@ Builds only 64-bit Rainmeter and includes unit tests in the project build.
 [CmdletBinding()]
 param(
 	[Parameter(Position = 0)]
-	[string]$BuildTargets,
+	[string[]]$BuildTargets,
 
 	[Parameter(Position = 1)]
 	[string]$Version,
@@ -47,12 +47,14 @@ $ErrorActionPreference = 'Stop'
 
 $fullBuildTypes = @('rainmeter-32', 'rainmeter-64', 'test-64', 'plugin-api', 'languages', 'installer')
 $BuildTypes = @(
-	foreach ($buildTarget in ($BuildTargets -split ',')) {
-		$buildTarget = $buildTarget.Trim()
-		if ($buildTarget -eq 'full') {
-			$fullBuildTypes
-		} else {
-			$buildTarget
+	foreach ($buildTargetGroup in $BuildTargets) {
+		foreach ($buildTarget in ($buildTargetGroup -split ',')) {
+			$buildTarget = $buildTarget.Trim()
+			if ($buildTarget -eq 'full') {
+				$fullBuildTypes
+			} else {
+				$buildTarget
+			}
 		}
 	}
 )
