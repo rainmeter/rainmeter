@@ -311,9 +311,9 @@ if ($BuildTypes -contains 'installer') {
 		"/DVERSION_MINOR=$versionMinor",
 		"/DBUILD_YEAR=$buildYear"
 	)
-	$release32Directory = Join-Path $PSScriptRoot '..\BuildOut\Release32'
+	$release32Executable = Join-Path $PSScriptRoot '..\BuildOut\Release32\Rainmeter.exe'
 	$x64OnlyInstaller = $BuildTypes -contains 'rainmeter-64' -and $BuildTypes -notcontains 'rainmeter-32'
-	if ($x64OnlyInstaller -or -not (Test-Path -LiteralPath $release32Directory -PathType Container)) {
+	if ($x64OnlyInstaller -or -not (Test-Path -LiteralPath $release32Executable -PathType Leaf)) {
 		$installerDefines += '/DX64ONLY'
 	}
 
