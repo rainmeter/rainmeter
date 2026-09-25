@@ -241,7 +241,7 @@ if ($BuildTypes -contains 'rainmeter') {
 
 if ($BuildTypes -contains 'rainmeter') {
 	Write-Host '* Building 64-bit projects'
-	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$msBuildTarget", '/p:Platform=x64', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '64-bit project build failed'
+	Invoke-NativeCommand $env:MSBUILD_EXE ($msBuildArgs + @("/t:$msBuildTarget", '/p:Platform=x64', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '64-bit project build failed'
 	Verify-RuntimeDependencies (Join-Path $PSScriptRoot '..\BuildOut\Release64')
 }
 
@@ -258,7 +258,7 @@ if ($BuildTypes -contains 'plugin-api') {
 
 	# The import libraries come from the PluginAPI stub rather than from Exports.def directly,
 	# since lib.exe cannot tell how the __stdcall functions are decorated from a name alone.
-	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @('/t:rebuild', '/p:Platform=x64', "/p:SolutionDir=$solutionDir", '/v:q', '..\PluginAPI\PluginAPI.vcxproj')) -ErrorMessage 'x64 Plugin API build failed'
+	Invoke-NativeCommand $env:MSBUILD_EXE ($msBuildArgs + @('/t:rebuild', '/p:Platform=x64', "/p:SolutionDir=$solutionDir", '/v:q', '..\PluginAPI\PluginAPI.vcxproj')) -ErrorMessage 'x64 Plugin API build failed'
 	$libDir = Join-Path $pluginApiDir 'x64'
 	New-Item -ItemType Directory -Path $libDir -Force | Out-Null
 	Copy-Item (Join-Path $solutionDir 'BuildOut\Release64\Obj\PluginAPI\Rainmeter.lib') $libDir
