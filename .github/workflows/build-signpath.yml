@@ -18,7 +18,7 @@ jobs:
           persist-credentials: false
 
       - name: Build Rainmeter
-        run: .\Build\Build.ps1 rainmeter $env:BUILD_VERSION.Substring(1) -LTCG -Rebuild
+        run: .\Build\Build.ps1 rainmeter $env:BUILD_VERSION.Substring(1) -OfficialBuild
         shell: pwsh
 
       - parallel:
