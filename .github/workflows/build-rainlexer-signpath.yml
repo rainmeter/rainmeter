@@ -26,8 +26,6 @@ jobs:
         with:
           name: RainLexerBuild
           path: |
-            RainLexer/x32-Release
-            !RainLexer/x32-Release/Obj
             RainLexer/x64-Release
             !RainLexer/x64-Release/Obj
           if-no-files-found: error
@@ -56,12 +54,11 @@ jobs:
         with:
           name: RainLexerBuild-${{ github.ref_name }}
           path: |
-            x32-Release/RainLexer.dll
             x64-Release/RainLexer.dll
           if-no-files-found: error
 
       - name: Remove build directories
-        run: rm -rf x32-Release x64-Release
+        run: rm -rf x64-Release
         shell: bash
 
       - name: Sign RainLexer DLLs

@@ -34,8 +34,6 @@ jobs:
         with:
           name: RainLexerBuild
           path: |
-            RainLexer/x32-Release
-            !RainLexer/x32-Release/Obj
             RainLexer/x64-Release
             !RainLexer/x64-Release/Obj
           if-no-files-found: error

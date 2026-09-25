@@ -51,10 +51,10 @@ VIAddVersionKey "OriginalFilename" "${OUTFILE}"
 VIAddVersionKey "LegalCopyright" "${U+00A9} ${BUILD_YEAR} Rainmeter Team"
 VIProductVersion "${VERSION_FULL}"
 BrandingText " "
-!ifdef X64ONLY
-SetCompressor zlib
-!else
+!ifdef OFFICIALBUILD
 SetCompressor /SOLID lzma
+!else
+SetCompressor zlib
 !endif
 RequestExecutionLevel user
 InstallDirRegKey HKLM "SOFTWARE\Rainmeter" ""
@@ -69,10 +69,6 @@ ReserveFile "..\..\BuildOut\Installer\Plugins\x86-unicode\System.dll"
 ReserveFile "..\..\BuildOut\Installer\Plugins\x86-unicode\UAC.dll"
 ReserveFile ".\Wizard.jpg"
 ReserveFile ".\WizardEmpty.bmp"
-
-; Additional Windows definitions
-!define PF_XMMI64_INSTRUCTIONS_AVAILABLE 10
-!define SCS_64BIT_BINARY 6
 
 !define MUI_ICON ".\Installer.ico"
 !define MUI_CUSTOMFUNCTION_GUIINIT InitWizardImage
@@ -96,7 +92,6 @@ Page custom PageOptions PageOptionsOnLeave
 
 Var NonDefaultLanguage
 Var AutoStartup
-Var Install64Bit
 Var InstallPortable
 Var ExistingRainmeterInstallation
 Var RestartAfterInstall
@@ -151,15 +146,11 @@ SetShellVarContext all
 ; Install
 ; --------------------------------------
 Function .onInit
-	${If} ${RunningX64}
-		${EnableX64FSRedirection}
+	${IfNot} ${RunningX64}
+		MessageBox MB_OK|MB_ICONSTOP "This installer requires 64-bit Windows." /SD IDOK
+		Quit
 	${EndIf}
-!ifdef X64ONLY
-		${IfNot} ${RunningX64}
-			MessageBox MB_OK|MB_ICONSTOP "This installer requires 64-bit Windows." /SD IDOK
-			Quit
-		${EndIf}
-!endif
+	${EnableX64FSRedirection}
 
 	${IfNot} ${UAC_IsInnerInstance}
 		${IfNot} ${AtLeastWin10}
@@ -185,7 +176,6 @@ Function .onInit
 				${If} $0 == "cancel"
 					Abort
 				${EndIf}
-
 				${If} $0 <> $LANGUAGE
 					; User selected non-default language
 					StrCpy $NonDefaultLanguage 1
@@ -249,8 +239,6 @@ Function .onInit
 				StrCpy $InstallPortable 1
 			${EndIf}
 
-			StrCpy $Install64Bit 1
-			${GetOptions} $R1 "/VERSION=" $0
 			${If} $InstallPortable = 1
 				; Check for /D= defined on the command line in case a portable
 				; installation is desired after standard installation
@@ -259,37 +247,14 @@ Function .onInit
 				${If} $2 == ""
 					StrCpy $INSTDIR "$EXEDIR\Rainmeter"
 				${EndIf}
-
-				${If} $0 = 32
-				${OrIfNot} ${RunningX64}
-					StrCpy $Install64Bit 0
-				${EndIf}
 			${Else}
 				; Standard installation (ignore /D=)
-				${If} $0 != ""
-					${If} $0 = 32
-					${OrIfNot} ${RunningX64}
-						StrCpy $INSTDIR "$PROGRAMFILES\Rainmeter"
-						StrCpy $Install64Bit 0
-					${Else}
-						StrCpy $INSTDIR "$PROGRAMFILES64\Rainmeter"
-					${EndIf}
+				${If} ${FileExists} "$PROGRAMFILES64\Rainmeter\Rainmeter.exe"
+					StrCpy $INSTDIR "$PROGRAMFILES64\Rainmeter"
+				${ElseIf} ${FileExists} "$PROGRAMFILES\Rainmeter\Rainmeter.exe"
+					StrCpy $INSTDIR "$PROGRAMFILES\Rainmeter"
 				${Else}
-					; No Version defined, check for previous installation first
-					${If} ${RunningX64}
-					${AndIf} ${FileExists} "$PROGRAMFILES64\Rainmeter\Rainmeter.exe"
-						StrCpy $INSTDIR "$PROGRAMFILES64\Rainmeter"
-					${ElseIf} ${FileExists} "$PROGRAMFILES\Rainmeter\Rainmeter.exe"
-						StrCpy $INSTDIR "$PROGRAMFILES\Rainmeter"
-						StrCpy $Install64Bit 0
-
-					; New installation
-					${ElseIf} ${RunningX64}
-						StrCpy $INSTDIR "$PROGRAMFILES64\Rainmeter"
-					${Else}
-						StrCpy $INSTDIR "$PROGRAMFILES\Rainmeter"
-						StrCpy $Install64Bit 0
-					${EndIf}
+					StrCpy $INSTDIR "$PROGRAMFILES64\Rainmeter"
 				${EndIf}
 			${EndIf}
 		${EndIf}
@@ -303,20 +268,15 @@ Function .onInit
 		; Exchange settings with user instance
 		!insertmacro UAC_AsUser_Call Function ExchangeSettings ${UAC_SYNCREGISTERS}
 		StrCpy $AutoStartup $1
-		StrCpy $Install64Bit $2
 		StrCpy $NonDefaultLanguage $3
 		StrCpy $RestartAfterInstall $4
 		StrCpy $LANGUAGE $5
 		StrCpy $INSTDIR $6
 	${EndIf}
-!ifdef X64ONLY
-		StrCpy $Install64Bit 1
-!endif
 FunctionEnd
 
 Function ExchangeSettings
 	StrCpy $1 $AutoStartup
-	StrCpy $2 $Install64Bit
 	StrCpy $3 $NonDefaultLanguage
 	StrCpy $4 $RestartAfterInstall
 	StrCpy $5 $LANGUAGE
@@ -428,7 +388,6 @@ Function PageOptions
 
 	${NSD_CreateDirRequest} 6u 14u 232u 14u ""
 	Pop $R0
-	${NSD_OnChange} $R0 PageOptionsDirectoryOnChange
 
 	${NSD_CreateBrowseButton} 242u 14u 50u 14u "$(^BrowseBtn)"
 	Pop $R1
@@ -436,18 +395,6 @@ Function PageOptions
 
 	StrCpy $1 0
 
-	StrCpy $R2 0
-!ifndef X64ONLY
-	${If} ${RunningX64}
-		${If} $InstallPortable = 1
-		${OrIf} $INSTDIR == ""
-		${OrIfNot} ${FileExists} "$INSTDIR\Rainmeter.exe"
-			${NSD_CreateCheckBox} 6u 54u 285u 12u "$(Install64Bit)"
-			Pop $R2
-			StrCpy $1 30u
-		${EndIf}
-	${EndIf}
-!endif
 
 	${If} $InstallPortable <> 1
 		${If} $1 = 0
@@ -496,10 +443,6 @@ Function PageOptions
 			StrCpy $0 "$0\Rainmeter"
 		${EndIf}
 		${NSD_SetText} $R0 "$0"
-
-		${If} ${RunningX64}
-			${NSD_Check} $R2
-		${EndIf}
 	${Else}
 		; Disable Directory editbox and Browse button if already installed
 		SendMessage $R0 ${EM_SETREADONLY} 1 0
@@ -507,19 +450,9 @@ Function PageOptions
 		${If} $INSTDIR != ""
 			EnableWindow $R1 0
 			${NSD_SetText} $R0 "$INSTDIR"
-
-			${If} ${RunningX64}
-			${AndIfNot} ${FileExists} "$INSTDIR\Rainmeter.exe"
-				${NSD_Check} $R2
-			${EndIf}
 		${Else}
 			; Fresh install
-			${If} ${RunningX64}
-				${NSD_SetText} $R0 "$PROGRAMFILES64\Rainmeter"
-				${NSD_Check} $R2
-			${Else}
-				${NSD_SetText} $R0 "$PROGRAMFILES\Rainmeter"
-			${EndIf}
+			${NSD_SetText} $R0 "$PROGRAMFILES64\Rainmeter"
 		${EndIf}
 	${EndIf}
 
@@ -532,29 +465,6 @@ Function PageOptions
 	${EndIf}
 
 	nsDialogs::Show
-FunctionEnd
-
-Function PageOptionsDirectoryOnChange
-	${NSD_GetText} $R0 $0
-
-	StrCpy $Install64Bit 0
-	${If} ${RunningX64}
-		${If} ${FileExists} "$0\Rainmeter.exe"
-			System::Call "kernel32::GetBinaryType(t '$0\Rainmeter.exe', *i .r1)"
-			${If} $1 = ${SCS_64BIT_BINARY}
-				StrCpy $Install64Bit 1
-			${EndIf}
-
-			${If} $R2 != 0
-				${NSD_SetState} $R2 $Install64Bit
-				EnableWindow $R2 0
-			${EndIf}
-		${Else}
-			${If} $R2 != 0
-				EnableWindow $R2 1
-			${EndIf}
-		${EndIf}
-	${EndIf}
 FunctionEnd
 
 Function PageOptionsBrowseOnClick
@@ -579,13 +489,6 @@ Function PageOptionsOnLeave
 
 	GetDlgItem $0 $HWNDPARENT 1
 	EnableWindow $0 0
-
-	${If} $R2 != 0
-		${NSD_GetState} $R2 $Install64Bit
-	${EndIf}
-!ifdef X64ONLY
-		StrCpy $Install64Bit 1
-!endif
 
 	${If} $R3 != 0
 		${NSD_GetState} $R3 $AutoStartup
@@ -652,13 +555,6 @@ Section
 	SetOutPath "$PLUGINSDIR"
 	SetShellVarContext current
 
-	Var /GLOBAL InstArc
-	${If} $Install64Bit = 1
-		StrCpy $InstArc "x64"
-	${Else}
-		StrCpy $InstArc "x86"
-	${EndIf}
-
 	SetOutPath "$INSTDIR"
 
 	StrCpy $ExistingRainmeterInstallation 0
@@ -697,8 +593,7 @@ Retry:
 	${IfNot} ${Silent}
 	${AndIf} ${FileExists} "$INSTDIR\Rainmeter.ini"
 		${If} $InstallPortable <> 1
-			${If} $Install64Bit = 1
-			${AndIf} "$INSTDIR" == "$PROGRAMFILES64\Rainmeter"
+			${If} "$INSTDIR" == "$PROGRAMFILES64\Rainmeter"
 			${OrIf} "$INSTDIR" == "$PROGRAMFILES\Rainmeter"
 				MessageBox MB_YESNO|MB_ICONEXCLAMATION "$(SettingsFileError)" /SD IDNO IDNO SkipIniMove
 				StrCpy $0 1
@@ -757,23 +652,11 @@ SkipIniMove:
 !ifdef INCLUDEFILES
 	File "..\..\Application\Rainmeter.exe.config"
 
-!ifdef X64ONLY
-		!insertmacro InstallFiles "BuildOut\Release64" "x64"
-!else
-	${If} $instArc == "x86"
-		!insertmacro InstallFiles "BuildOut\Release32" "x86"
-	${Else}
-		!insertmacro InstallFiles "BuildOut\Release64" "x64"
-	${EndIf}
-!endif
+	!insertmacro InstallFiles "BuildOut\Release64" "x64"
 
 	RMDir /r "$INSTDIR\Languages"
 	SetOutPath "$INSTDIR\Languages"
-!ifdef X64ONLY
 	File "..\..\BuildOut\Release64\Languages\*.rmlang"
-!else
-	File "..\..\BuildOut\Release32\Languages\*.rmlang"
-!endif
 
 	SetOutPath "$INSTDIR\Defaults\Skins"
 	File /r "..\Skins\*.*"
