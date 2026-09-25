@@ -3,10 +3,10 @@
 Builds Rainmeter release artifacts.
 
 .PARAMETER BuildTargets
-Comma-separated build targets to run. Valid values are full, rainmeter-32, rainmeter-64, test-64, languages, plugin-api, and installer. The full target expands to all targets.
+Comma-separated build targets to run. Valid values are full, rainmeter, test, languages, plugin-api, and installer. The full target expands to all targets.
 
 .PARAMETER Version
-The release version in major.minor.subminor.revision format. Required for rainmeter-32, rainmeter-64, and installer targets.
+The release version in major.minor.subminor.revision format. Required for rainmeter and installer targets.
 
 .PARAMETER IncludeTests
 Includes unit tests in project builds; omitted by default.
@@ -17,15 +17,18 @@ Rebuilds projects instead of building them incrementally; off by default.
 .PARAMETER LTCG
 Enables whole-program optimization and link-time code generation for release builds.
 
+.PARAMETER OfficialBuild
+Uses solid LZMA compression for the official installer.
+
 .EXAMPLE
 .\Build.ps1 full 1.2.3.4 -IncludeTests
 
 Builds all Rainmeter components and creates the installer.
 
 .EXAMPLE
-.\Build.ps1 rainmeter-64 1.2.3.4 -IncludeTests
+.\Build.ps1 rainmeter 1.2.3.4 -IncludeTests
 
-Builds only 64-bit Rainmeter and includes unit tests in the project build.
+Builds Rainmeter and includes unit tests in the project build.
 #>
 [CmdletBinding()]
 param(
@@ -39,14 +42,16 @@ param(
 
 	[switch]$Rebuild,
 
-	[switch]$LTCG
+	[switch]$LTCG,
+
+	[switch]$OfficialBuild
 )
 
 $ErrorActionPreference = 'Stop'
 
 $msBuildTarget = if ($Rebuild) { 'rebuild' } else { 'build' }
 
-$fullBuildTypes = @('rainmeter-32', 'rainmeter-64', 'test-64', 'plugin-api', 'languages', 'installer')
+$fullBuildTypes = @('rainmeter', 'test', 'plugin-api', 'languages', 'installer')
 $BuildTypes = @(
 	foreach ($buildTargetGroup in $BuildTargets) {
 		foreach ($buildTarget in ($buildTargetGroup -split ',')) {
@@ -179,9 +184,8 @@ $excludeTests = if ($IncludeTests) { 'false' } else { 'true' }
 
 foreach ($buildType in $BuildTypes) {
 	switch ($buildType) {
-		'rainmeter-32' {}
-		'rainmeter-64' {}
-		'test-64' {}
+		'rainmeter' {}
+		'test' {}
 		'languages' {}
 		'plugin-api' {}
 		'installer' {}
@@ -189,7 +193,7 @@ foreach ($buildType in $BuildTypes) {
 	}
 }
 
-$versionedBuildTypes = @('rainmeter-32', 'rainmeter-64', 'installer')
+$versionedBuildTypes = @('rainmeter', 'installer')
 $requiresVersion = @($BuildTypes | Where-Object { $versionedBuildTypes -contains $_ }).Count -gt 0
 
 if ($requiresVersion) {
@@ -223,7 +227,7 @@ if ($LTCG) {
 	$msBuildArgs += '/p:EnableLTCG=true'
 }
 
-if ($BuildTypes -contains 'rainmeter-32' -or $BuildTypes -contains 'rainmeter-64') {
+if ($BuildTypes -contains 'rainmeter') {
 	Write-Host "* Starting $BuildTargets build for $versionFull"
 
 	$versionHeaderLines = @(
@@ -245,19 +249,13 @@ if ($BuildTypes -contains 'rainmeter-32' -or $BuildTypes -contains 'rainmeter-64
 	Write-Utf8File (Join-Path $PSScriptRoot '..\Version.h') $versionHeaderLines
 }
 
-if ($BuildTypes -contains 'rainmeter-32') {
-	Write-Host '* Building 32-bit projects'
-	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$msBuildTarget", '/p:Platform=Win32', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '32-bit project build failed'
-	Verify-RuntimeDependencies (Join-Path $PSScriptRoot '..\BuildOut\Release32')
-}
-
-if ($BuildTypes -contains 'rainmeter-64') {
+if ($BuildTypes -contains 'rainmeter') {
 	Write-Host '* Building 64-bit projects'
 	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @("/t:$msBuildTarget", '/p:Platform=x64', '/v:q', '/m', '..\Rainmeter.sln')) -ErrorMessage '64-bit project build failed'
 	Verify-RuntimeDependencies (Join-Path $PSScriptRoot '..\BuildOut\Release64')
 }
 
-if ($BuildTypes -contains 'test-64') {
+if ($BuildTypes -contains 'test') {
 	Write-Host '* Testing 64-bit projects'
 	Invoke-NativeCommand 'vstest.console.exe' @('..\BuildOut\Release64\Obj\Common_Test\Common_Test.dll', '..\BuildOut\Release64\Rainmeter.dll', '/Platform:x64') -ErrorMessage '64-bit tests failed'
 }
@@ -270,14 +268,10 @@ if ($BuildTypes -contains 'plugin-api') {
 
 	# The import libraries come from the PluginAPI stub rather than from Exports.def directly,
 	# since lib.exe cannot tell how the __stdcall functions are decorated from a name alone.
-	foreach ($arch in ([ordered]@{ x32 = 'Win32'; x64 = 'x64' }).GetEnumerator()) {
-		Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @('/t:rebuild', "/p:Platform=$($arch.Value)", "/p:SolutionDir=$solutionDir", '/v:q', '..\PluginAPI\PluginAPI.vcxproj')) -ErrorMessage "$($arch.Key) Plugin API build failed"
-
-		$libDir = Join-Path $pluginApiDir $arch.Key
-		New-Item -ItemType Directory -Path $libDir -Force | Out-Null
-		$outDirRoot = if ($arch.Value -eq 'Win32') { 'Release32' } else { 'Release64' }
-		Copy-Item (Join-Path $solutionDir "BuildOut\$outDirRoot\Obj\PluginAPI\Rainmeter.lib") $libDir
-	}
+	Invoke-NativeCommand 'msbuild.exe' ($msBuildArgs + @('/t:rebuild', '/p:Platform=x64', "/p:SolutionDir=$solutionDir", '/v:q', '..\PluginAPI\PluginAPI.vcxproj')) -ErrorMessage 'x64 Plugin API build failed'
+	$libDir = Join-Path $pluginApiDir 'x64'
+	New-Item -ItemType Directory -Path $libDir -Force | Out-Null
+	Copy-Item (Join-Path $solutionDir 'BuildOut\Release64\Obj\PluginAPI\Rainmeter.lib') $libDir
 
 	Copy-Item (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.h'), (Join-Path $PSScriptRoot '..\Library\RainmeterAPI.cs') $pluginApiDir
 }
@@ -311,10 +305,8 @@ if ($BuildTypes -contains 'installer') {
 		"/DVERSION_MINOR=$versionMinor",
 		"/DBUILD_YEAR=$buildYear"
 	)
-	$release32Executable = Join-Path $PSScriptRoot '..\BuildOut\Release32\Rainmeter.exe'
-	$x64OnlyInstaller = $BuildTypes -contains 'rainmeter-64' -and $BuildTypes -notcontains 'rainmeter-32'
-	if ($x64OnlyInstaller -or -not (Test-Path -LiteralPath $release32Executable -PathType Leaf)) {
-		$installerDefines += '/DX64ONLY'
+	if ($OfficialBuild) {
+		$installerDefines += '/DOFFICIALBUILD'
 	}
 
 	Invoke-NativeCommand $makeNsis ($installerDefines + @('/WX', '.\Installer\Installer.nsi')) -ErrorMessage 'Installer build failed'

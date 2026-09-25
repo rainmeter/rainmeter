@@ -54,9 +54,7 @@ $scriptDirectory = Join-Path $PSScriptRoot '..\Language'
 $resourceHeaderPath = Join-Path $PSScriptRoot '..\Library\resource.h'
 $installerOutputDirectory = Join-Path $PSScriptRoot '..\BuildOut\Installer'
 $languageOutputDirectories = @(
-	(Join-Path $PSScriptRoot '..\BuildOut\Release32\Languages'),
 	(Join-Path $PSScriptRoot '..\BuildOut\Release64\Languages'),
-	(Join-Path $PSScriptRoot '..\BuildOut\Debug32\Languages'),
 	(Join-Path $PSScriptRoot '..\BuildOut\Debug64\Languages')
 )
 if ($OutputDirectory) {
