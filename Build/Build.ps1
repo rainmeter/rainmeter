@@ -11,14 +11,8 @@ The release version in major.minor.subminor.revision format. Required for rainme
 .PARAMETER IncludeTests
 Includes unit tests in project builds; omitted by default.
 
-.PARAMETER Rebuild
-Rebuilds projects instead of building them incrementally; off by default.
-
-.PARAMETER LTCG
-Enables whole-program optimization and link-time code generation for release builds.
-
 .PARAMETER OfficialBuild
-Uses solid LZMA compression for the official installer.
+Rebuilds projects with link-time code generation and uses solid LZMA compression for the installer.
 
 .EXAMPLE
 .\Build.ps1 full 1.2.3.4 -IncludeTests
@@ -40,16 +34,12 @@ param(
 
 	[switch]$IncludeTests,
 
-	[switch]$Rebuild,
-
-	[switch]$LTCG,
-
 	[switch]$OfficialBuild
 )
 
 $ErrorActionPreference = 'Stop'
 
-$msBuildTarget = if ($Rebuild) { 'rebuild' } else { 'build' }
+$msBuildTarget = if ($OfficialBuild) { 'rebuild' } else { 'build' }
 
 $fullBuildTypes = @('rainmeter', 'test', 'plugin-api', 'languages', 'installer')
 $BuildTypes = @(
@@ -223,7 +213,7 @@ $msBuildArgs = @(
 	"/p:ExcludeTests=$excludeTests",
 	'/p:Configuration=Release'
 )
-if ($LTCG) {
+if ($OfficialBuild) {
 	$msBuildArgs += '/p:EnableLTCG=true'
 }
 
