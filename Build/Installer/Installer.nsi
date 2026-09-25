@@ -147,19 +147,16 @@ SetShellVarContext all
 ; --------------------------------------
 Function .onInit
 	${IfNot} ${RunningX64}
-		MessageBox MB_OK|MB_ICONSTOP "This installer requires 64-bit Windows." /SD IDOK
+	${OrIfNot} ${AtLeastWin10}
+	${OrIfNot} ${AtLeastBuild} 18362
+		MessageBox MB_OK|MB_ICONSTOP "$(UnsupportedWindowsError)" /SD IDOK
+		!insertmacro LOG_ERROR ${ERROR_UNSUPPORTED}
 		Quit
 	${EndIf}
+
 	${EnableX64FSRedirection}
 
 	${IfNot} ${UAC_IsInnerInstance}
-		${IfNot} ${AtLeastWin10}
-		${OrIfNot} ${AtLeastBuild} 18362
-			MessageBox MB_OK|MB_ICONSTOP "$(UnsupportedWindowsError)" /SD IDOK
-			!insertmacro LOG_ERROR ${ERROR_UNSUPPORTED}
-			Quit
-		${EndIf}
-
 		ReadRegStr $0 HKLM "SOFTWARE\Rainmeter" "Language"
 		ReadRegDWORD $NonDefaultLanguage HKLM "SOFTWARE\Rainmeter" "NonDefault"
 
