@@ -56,5 +56,45 @@ set
 		throw 'MSBuild.exe not found'
 	}
 	$env:MSBUILD_EXE = $msBuild
-	$env:PATH = "$(Split-Path $msBuild);$env:PATH"
+	$env:VisualStudioVersion = '18.0'
+
+	$netFxSdkRoot = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\NETFXSDK'
+	if (Test-Path -LiteralPath $netFxSdkRoot -PathType Container) {
+		$netFxSdk = Get-ChildItem -LiteralPath $netFxSdkRoot -Directory |
+			Sort-Object { [version]$_.Name } -Descending |
+			Select-Object -First 1
+		if ($netFxSdk) {
+			$netFxInclude = Join-Path $netFxSdk.FullName 'include\um'
+			$netFxLib = Join-Path $netFxSdk.FullName "lib\um\$Architecture"
+			if (Test-Path -LiteralPath $netFxInclude -PathType Container) {
+				$env:INCLUDE = "$($env:INCLUDE.TrimEnd(';'));$netFxInclude"
+			}
+			if (Test-Path -LiteralPath $netFxLib -PathType Container) {
+				$vcLibraries = @($env:LIB -split ';' | Where-Object { $_ -match '\\VC\\Tools\\MSVC\\' })
+				$otherLibraries = @($env:LIB -split ';' | Where-Object { $_ -and $_ -notmatch '\\VC\\Tools\\MSVC\\' })
+				$env:LIB = ($vcLibraries + $netFxLib + $otherLibraries) -join ';'
+			}
+		}
+	}
+
+	$framework = Join-Path $env:WINDIR "Microsoft.NET\Framework$(if ($Architecture -eq 'x64') { '64' })\v4.0.30319"
+	if (Test-Path -LiteralPath $framework -PathType Container) {
+		$vcLibPaths = @($env:LIBPATH -split ';' | Where-Object { $_ -match '\\VC\\Tools\\MSVC\\' })
+		$otherLibPaths = @($env:LIBPATH -split ';' | Where-Object { $_ -and $_ -notmatch '\\VC\\Tools\\MSVC\\' })
+		$env:LIBPATH = ($vcLibPaths + $otherLibPaths + $framework) -join ';'
+	}
+
+	$toolPaths = @(
+		(Split-Path $msBuild),
+		(Join-Path $vsInstallDir 'MSBuild\Current\Bin\Roslyn'),
+		(Join-Path $vsInstallDir 'Common7\IDE\CommonExtensions\Microsoft\TestWindow'),
+		(Join-Path $vsInstallDir 'Common7\IDE'),
+		(Join-Path $vsInstallDir 'Common7\Tools'),
+		$framework
+	) | Where-Object { Test-Path -LiteralPath $_ -PathType Container }
+	$env:PATH = "$(($toolPaths -join ';'));$env:PATH"
+	$vstest = Join-Path $vsInstallDir 'Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe'
+	if (Test-Path -LiteralPath $vstest -PathType Leaf) {
+		$env:VSTEST_CONSOLE_EXE = $vstest
+	}
 }

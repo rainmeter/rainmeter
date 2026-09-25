@@ -247,7 +247,10 @@ if ($BuildTypes -contains 'rainmeter') {
 
 if ($BuildTypes -contains 'test') {
 	Write-Host '* Testing 64-bit projects'
-	Invoke-NativeCommand 'vstest.console.exe' @('..\BuildOut\Release64\Obj\Common_Test\Common_Test.dll', '..\BuildOut\Release64\Rainmeter.dll', '/Platform:x64') -ErrorMessage '64-bit tests failed'
+	if (-not $env:VSTEST_CONSOLE_EXE) {
+		throw 'vstest.console.exe not found'
+	}
+	Invoke-NativeCommand $env:VSTEST_CONSOLE_EXE @('..\BuildOut\Release64\Obj\Common_Test\Common_Test.dll', '..\BuildOut\Release64\Rainmeter.dll', '/Platform:x64') -ErrorMessage '64-bit tests failed'
 }
 
 if ($BuildTypes -contains 'plugin-api') {

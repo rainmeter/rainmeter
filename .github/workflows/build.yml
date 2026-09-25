@@ -18,6 +18,10 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Compare Visual Studio environments
+        run: .\Build\CompareVisualStudioEnvironment.ps1
+        shell: pwsh
+
       - name: Install NSIS
         id: install-nsis
         uses: ./.github/actions/install-nsis
