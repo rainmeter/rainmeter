@@ -746,8 +746,9 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, std::wstring_view curr
 		// This is a backward-compatibility hack for actions, which need [#CURRENTSECTION] even when
 		// section-variable replacement is disabled. The token has only one '#', so handle it before
 		// looking for the closing '#' of an old-style #VAR# variable. The match is intentionally
-		// case-sensitive to preserve the old special-case behavior.
-		if (!currentSection.empty() && start != 0)
+		// case-sensitive to preserve the old special-case behavior. New-style parsing already handles
+		// this token; expanding an escaped one here would resolve it in [Variables] too early.
+		if (!isNewStyle && !currentSection.empty() && start != 0)
 		{
 			const size_t variableStart = start - 1;
 			if (std::wstring_view(result).substr(variableStart).starts_with(currentSectionVariable))
