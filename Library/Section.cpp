@@ -21,7 +21,7 @@ Section::~Section()
 
 void Section::ReadOptions(ConfigParser& parser, bool allowMeterStyle)
 {
-	auto optionReader = parser.GetInheritableOptionReader(m_Name, m_ID, allowMeterStyle);
+	auto optionReader = parser.GetInheritableOptionReader(this, allowMeterStyle);
 	ReadOptions(optionReader);
 }
 

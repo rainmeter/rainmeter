@@ -787,7 +787,7 @@ void MeterTextEdit::SetText(std::wstring_view text)
 void MeterTextEdit::Reset()
 {
 	ConfigParser& parser = m_Skin->GetParser();
-	auto optionReader = parser.GetInheritableOptionReader(m_Name, m_ID, true);
+	auto optionReader = parser.GetInheritableOptionReader(this, true);
 	std::wstring text = optionReader.ReadString<"InitialText">();
 
 	ApplyTextTransformations(text);

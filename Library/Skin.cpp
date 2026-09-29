@@ -2891,7 +2891,7 @@ bool Skin::ReadSkin()
 	// First read the container option, then set the appropriate relative meter.
 	for (Meter* meter : m_Meters)
 	{
-		auto reader = m_Parser.GetInheritableOptionReader(meter->GetName(), meter->GetSectionID(), true);
+		auto reader = m_Parser.GetInheritableOptionReader(meter, true);
 		meter->ReadContainerOptions(reader);
 	}
 	m_ResetRelativeMeters = true;

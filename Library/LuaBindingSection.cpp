@@ -12,7 +12,6 @@ int GetOption(lua_State* L, Section* section, bool allowMeterStyle)
 {
 	Skin* skin = section->GetSkin();
 	ConfigParser& parser = skin->GetParser();
-	const WCHAR* sectionName = section->GetName();
 	const auto key = LuaHelper::ToWide(2);
 	const auto defValue = LuaHelper::ToWide(3);
 
@@ -22,7 +21,7 @@ int GetOption(lua_State* L, Section* section, bool allowMeterStyle)
 		options.sectionVariables = LuaHelper::ToBool(4);
 	}
 
-	auto optionReader = parser.GetInheritableOptionReader(sectionName, section->GetSectionID(), allowMeterStyle);
+	auto optionReader = parser.GetInheritableOptionReader(section, allowMeterStyle);
 	const auto& value = optionReader.ReadString(key.c_str(), defValue.c_str(), options);
 
 	LuaHelper::PushWide(value);

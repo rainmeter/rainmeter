@@ -736,7 +736,7 @@ void MeasureInputText::Command(const std::wstring& command)
 	auto& parser = m_Skin->GetParser();
 	bool hasSteps;
 	{
-		auto reader = parser.GetInheritableOptionReader(m_Name, m_ID);
+		auto reader = parser.GetInheritableOptionReader(this);
 		m_Options = InputTextOptions();
 		for (const OptionName& entry : c_Options)
 		{
