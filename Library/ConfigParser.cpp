@@ -167,7 +167,8 @@ void ConfigParser::SetVariable(std::wstring_view strVariable, std::wstring_view 
 
 bool ConfigParser::GetVariable(std::wstring_view strVariable, std::wstring& strValue, bool isNewStyle)
 {
-	return GetVariable(strVariable, strValue, nullptr, MonitorVariableMode::DEFAULT_LOGICAL, isNewStyle);
+	Section* section = m_Skin ? m_Skin->GetCurrentSection() : nullptr;
+	return GetVariable(strVariable, strValue, section, MonitorVariableMode::DEFAULT_LOGICAL, isNewStyle);
 }
 
 bool ConfigParser::GetVariable(std::wstring_view strVariable, std::wstring& strValue, Section* currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle)
@@ -256,7 +257,7 @@ const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& st
 	return nullptr;
 }
 
-std::optional<std::wstring> ConfigParser::GetSectionVariable(std::wstring_view variableStr, void* logEntry)
+std::optional<std::wstring> ConfigParser::GetSectionVariable(std::wstring_view variableStr, Section* currentSection, void* logEntry)
 {
 	if (!m_Skin) return std::nullopt;
 
@@ -335,6 +336,13 @@ std::optional<std::wstring> ConfigParser::GetSectionVariable(std::wstring_view v
 
 			std::wstring value;
 			const auto type = measure->GetTypeID();
+			std::optional<CurrentSectionScope> sectionScope;
+
+			if (currentSection && (type == TypeID<MeasureScript>() || type == TypeID<MeasurePlugin>()))
+			{
+				sectionScope.emplace(m_Skin, currentSection);
+			}
+
 			if (type == TypeID<MeasureScript>())
 			{
 				MeasureScript* script = (MeasureScript*)measure;
@@ -858,7 +866,7 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result, Section* currentSection
 				}
 				else
 				{
-					if (auto value = GetSectionVariable(section))
+					if (auto value = GetSectionVariable(section, currentSection))
 					{
 						result.replace(start, end - start + 1, *value);
 						start += value->length();
@@ -896,6 +904,7 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, Section* currentSec
 	{
 		currentSection = meter ? meter : m_Skin->GetCurrentSection();
 	}
+
 	bool replaced = false;
 
 	Logger::Entry delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
@@ -987,7 +996,7 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, Section* currentSec
 				}
 				else
 				{
-					if (auto foundValue = GetSectionVariable(variable, &delayedLogEntry))
+					if (auto foundValue = GetSectionVariable(variable, currentSection, &delayedLogEntry))
 					{
 						replaceFoundValue(std::move(*foundValue));
 						break;
