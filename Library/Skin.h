@@ -143,7 +143,7 @@ public:
 	void SetMouseLeaveEvent(bool cancel);
 	void SetHasMouseScrollAction() { m_HasMouseScrollAction = true; }
 
-	Section* GetCurrentActionSection() { return m_CurrentActionSection; }
+	Section* GetCurrentSection() { return m_CurrentSection; }
 
 	void MoveWindow(int x, int y, SkinPositionSpace posSpace);
 	void MoveSelectedWindow(int dx, int dy);
@@ -278,7 +278,7 @@ public:
 
 	static bool GetMathParserValue(const WCHAR* str, int len, double* value, void* context);
 
-	friend class CurrentActionSectionScope;
+	friend class CurrentSectionScope;
 	friend class DialogManage;
 	friend class Rainmeter;
 	friend class ContextMenu;
@@ -481,7 +481,7 @@ private:
 	std::wstring m_OnDisplayMetricsChangeAction;
 	std::wstring m_OnVisibilityChangeAction;
 
-	Section* m_CurrentActionSection;
+	Section* m_CurrentSection;
 
 	std::wstring m_SkinGroup;
 	std::wstring m_ResourcesPath;
@@ -608,23 +608,22 @@ private:
 	static bool c_IsInSelectionMode;
 };
 
-// Sets the section running an action, and puts back the previous one when the action ends.
-// Actions can start other actions, so the outer action must keep its section for the bangs
-// that come after the inner one.
-class CurrentActionSectionScope
+// Lua callbacks and nested actions can query CURRENTSECTION. Keep the active section available
+// while they run, then restore the caller's section when control returns.
+class CurrentSectionScope
 {
 public:
-	CurrentActionSectionScope(Skin* skin, Section* section) :
+	CurrentSectionScope(Skin* skin, Section* section) :
 		m_Skin(skin),
-		m_Previous(skin->m_CurrentActionSection)
+		m_Previous(skin->m_CurrentSection)
 	{
-		m_Skin->m_CurrentActionSection = section;
+		m_Skin->m_CurrentSection = section;
 	}
 
-	~CurrentActionSectionScope() { m_Skin->m_CurrentActionSection = m_Previous; }
+	~CurrentSectionScope() { m_Skin->m_CurrentSection = m_Previous; }
 
-	CurrentActionSectionScope(const CurrentActionSectionScope& other) = delete;
-	CurrentActionSectionScope& operator=(CurrentActionSectionScope other) = delete;
+	CurrentSectionScope(const CurrentSectionScope& other) = delete;
+	CurrentSectionScope& operator=(CurrentSectionScope other) = delete;
 
 private:
 	Skin* m_Skin;
