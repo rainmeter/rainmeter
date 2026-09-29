@@ -5,7 +5,6 @@
 #include "LuaHelper.h"
 #include "Util.h"
 #include "Rainmeter.h"
-#include "../Common/StringParser.h"
 
 const char* g_InitializeFunctionName = "Initialize";
 const char* g_UpdateFunctionName = "Update";
@@ -187,7 +186,7 @@ void MeasureScript::Command(const std::wstring& command)
 	}
 }
 
-bool MeasureScript::CommandWithReturn(std::wstring_view command, std::wstring& strValue, void* delayedLogEntry)
+bool MeasureScript::CommandWithReturn(std::wstring_view name, const std::vector<std::wstring>& args, bool isFunctionCall, std::wstring& strValue)
 {
 	// Scripts need to be initialized so that any variables declared in
 	// the Initialize() function in the lua script file are accessible.
@@ -198,49 +197,9 @@ bool MeasureScript::CommandWithReturn(std::wstring_view command, std::wstring& s
 		return true;
 	}
 
-	// A command is either a function call, "Function(Arg1, Arg2)", or the name of a variable.
-	StringParser parser(command);
-	const std::wstring_view funcName = parser.ConsumeUntil(L'(');
-	if (!funcName.empty() || !parser.IsConsumed())
+	if (isFunctionCall)
 	{
-		// Function call. Anything after the closing parenthesis is ignored to match the old code,
-		// which silently accepted e.g. "[ScriptMeasure:Function(),4]".
-		if (funcName.empty() || !parser.ConsumeSuffixFromLast(L')'))
-		{
-			WCHAR errMsg[MAX_LINE_LENGTH];
-			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %.*s", (int)command.length(), command.data());
-			if (delayedLogEntry)
-			{
-				std::wstring source = m_Skin->GetSkinPath();
-				source += L" - [";
-				source += GetOriginalName();
-				source += L']';
-
-				// Since scripts can accept single brackets as input, the nested variable parser
-				// can send incomplete section variable to the script, so store a delayed message
-				// in case the "actual" section variable is invalid. If the "final" variable the
-				// parser finds is a valid variable, this error message will not be logged.
-				// See: |ConfigParser::ParseVariables|
-				auto* log = (Logger::Entry*)delayedLogEntry;
-				*log = { Logger::Level::Error, L"", source.c_str(), errMsg };
-			}
-			else
-			{
-				LogErrorF(this, errMsg);
-			}
-			return false;
-		}
-
-		std::vector<std::wstring_view> args;
-		parser.ConsumeWhitespace();
-		while (!parser.IsConsumed())
-		{
-			args.emplace_back(parser.ConsumeUntilOrRest(
-				L',', StringParser::SkipWhitespace | StringParser::SkipQuoted));
-			parser.ConsumeWhitespace();
-		}
-
-		if (!m_LuaScript.RunCustomFunction(funcName, args, strValue))
+		if (!m_LuaScript.RunCustomFunction(name, args, strValue))
 		{
 			if (!strValue.empty())
 			{
@@ -251,7 +210,7 @@ bool MeasureScript::CommandWithReturn(std::wstring_view command, std::wstring& s
 	}
 	else
 	{
-		if (!m_LuaScript.GetLuaVariable(command, strValue))
+		if (!m_LuaScript.GetLuaVariable(name, strValue))
 		{
 			LogErrorF(this, L"%s", strValue.c_str());
 			return false;

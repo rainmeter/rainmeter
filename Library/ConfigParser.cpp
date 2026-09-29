@@ -41,6 +41,149 @@ std::optional<VariableType> VariableTypeForKey(WCHAR key)
 	return std::nullopt;
 }
 
+struct ParsedFunctionCall
+{
+	std::wstring_view name;
+	std::vector<std::wstring> args;
+	bool isFunctionCall = false;
+	bool valid = true;
+};
+
+size_t FindClosingBracket(std::wstring_view str, size_t opening)
+{
+	struct BracketState
+	{
+		WCHAR quote = L'\0';
+		int parentheses = 0;
+	};
+
+	std::vector<BracketState> brackets(1);
+	for (size_t pos = opening + 1; pos < str.length(); ++pos)
+	{
+		const WCHAR ch = str[pos];
+		if (ch == L'[')
+		{
+			if (brackets.back().parentheses == 0 ||
+				(pos + 1 < str.length() && VariableTypeForKey(str[pos + 1])))
+			{
+				brackets.emplace_back();
+			}
+			continue;
+		}
+
+		auto& bracket = brackets.back();
+		if (bracket.quote)
+		{
+			if (ch == bracket.quote) bracket.quote = L'\0';
+			continue;
+		}
+		if (ch == L'\'' || ch == L'"')
+		{
+			bracket.quote = ch;
+		}
+		else if (ch == L'(')
+		{
+			++bracket.parentheses;
+		}
+		else if (ch == L')' && bracket.parentheses > 0)
+		{
+			--bracket.parentheses;
+		}
+		else if (ch == L']' && bracket.parentheses == 0)
+		{
+			brackets.pop_back();
+			if (brackets.empty()) return pos;
+		}
+	}
+	return std::wstring_view::npos;
+}
+
+std::wstring_view TrimFunctionArgument(std::wstring_view arg)
+{
+	while (!arg.empty() && iswspace(arg.front())) arg.remove_prefix(1);
+	while (!arg.empty() && iswspace(arg.back())) arg.remove_suffix(1);
+	return arg;
+}
+
+ParsedFunctionCall ParseFunctionCall(std::wstring_view command)
+{
+	ParsedFunctionCall call;
+	size_t open = std::wstring_view::npos;
+	for (size_t i = 0; i < command.length(); ++i)
+	{
+		if (command[i] == L'(')
+		{
+			open = i;
+			break;
+		}
+	}
+
+	if (open == std::wstring_view::npos)
+	{
+		call.name = command;
+		return call;
+	}
+
+	call.isFunctionCall = true;
+	call.name = command.substr(0, open);
+	if (call.name.empty())
+	{
+		call.valid = false;
+		return call;
+	}
+
+	WCHAR quote = L'\0';
+	int depth = 1;
+	size_t argumentStart = open + 1;
+	for (size_t i = argumentStart; i < command.length(); ++i)
+	{
+		const WCHAR ch = command[i];
+		if (ch == L'[')
+		{
+			const size_t closing = FindClosingBracket(command, i);
+			if (closing != std::wstring_view::npos)
+			{
+				i = closing;
+				continue;
+			}
+		}
+		if (quote)
+		{
+			if (ch == quote) quote = L'\0';
+			continue;
+		}
+
+		if (ch == L'\'' || ch == L'"')
+		{
+			quote = ch;
+		}
+		else if (ch == L'(')
+		{
+			++depth;
+		}
+		else if (ch == L')')
+		{
+			if (--depth == 0)
+			{
+				const auto arg = TrimFunctionArgument(command.substr(argumentStart, i - argumentStart));
+				if (!arg.empty())
+				{
+					call.args.emplace_back(arg);
+				}
+				return call;
+			}
+		}
+		else if (ch == L',')
+		{
+			call.args.emplace_back(TrimFunctionArgument(command.substr(argumentStart, i - argumentStart)));
+			argumentStart = i + 1;
+		}
+	}
+
+	call.valid = false;
+	return call;
+}
+
 void LogFormulaError(const WCHAR* error, const WCHAR* formula)
 {
 	LogErrorF(L"Formula: %s: %s", error, formula);
@@ -257,7 +400,7 @@ const std::wstring* ConfigParser::GetVariableOriginalName(const std::wstring& st
 	return nullptr;
 }
 
-std::optional<std::wstring> ConfigParser::GetSectionVariable(std::wstring_view variableStr, Section* currentSection, void* logEntry)
+std::optional<std::wstring> ConfigParser::GetSectionVariable(std::wstring_view variableStr, Section* currentSection, MonitorVariableMode monitorVariableMode, VariableExpandMode expandMode, Meter* meter, int depth)
 {
 	if (!m_Skin) return std::nullopt;
 
@@ -343,15 +486,36 @@ std::optional<std::wstring> ConfigParser::GetSectionVariable(std::wstring_view v
 				sectionScope.emplace(m_Skin, currentSection);
 			}
 
+			if (type != TypeID<MeasureScript>() && type != TypeID<MeasurePlugin>()) return std::nullopt;
+			auto call = ParseFunctionCall(selector);
+			if (!call.valid)
+			{
+				LogErrorF(measure, L"Invalid function call: %.*s", (int)selector.length(), selector.data());
+				return std::nullopt;
+			}
+
+			for (auto& arg : call.args)
+			{
+				if (arg.find(L'[') == std::wstring::npos) continue;
+				if (expandMode == VariableExpandMode::AllKeys)
+				{
+					ReplaceMeasures(arg, currentSection, monitorVariableMode, depth + 1);
+				}
+				else
+				{
+					ExpandSectionVariables(arg, currentSection, monitorVariableMode, expandMode, meter, depth + 1);
+				}
+			}
+
 			if (type == TypeID<MeasureScript>())
 			{
 				MeasureScript* script = (MeasureScript*)measure;
-				if (script->CommandWithReturn(selector, value, logEntry)) return value;
+				if (script->CommandWithReturn(call.name, call.args, call.isFunctionCall, value)) return value;
 			}
-			else if (type == TypeID<MeasurePlugin>())
+			else
 			{
 				MeasurePlugin* plugin = (MeasurePlugin*)measure;
-				if (plugin->CommandWithReturn(selector, value, logEntry)) return value;
+				if (plugin->CommandWithReturn(call.name, call.args, call.isFunctionCall, value)) return value;
 			}
 
 			return std::nullopt;
@@ -822,14 +986,15 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 	return ReplaceMeasures(result, {}, MonitorVariableMode::DEFAULT_LOGICAL);
 }
 
-bool ConfigParser::ReplaceMeasures(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode)
+bool ConfigParser::ReplaceMeasures(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode, int depth)
 {
+	if (depth > 10) return false;
 	size_t start = result.find(L'[');
 	if (start == std::wstring::npos) return false;
 
 	// Check for new-style measures (and section variables) [&Measure], [&Meter]
 	// Note: This also parses regular variables as well (in case of nested variable types) eg. [#Var[&Measure]]
-	bool replaced = ExpandSectionVariables(result, currentSection, monitorVariableMode, VariableExpandMode::AllKeys, nullptr, 0, start);
+	bool replaced = ExpandSectionVariables(result, currentSection, monitorVariableMode, VariableExpandMode::AllKeys, nullptr, depth, start);
 
 	// Check for old-style measures and section variables. [Measure], [Meter:X], etc.
 	while ((start = result.find(L'[', start)) != std::wstring::npos)
@@ -866,7 +1031,7 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result, Section* currentSection
 				}
 				else
 				{
-					if (auto value = GetSectionVariable(section, currentSection))
+					if (auto value = GetSectionVariable(section, currentSection, monitorVariableMode, VariableExpandMode::AllKeys, nullptr, depth))
 					{
 						result.replace(start, end - start + 1, *value);
 						start += value->length();
@@ -898,118 +1063,160 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, Section* currentSec
 	constexpr int maxRecursionDepth = 10;
 	if (depth > maxRecursionDepth) return false;
 
-	// Since actions are parsed when executed, get the current active
-	// section in case the current section variable is used.
 	if (depth == 0 && m_Skin && (!currentSection || meter))
 	{
 		currentSection = meter ? meter : m_Skin->GetCurrentSection();
 	}
 
-	bool replaced = false;
-
-	Logger::Entry delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
-
-	// Find the innermost section variable(s) first, then move outward (working left to right)
-	size_t end = start;
-	while ((end = str.find(L']', end)) != std::wstring::npos)
+	struct Bracket
 	{
-		bool found = false;
+		size_t start;
+		size_t lastClose = std::wstring::npos;
+		WCHAR quote = L'\0';
+		int parentheses = 0;
+		bool skippedNested = false;
+	};
 
-		const size_t ei = end - 1;
-		size_t start = end;
-		while (start != 0 && (start = str.rfind(L'[', start - 1)) != std::wstring::npos)
+	bool replaced = false;
+	std::vector<Bracket> brackets;
+	size_t pos = start;
+	while (pos < str.length() || !brackets.empty())
+	{
+		if (pos == str.length())
 		{
-			found = false;
-			size_t si = start + 2;  // Start index where escaped variable "should" be: [ *   *]
-
-			// Check for escaped variables first, if found, skip to the next variable
-			if (si != ei && str[si] == L'*' && str[ei] == L'*')
+			if (brackets.size() > 1)
 			{
-				// Normally we remove the *'s for escaped variable names here, however mouse actions
-				// are parsed before being sent to the command handler where the rest of the
-				// variables are parsed. So we need to leave the escape *'s when called from that
-				// parser.
-				if (expandMode != VariableExpandMode::DollarMouseOnly)
-				{
-					str.erase(ei, 1);
-					str.erase(si, 1);
-				}
-				break;
+				const size_t unmatched = brackets.back().start;
+				brackets.pop_back();
+				pos = unmatched + 1;
+				continue;
+			}
+			// A malformed function can lack ')'. Use its last ']' to report the complete call once.
+			if (brackets.size() != 1 || brackets.back().lastClose == std::wstring::npos) break;
+			pos = brackets.back().lastClose;
+			brackets.back().lastClose = std::wstring::npos;
+			brackets.back().parentheses = 0;
+			brackets.back().quote = L'\0';
+		}
+
+		const WCHAR ch = str[pos];
+		if (ch == L'[')
+		{
+			if (!brackets.empty() && brackets.back().parentheses > 0 &&
+				brackets.back().start + 1 < str.length() && str[brackets.back().start + 1] == L'&')
+			{
+				const size_t closing = FindClosingBracket(str, pos);
+				if (closing != std::wstring::npos) brackets.back().skippedNested = true;
+				pos = closing == std::wstring::npos ? pos + 1 : closing + 1;
+				continue;
+			}
+			if (!brackets.empty() && brackets.back().parentheses > 0 &&
+				(pos + 1 == str.length() || !VariableTypeForKey(str[pos + 1])))
+			{
+				++pos;
+				continue;
 			}
 
-			--si;  // Move index to the "key" character (if it exists)
+			brackets.push_back({ pos });
+			++pos;
+			continue;
+		}
 
-			// Avoid empty commands
-			if (end == si) break;
+		if (brackets.empty())
+		{
+			++pos;
+			continue;
+		}
 
-			const WCHAR key = str[si];
-			auto variable = std::wstring_view(str).substr(si + 1, end - si - 1);
-			if (variable.empty()) break;
+		auto& bracket = brackets.back();
+		if (bracket.quote)
+		{
+			if (ch == bracket.quote) bracket.quote = L'\0';
+			if (ch == L']') bracket.lastClose = pos;
+			++pos;
+			continue;
+		}
 
-			const auto keyType = VariableTypeForKey(key);
+		if (ch == L'\'' || ch == L'"')
+		{
+			bracket.quote = ch;
+			++pos;
+			continue;
+		}
 
-			// If we didn't find a variable key at this [, we keep searching for previous [. This is not
-			// ideal and we should figure out a way to avoid this in the future.
-			if (!keyType) continue;
+		if (ch == L'(')
+		{
+			++bracket.parentheses;
+			++pos;
+			continue;
+		}
 
-			auto replaceFoundValue = [&](std::wstring value)
+		if (ch == L')' && bracket.parentheses > 0)
+		{
+			--bracket.parentheses;
+			++pos;
+			continue;
+		}
+		if (ch == L')' && brackets.size() > 1 && brackets[brackets.size() - 2].parentheses > 0)
+		{
+			brackets.pop_back();
+			continue;
+		}
+
+		if (ch != L']')
+		{
+			++pos;
+			continue;
+		}
+
+		if (bracket.parentheses > 0)
+		{
+			bracket.lastClose = pos;
+			++pos;
+			continue;
+		}
+
+		const size_t opening = bracket.start;
+		const size_t closing = pos;
+		const bool skippedNested = bracket.skippedNested;
+		brackets.pop_back();
+		const size_t keyPos = opening + 1;
+		const auto keyType = keyPos < closing ? VariableTypeForKey(str[keyPos]) : std::nullopt;
+
+		if (closing > opening + 3 && str[opening + 2] == L'*' && str[closing - 1] == L'*')
+		{
+			if (expandMode != VariableExpandMode::DollarMouseOnly)
 			{
-				if (keyType == VariableType::Ampersand || keyType == VariableType::Hash)
-				{
-					if (depth < maxRecursionDepth)
-					{
-						ExpandSectionVariables(value, currentSection, monitorVariableMode, expandMode, meter, depth + 1);
-					}
-					else if (ContainsKeyedSectionVariable(value))
-					{
-						const WCHAR* sectionName = currentSection ? currentSection->GetOriginalName().c_str() : L"";
-						LogErrorSF(m_Skin, sectionName,
-							L"Parsing Error: Maximum variable recursion depth reached (%i) in string: %s", maxRecursionDepth, value.c_str());
-					}
-				}
+				str.erase(closing - 1, 1);
+				str.erase(opening + 2, 1);
+			}
+			const size_t finalClosing = expandMode == VariableExpandMode::DollarMouseOnly ? closing : closing - 2;
+			pos = finalClosing + 1;
+			continue;
+		}
 
-				str.replace(start, end - start + 1, value);
-				found = true;
-				replaced = true;
-
-				// Resume after the inserted value. Any replacement parsing was handled above.
-				end = start + value.length() - 1;
-			};
-
-			// Since regular variables are replaced just before section variables in most cases, we replace
-			// both types at the same time in case nesting of the different types occurs. The only side effect
-			// is new-style regular variables located in an action will now be "dynamic" just like section
-			// variables.
-			//  Special case 1: Mouse variables cannot be used in the outer part of a nested variable. This is
-			//    because mouse variables are parsed and replaced before the other new-style variables.
-			//  Special case 2: Places where regular variables need to be parsed without any section variables
-			//    parsed afterward. One example is when "@Include" is parsed.
-			//  Special case 3: Always process escaped character references.
+		std::optional<std::wstring> value;
+		if (keyType && keyPos + 1 < closing)
+		{
+			auto variable = std::wstring_view(str).substr(keyPos + 1, closing - keyPos - 1);
 			if (keyType == VariableType::Ampersand && expandMode == VariableExpandMode::AllKeys)
 			{
-				Measure* measure = GetMeasure(variable);
-				if (measure)
+				if (Measure* measure = GetMeasure(variable))
 				{
-					const std::wstring_view value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false);
-					replaceFoundValue(std::wstring(value));
-					break;
+					value = std::wstring(measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1.0, -1, false));
 				}
 				else
 				{
-					if (auto foundValue = GetSectionVariable(variable, currentSection, &delayedLogEntry))
-					{
-						replaceFoundValue(std::move(*foundValue));
-						break;
-					}
+					value = GetSectionVariable(variable, currentSection, monitorVariableMode, expandMode, meter, depth);
 				}
 			}
-			else if (keyType == VariableType::Hash && (expandMode == VariableExpandMode::AllKeys || expandMode == VariableExpandMode::HashOnly))
+			else if (keyType == VariableType::Hash &&
+				(expandMode == VariableExpandMode::AllKeys || expandMode == VariableExpandMode::HashOnly))
 			{
-				std::wstring value;
-				if (GetVariable(variable, value, currentSection, monitorVariableMode, true))
+				std::wstring foundValue;
+				if (GetVariable(variable, foundValue, currentSection, monitorVariableMode, true))
 				{
-					replaceFoundValue(std::move(value));
-					break;
+					value = std::move(foundValue);
 				}
 			}
 			else if (keyType == VariableType::Dollar)
@@ -1017,29 +1224,14 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, Section* currentSec
 				if (expandMode == VariableExpandMode::DollarMouseOnly)
 				{
 					std::wstring foundValue = GetDollarMouseVariable(variable, meter);
-					if (!foundValue.empty())
-					{
-						replaceFoundValue(std::move(foundValue));
-						break;
-					}
+					if (!foundValue.empty()) value = std::move(foundValue);
 				}
 				else if (expandMode == VariableExpandMode::AllKeys)
 				{
-					// [$Input] has no meter name to give, so it uses the section running the action.
 					Section* section = meter;
 					if (!section && m_Skin) section = m_Skin->GetCurrentSection();
-
-					if (auto foundValue = GetDollarInputVariable(variable, section))
-					{
-						replaceFoundValue(std::move(*foundValue));
-						break;
-					}
-
-					if (const auto result = GetDollarVariable(variable))
-					{
-						replaceFoundValue(std::move(*result));
-						break;
-					}
+					value = GetDollarInputVariable(variable, section);
+					if (!value) value = GetDollarVariable(variable);
 				}
 			}
 			else if (keyType == VariableType::Backslash)
@@ -1049,38 +1241,44 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, Section* currentSec
 				{
 					base = 16;
 					variable.remove_prefix(1);
-					if (variable.empty()) break;
 				}
-
-				std::wstring variableStr(variable);
-				WCHAR* pch = nullptr;
-				errno = 0;
-				long ch = wcstol(variableStr.c_str(), &pch, base);
-				if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0L || ch >= 0xFFFE)
+				if (!variable.empty())
 				{
-					// Invalid character
-					break;
+					std::wstring variableStr(variable);
+					WCHAR* endPtr = nullptr;
+					errno = 0;
+					const long character = wcstol(variableStr.c_str(), &endPtr, base);
+					if (endPtr && *endPtr == L'\0' && errno != ERANGE && character > 0L && character < 0xFFFE)
+					{
+						value = std::wstring(1, (WCHAR)character);
+					}
 				}
-
-				replaceFoundValue(std::wstring(1, (WCHAR)ch));
-				break;
 			}
 		}
 
-		if (!delayedLogEntry.message.empty() && found)
+		if (!value)
 		{
-			// Since custom script/plugin functions can accept single brackets as parameters, it is possible that
-			// the nested variable parser can produce errors when determining function names. Reset any delayed
-			// messages if the variable at the starting position was found.
-			delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
+			pos = skippedNested ? opening + 1 : closing + 1;
+			continue;
 		}
 
-		++end;	// Check for the next "end" bracket after the current ending bracket
-	}
+		if (keyType == VariableType::Ampersand || keyType == VariableType::Hash)
+		{
+			if (depth < maxRecursionDepth)
+			{
+				ExpandSectionVariables(*value, currentSection, monitorVariableMode, expandMode, meter, depth + 1);
+			}
+			else if (ContainsKeyedSectionVariable(*value))
+			{
+				const WCHAR* sectionName = currentSection ? currentSection->GetOriginalName().c_str() : L"";
+				LogErrorSF(m_Skin, sectionName,
+					L"Parsing Error: Maximum variable recursion depth reached (%i) in string: %s", maxRecursionDepth, value->c_str());
+			}
+		}
 
-	if (!delayedLogEntry.message.empty())
-	{
-		GetLogger().Log(&delayedLogEntry);
+		str.replace(opening, closing - opening + 1, *value);
+		replaced = true;
+		pos = opening + value->length();
 	}
 
 	return replaced;

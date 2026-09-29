@@ -8,7 +8,6 @@
 #include "System.h"
 #include "../Common/RawString.h"
 #include "../Common/ScopedFunction.h"
-#include "../Common/StringParser.h"
 
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
@@ -249,7 +248,7 @@ void MeasurePlugin::Command(const std::wstring& command)
 	}
 }
 
-bool MeasurePlugin::CommandWithReturn(std::wstring_view command, std::wstring& strValue, void* delayedLogEntry)
+bool MeasurePlugin::CommandWithReturn(std::wstring_view name, const std::vector<std::wstring>& args, bool isFunctionCall, std::wstring& strValue)
 {
 	if (!m_Initialized)
 	{
@@ -257,39 +256,10 @@ bool MeasurePlugin::CommandWithReturn(std::wstring_view command, std::wstring& s
 		return true;
 	}
 
-	// A command is a function call, "Function(Arg1, Arg2)".
-	StringParser parser(command);
-	const std::wstring_view funcName = parser.ConsumeUntil(L'(');
-	if (!funcName.empty() || !parser.IsConsumed())
+	if (isFunctionCall)
 	{
-		if (funcName.empty() || !parser.ConsumeSuffixFromLast(L')'))
-		{
-			WCHAR errMsg[MAX_LINE_LENGTH];
-			_snwprintf_s(errMsg, _TRUNCATE, L"Invalid function call: %.*s", (int)command.length(), command.data());
-			if (delayedLogEntry)
-			{
-				std::wstring source = m_Skin->GetSkinPath();
-				source += L" - [";
-				source += GetOriginalName();
-				source += L']';
-
-				// Since plugins can accept single brackets as input, the nested variable parser
-				// can send incomplete section variable to the plugin, so store a delayed message
-				// in case the "actual" section variable is invalid. If the "final" variable the
-				// parser finds is a valid variable, this error message will not be logged.
-				// See: |ConfigParser::ParseVariables|
-				auto* log = (Logger::Entry*)delayedLogEntry;
-				*log = { Logger::Level::Error, L"", source.c_str(), errMsg };
-			}
-			else
-			{
-				LogErrorF(this, errMsg);
-			}
-			return false;
-		}
-
 		// Prevent calling known API functions
-		std::string function = StringUtil::Narrow(funcName.data(), (int)funcName.length());
+		std::string function = StringUtil::Narrow(name.data(), (int)name.length());
 		if (function == "Initialize" ||
 			function == "Reload" ||
 			function == "Update" ||
@@ -302,24 +272,20 @@ bool MeasurePlugin::CommandWithReturn(std::wstring_view command, std::wstring& s
 			return false;
 
 		// Plugins expect an array of null terminated strings, so the arguments cannot be passed on as
-		// views into |command|. A RawString is a single pointer to such a string, which makes the
+		// views. A RawString is a single pointer to such a string, which makes the
 		// vector itself the array the plugin expects.
 		static_assert(sizeof(RawString) == sizeof(WCHAR*), "RawString must be a single string pointer.");
 
-		std::vector<RawString> args;
-		parser.ConsumeWhitespace();
-		while (!parser.IsConsumed())
+		std::vector<RawString> pluginArgs;
+		for (const auto arg : args)
 		{
-			const auto arg = parser.ConsumeUntilOrRest(
-				L',', StringParser::SkipWhitespace | StringParser::SkipQuoted);
-			args.emplace_back(StringUtil::StripLeadingAndTrailingQuotes(arg, true));
-			parser.ConsumeWhitespace();
+			pluginArgs.emplace_back(StringUtil::StripLeadingAndTrailingQuotes(arg, true));
 		}
 
 		void* custom = GetProcAddress(m_Plugin, function.c_str());
 		if (custom)
 		{
-			auto* result = ((CUSTOMFUNCTION)custom)(m_PluginData, (int)args.size(), reinterpret_cast<const WCHAR**>(args.data()));
+			auto* result = ((CUSTOMFUNCTION)custom)(m_PluginData, (int)pluginArgs.size(), reinterpret_cast<const WCHAR**>(pluginArgs.data()));
 			if (result)
 			{
 				strValue = result;
@@ -327,12 +293,12 @@ bool MeasurePlugin::CommandWithReturn(std::wstring_view command, std::wstring& s
 			}
 			else
 			{
-				LogErrorF(this, L"Invalid return type in function: %.*s", (int)funcName.length(), funcName.data());
+				LogErrorF(this, L"Invalid return type in function: %.*s", (int)name.length(), name.data());
 			}
 		}
 		else
 		{
-			LogErrorF(this, L"Cannot find function: %.*s", (int)funcName.length(), funcName.data());
+			LogErrorF(this, L"Cannot find function: %.*s", (int)name.length(), name.data());
 		}
 	}
 

@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <cstdint>
 #include <d2d1.h>
@@ -246,7 +247,7 @@ private:
 
 	void ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection = nullptr, int depth = 0);
 
-	std::optional<std::wstring> GetSectionVariable(std::wstring_view variableStr, Section* currentSection = nullptr, void* logEntry = nullptr);
+	std::optional<std::wstring> GetSectionVariable(std::wstring_view variableStr, Section* currentSection = nullptr, MonitorVariableMode monitorVariableMode = MonitorVariableMode::DEFAULT_LOGICAL, VariableExpandMode expandMode = VariableExpandMode::AllKeys, Meter* meter = nullptr, int depth = 0);
 
 	std::optional<std::wstring> GetBuiltInVariable(std::wstring_view variableStr, Section* currentSection);
 	std::optional<std::wstring> GetCurrentConfigVariable(std::wstring_view variableStr);
@@ -256,7 +257,7 @@ private:
 
 	bool GetVariable(std::wstring_view strVariable, std::wstring& strValue, Section* currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle = false);
 	bool ReplaceVariables(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle = false, std::optional<size_t> firstSpecialPos = std::nullopt);
-	bool ReplaceMeasures(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode);
+	bool ReplaceMeasures(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode, int depth = 0);
 	bool ExpandSectionVariables(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0, size_t start = 0);
 
 	const std::wstring* FindReadStringValue(const OptionReader& reader, IniOptionID option) const;

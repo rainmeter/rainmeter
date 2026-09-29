@@ -20,7 +20,7 @@ public:
 	virtual std::optional<std::wstring_view> GetStringValue();
 	virtual void Command(const std::wstring& command);
 
-	bool CommandWithReturn(std::wstring_view command, std::wstring& strValue, void* delayedLogEntry = nullptr);
+	bool CommandWithReturn(std::wstring_view name, const std::vector<std::wstring>& args, bool isFunctionCall, std::wstring& strValue);
 
 	const std::wstring& GetScriptFile() { return m_LuaScript.GetFile(); }
 

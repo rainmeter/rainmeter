@@ -315,7 +315,7 @@ LuaResult LuaScript::RunString(const std::wstring& str)
 	return LuaResult::Success();
 }
 
-bool LuaScript::RunCustomFunction(std::wstring_view funcName, const std::vector<std::wstring_view>& args, std::wstring& strValue)
+bool LuaScript::RunCustomFunction(std::wstring_view funcName, const std::vector<std::wstring>& args, std::wstring& strValue)
 {
 	if (!IsInitialized()) return false;
 

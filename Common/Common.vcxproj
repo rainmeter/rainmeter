@@ -87,6 +87,7 @@
     <ClInclude Include="Gfx\Util\DWriteHelpers.h" />
     <ClInclude Include="IniFile.h" />
     <ClInclude Include="ScopedFunction.h" />
+    <ClInclude Include="TestUtil.h" />
     <ClInclude Include="MathParser.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="MenuModifier.h" />

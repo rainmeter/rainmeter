@@ -43,7 +43,7 @@ public:
 	static void HandleSkinSettingChange(Skin* skin, RmSkinSettingChange setting);
 	void HandleSkinSettingChange(RmSkinSettingChange setting);
 
-	bool CommandWithReturn(std::wstring_view command, std::wstring& strValue, void* delayedLogEntry = nullptr);
+	bool CommandWithReturn(std::wstring_view name, const std::vector<std::wstring>& args, bool isFunctionCall, std::wstring& strValue);
 
 protected:
 	void ReadOptions(ConfigParser::OptionReader& reader) override;
