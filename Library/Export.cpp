@@ -166,7 +166,7 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 	};
 
 	if (auto* reader = measure->GetCurrentOptionReader()) return read(*reader);
-	auto reader = parser.GetInheritableOptionReader(measure->GetName(), measure->GetSectionID());
+	auto reader = parser.GetInheritableOptionReader(measure);
 	return read(reader);
 }
 
@@ -182,7 +182,7 @@ LPCWSTR __stdcall RmReadStringFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 	const auto sectionID = IniNameRegistry::FindSection(section).value_or(IniSectionID{});
 
-	auto optionReader = parser.GetInheritableOptionReader(section, sectionID, AllowMeterStyleInheritance(measure, section));
+	auto optionReader = parser.GetInheritableOptionReader(section, sectionID, AllowMeterStyleInheritance(measure, section), parser.GetSection(section));
 	return optionReader.ReadString(option, defValue, { .sectionVariables = replaceMeasures != FALSE }).c_str();
 }
 
@@ -205,7 +205,7 @@ double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 	};
 
 	if (auto* reader = measure->GetCurrentOptionReader()) return read(*reader);
-	auto reader = parser.GetInheritableOptionReader(measure->GetName(), measure->GetSectionID());
+	auto reader = parser.GetInheritableOptionReader(measure);
 	return read(reader);
 }
 
@@ -220,7 +220,7 @@ double __stdcall RmReadFormulaFromSection(void* rm, LPCWSTR section, LPCWSTR opt
 	ConfigParser& parser = measure->GetSkin()->GetParser();
 	const auto sectionID = IniNameRegistry::FindSection(section).value_or(IniSectionID{});
 
-	auto optionReader = parser.GetInheritableOptionReader(section, sectionID, AllowMeterStyleInheritance(measure, section));
+	auto optionReader = parser.GetInheritableOptionReader(section, sectionID, AllowMeterStyleInheritance(measure, section), parser.GetSection(section));
 	return optionReader.ReadFloat(option, defValue);
 }
 
@@ -394,7 +394,7 @@ LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue)
 	if (parser)
 	{
 		const auto sectionID = IniNameRegistry::FindSection(section).value_or(IniSectionID{});
-		auto reader = parser->GetInheritableOptionReader(section, sectionID, parser->GetMeter(section) != nullptr);
+		auto reader = parser->GetInheritableOptionReader(section, sectionID, parser->GetMeter(section) != nullptr, parser->GetSection(section));
 		return reader.ReadString(option, defValue, { .sectionVariables = false }).c_str();
 	}
 

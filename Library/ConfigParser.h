@@ -131,7 +131,7 @@ public:
 	private:
 		friend class ConfigParser;
 
-		OptionReader(ConfigParser& parser, std::wstring_view sectionName, IniSectionID sectionID, ReadOptionInheritMode inheritMode);
+		OptionReader(ConfigParser& parser, Section* section, std::wstring_view sectionName, IniSectionID sectionID, ReadOptionInheritMode inheritMode);
 
 		void ClearLastReadFlags() { m_LastReplaced = false; m_LastDefaultUsed = false; m_LastValueDefined = false; }
 		void MarkReplaced() { m_LastReplaced = true; }
@@ -139,6 +139,7 @@ public:
 		void MarkValueDefined() { m_LastValueDefined = true; }
 
 		const std::vector<IniSectionID>& GetInheritChain() const { return m_InheritChain; }
+		Section* GetSection() const { return m_Section; }
 		std::wstring_view GetSectionName() const { return m_SectionName; }
 		IniSectionID GetSectionID() const { return m_SectionID; }
 		MonitorVariableMode GetMonitorVariableMode() const { return m_MonitorVariableMode; }
@@ -149,6 +150,7 @@ public:
 		bool m_LastDefaultUsed = false;
 		bool m_LastValueDefined = false;
 		MonitorVariableMode m_MonitorVariableMode = MonitorVariableMode::DEFAULT_LOGICAL;
+		Section* m_Section;
 		std::wstring_view m_SectionName;
 		IniSectionID m_SectionID;
 	};
@@ -160,7 +162,10 @@ public:
 	ConfigParser& operator=(ConfigParser other) = delete;
 
 	OptionReader GetOptionReader(std::wstring_view sectionName, IniSectionID sectionID);
+	OptionReader GetOptionReader(Section* section);
 	OptionReader GetInheritableOptionReader(std::wstring_view sectionName, IniSectionID sectionID, bool allowMeterStyle = false);
+	OptionReader GetInheritableOptionReader(std::wstring_view sectionName, IniSectionID sectionID, bool allowMeterStyle, Section* section);
+	OptionReader GetInheritableOptionReader(Section* section, bool allowMeterStyle = false);
 
 	void Initialize(const std::wstring& filename, Skin* skin = nullptr, LPCTSTR skinSection = nullptr);
 
@@ -243,16 +248,16 @@ private:
 
 	std::optional<std::wstring> GetSectionVariable(std::wstring_view variableStr, void* logEntry = nullptr);
 
-	std::optional<std::wstring> GetBuiltInVariable(std::wstring_view variableStr, std::wstring_view currentSection);
+	std::optional<std::wstring> GetBuiltInVariable(std::wstring_view variableStr, Section* currentSection);
 	std::optional<std::wstring> GetCurrentConfigVariable(std::wstring_view variableStr);
 	std::optional<std::wstring> GetDollarSkinVariable(std::wstring_view variableStr);
 	std::optional<std::wstring> GetDollarDisplayVariable(std::wstring_view variableStr);
 	std::optional<std::wstring> GetMonitorVariable(std::wstring_view variableStr, MonitorVariableMode monitorVariableMode);
 
-	bool GetVariable(std::wstring_view strVariable, std::wstring& strValue, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle = false);
-	bool ReplaceVariables(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle = false, std::optional<size_t> firstSpecialPos = std::nullopt);
-	bool ReplaceMeasures(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode);
-	bool ExpandSectionVariables(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0, size_t start = 0);
+	bool GetVariable(std::wstring_view strVariable, std::wstring& strValue, Section* currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle = false);
+	bool ReplaceVariables(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle = false, std::optional<size_t> firstSpecialPos = std::nullopt);
+	bool ReplaceMeasures(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode);
+	bool ExpandSectionVariables(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0, size_t start = 0);
 
 	const std::wstring* FindReadStringValue(const OptionReader& reader, IniOptionID option) const;
 	void ProcessReadString(std::wstring& result, OptionReader& reader, ReadOptions options, size_t firstSpecialPos, bool runNewStyle);

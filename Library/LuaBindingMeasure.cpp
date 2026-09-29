@@ -37,10 +37,9 @@ static int GetNumberOption(lua_State* L)
 	DECLARE_SELF(L)
 	Skin* skin = self->GetSkin();
 	ConfigParser& parser = skin->GetParser();
-	const WCHAR* section = self->GetName();
 	const auto key = LuaHelper::ToWide(2);
 
-	auto optionReader = parser.GetInheritableOptionReader(section, self->GetSectionID());
+	auto optionReader = parser.GetInheritableOptionReader(self);
 	const double value = optionReader.ReadFloat(key.c_str(), lua_tonumber(L, 3));
 
 	lua_pushnumber(L, value);

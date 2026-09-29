@@ -494,7 +494,7 @@ bool Measure::Update(bool rereadOptions)
 		// [MeasureName], we need to read the options after m_Value has been changed.
 		if (rereadOptions)
 		{
-			auto reader = m_Skin->GetParser().GetInheritableOptionReader(m_Name, m_ID);
+			auto reader = m_Skin->GetParser().GetInheritableOptionReader(this);
 			m_IfActions.ReadConditionOptions(reader);
 		}
 

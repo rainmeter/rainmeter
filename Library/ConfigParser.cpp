@@ -72,8 +72,9 @@ ConfigParser::~ConfigParser()
 {
 }
 
-ConfigParser::OptionReader::OptionReader(ConfigParser& parser, std::wstring_view sectionName, IniSectionID sectionID, ReadOptionInheritMode inheritMode) :
+ConfigParser::OptionReader::OptionReader(ConfigParser& parser, Section* section, std::wstring_view sectionName, IniSectionID sectionID, ReadOptionInheritMode inheritMode) :
 	m_Parser(parser),
+	m_Section(section),
 	m_SectionName(sectionName),
 	m_SectionID(sectionID)
 {
@@ -95,13 +96,30 @@ ConfigParser::OptionReader::OptionReader(ConfigParser& parser, std::wstring_view
 
 ConfigParser::OptionReader ConfigParser::GetOptionReader(std::wstring_view sectionName, IniSectionID sectionID)
 {
-	return OptionReader(*this, sectionName, sectionID, ReadOptionInheritMode::None);
+	return OptionReader(*this, nullptr, sectionName, sectionID, ReadOptionInheritMode::None);
+}
+
+ConfigParser::OptionReader ConfigParser::GetOptionReader(Section* section)
+{
+	return OptionReader(*this, section, section->GetOriginalName(), section->GetSectionID(), ReadOptionInheritMode::None);
 }
 
 ConfigParser::OptionReader ConfigParser::GetInheritableOptionReader(std::wstring_view sectionName, IniSectionID sectionID, bool allowMeterStyle)
 {
 	const auto inheritMode = allowMeterStyle ? ReadOptionInheritMode::InheritAndMeterStyle : ReadOptionInheritMode::InheritOnly;
-	return OptionReader(*this, sectionName, sectionID, inheritMode);
+	return OptionReader(*this, nullptr, sectionName, sectionID, inheritMode);
+}
+
+ConfigParser::OptionReader ConfigParser::GetInheritableOptionReader(std::wstring_view sectionName, IniSectionID sectionID, bool allowMeterStyle, Section* section)
+{
+	const auto inheritMode = allowMeterStyle ? ReadOptionInheritMode::InheritAndMeterStyle : ReadOptionInheritMode::InheritOnly;
+	return OptionReader(*this, section, sectionName, sectionID, inheritMode);
+}
+
+ConfigParser::OptionReader ConfigParser::GetInheritableOptionReader(Section* section, bool allowMeterStyle)
+{
+	const auto inheritMode = allowMeterStyle ? ReadOptionInheritMode::InheritAndMeterStyle : ReadOptionInheritMode::InheritOnly;
+	return OptionReader(*this, section, section->GetOriginalName(), section->GetSectionID(), inheritMode);
 }
 
 void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR skinSection)
@@ -149,10 +167,10 @@ void ConfigParser::SetVariable(std::wstring_view strVariable, std::wstring_view 
 
 bool ConfigParser::GetVariable(std::wstring_view strVariable, std::wstring& strValue, bool isNewStyle)
 {
-	return GetVariable(strVariable, strValue, {}, MonitorVariableMode::DEFAULT_LOGICAL, isNewStyle);
+	return GetVariable(strVariable, strValue, nullptr, MonitorVariableMode::DEFAULT_LOGICAL, isNewStyle);
 }
 
-bool ConfigParser::GetVariable(std::wstring_view strVariable, std::wstring& strValue, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle)
+bool ConfigParser::GetVariable(std::wstring_view strVariable, std::wstring& strValue, Section* currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle)
 {
 	// #1: Built-in variables
 	auto result = GetBuiltInVariable(strVariable, currentSection);
@@ -190,7 +208,7 @@ std::optional<std::wstring> ConfigParser::GetDollarVariable(std::wstring_view va
 	return GetDollarDisplayVariable(variableStr);
 }
 
-std::optional<std::wstring> ConfigParser::GetBuiltInVariable(std::wstring_view variableStr, std::wstring_view currentSection)
+std::optional<std::wstring> ConfigParser::GetBuiltInVariable(std::wstring_view variableStr, Section* currentSection)
 {
 	auto strParser = StringParser(variableStr);
 
@@ -210,7 +228,7 @@ std::optional<std::wstring> ConfigParser::GetBuiltInVariable(std::wstring_view v
 
 	if (strParser.Consume(L"Current"))
 	{
-		if (strParser.ConsumeRest(L"Section")) return std::wstring(currentSection);
+		if (strParser.ConsumeRest(L"Section")) return currentSection ? currentSection->GetOriginalName() : L"";
 		if (strParser.ConsumeRest(L"File") && m_Skin) return m_Skin->GetFileName();
 		if (strParser.ConsumeRest(L"Config") && m_Skin) return m_Skin->GetFolderPath();
 		return std::nullopt;
@@ -720,7 +738,7 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 	return ReplaceVariables(result, {}, MonitorVariableMode::DEFAULT_LOGICAL, isNewStyle);
 }
 
-bool ConfigParser::ReplaceVariables(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle, std::optional<size_t> firstSpecialPos)
+bool ConfigParser::ReplaceVariables(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle, std::optional<size_t> firstSpecialPos)
 {
 	bool replaced = false;
 	const size_t specialPos = firstSpecialPos ? *firstSpecialPos : result.find_first_of(L"[%#");
@@ -748,13 +766,14 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, std::wstring_view curr
 		// looking for the closing '#' of an old-style #VAR# variable. The match is intentionally
 		// case-sensitive to preserve the old special-case behavior. New-style parsing already handles
 		// this token; expanding an escaped one here would resolve it in [Variables] too early.
-		if (!isNewStyle && !currentSection.empty() && start != 0)
+		if (!isNewStyle && currentSection && start != 0)
 		{
 			const size_t variableStart = start - 1;
 			if (std::wstring_view(result).substr(variableStart).starts_with(currentSectionVariable))
 			{
-				result.replace(variableStart, currentSectionVariable.length(), currentSection);
-				start = variableStart + currentSection.length();
+				const auto& sectionName = currentSection->GetOriginalName();
+				result.replace(variableStart, currentSectionVariable.length(), sectionName);
+				start = variableStart + sectionName.length();
 				replaced = true;
 				continue;
 			}
@@ -795,7 +814,7 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 	return ReplaceMeasures(result, {}, MonitorVariableMode::DEFAULT_LOGICAL);
 }
 
-bool ConfigParser::ReplaceMeasures(std::wstring& result, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode)
+bool ConfigParser::ReplaceMeasures(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode)
 {
 	size_t start = result.find(L'[');
 	if (start == std::wstring::npos) return false;
@@ -866,23 +885,17 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, const VariableExpan
 	return ExpandSectionVariables(str, {}, MonitorVariableMode::DEFAULT_LOGICAL, expandMode, meter, depth, start);
 }
 
-bool ConfigParser::ExpandSectionVariables(std::wstring& str, std::wstring_view currentSection, MonitorVariableMode monitorVariableMode, const VariableExpandMode expandMode, Meter* meter, int depth, size_t start)
+bool ConfigParser::ExpandSectionVariables(std::wstring& str, Section* currentSection, MonitorVariableMode monitorVariableMode, const VariableExpandMode expandMode, Meter* meter, int depth, size_t start)
 {
 	constexpr int maxRecursionDepth = 10;
 	if (depth > maxRecursionDepth) return false;
 
 	// Since actions are parsed when executed, get the current active
 	// section in case the current section variable is used.
-	if (depth == 0 && m_Skin && (currentSection.empty() || meter))
+	if (depth == 0 && m_Skin && (!currentSection || meter))
 	{
-		Section* section = m_Skin->GetCurrentSection();
-		if (section || meter)
-		{
-			Section* currentActionSection = meter ? meter : section;
-			currentSection = currentActionSection->GetOriginalName();
-		}
+		currentSection = meter ? meter : m_Skin->GetCurrentSection();
 	}
-
 	bool replaced = false;
 
 	Logger::Entry delayedLogEntry = { Logger::Level::Debug, L"", L"", L"" };
@@ -940,8 +953,8 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, std::wstring_view c
 					}
 					else if (ContainsKeyedSectionVariable(value))
 					{
-						const std::wstring sectionName(currentSection);
-						LogErrorSF(m_Skin, sectionName.c_str(),
+						const WCHAR* sectionName = currentSection ? currentSection->GetOriginalName().c_str() : L"";
+						LogErrorSF(m_Skin, sectionName,
 							L"Parsing Error: Maximum variable recursion depth reached (%i) in string: %s", maxRecursionDepth, value.c_str());
 					}
 				}
@@ -1182,12 +1195,13 @@ const std::wstring* ConfigParser::FindReadStringValue(const OptionReader& reader
 
 void ConfigParser::ProcessReadString(std::wstring& result, OptionReader& reader, ReadOptions options, size_t firstSpecialPos, bool runNewStyle)
 {
-	if (ReplaceVariables(result, reader.GetSectionName(), reader.GetMonitorVariableMode(), runNewStyle, firstSpecialPos))
+	Section* currentSection = reader.GetSection();
+	if (ReplaceVariables(result, currentSection, reader.GetMonitorVariableMode(), runNewStyle, firstSpecialPos))
 	{
 		reader.MarkReplaced();
 	}
 
-	if (options.sectionVariables && ReplaceMeasures(result, reader.GetSectionName(), reader.GetMonitorVariableMode()))
+	if (options.sectionVariables && ReplaceMeasures(result, currentSection, reader.GetMonitorVariableMode()))
 	{
 		reader.MarkReplaced();
 	}
