@@ -4,6 +4,8 @@
 #include "ConfigParser.h"
 #include "Meter.h"
 #include "MeasureString.h"
+#include "MeasureScript.h"
+#include "Logger.h"
 #include "Skin.h"
 #include "../Common/UnitTest.h"
 #include "../Common/Gfx/Util/D2DUtil.h"
@@ -287,6 +289,82 @@ public:
 		std::wstring string8 = L"[MeasureString[MeasureIndex]]";
 		Assert::IsTrue(parser.ReplaceMeasures(string8));
 		Assert::AreEqual(string8.c_str(), L"[MeasureString2]");
+	}
+
+	TEST_METHOD(TestFunctionArgumentsWithClosingBrackets)
+	{
+		Skin skin(L"", L"", false);
+		ConfigParser& parser = skin.GetParser();
+		parser.Initialize(L"", &skin, nullptr);
+		parser.SetVariable(L"Value", L"inside");
+
+		MeasureScript script(&skin, L"Script");
+		parser.AddSection(&script);
+
+		const WCHAR* cases[] =
+		{
+			L"[&Script:Echo('a]b')]",
+			L"[&Script:Echo('[\"a (b)\"]')]",
+			L"[&Script:Echo(\"a]b\")]",
+			L"[&Script:Echo(a]b)]",
+			L"[&Script:Echo('a)]b')]",
+			L"[&Script:Echo(('a]b'))]",
+			L"[&Script:Echo('a]b', [#Value])]",
+			L"[&Script:Echo('a]b[#Value]')]"
+		};
+		for (const auto* input : cases)
+		{
+			std::wstring value = input;
+			Assert::IsTrue(parser.ReplaceMeasures(value));
+			Assert::AreEqual(L"0", value.c_str(), input);
+		}
+
+		std::wstring adjacent = L"[&Script:Echo('a]b')][#Value]";
+		Assert::IsTrue(parser.ReplaceMeasures(adjacent));
+		Assert::AreEqual(L"0inside", adjacent.c_str());
+
+		const auto* bracketedValue = L"[\"a (b)\"]";
+		parser.SetVariable(L"Value", bracketedValue);
+		TestMeasureString measureString(L"MeasureString");
+		parser.SetValue(L"MeasureString", L"String", bracketedValue);
+		measureString.Read(parser);
+		parser.AddSection(&measureString);
+
+		const WCHAR* nestedCases[] =
+		{
+			L"[&Script:Echo('[#Value]')]",
+			L"[&Script:Echo('[&MeasureString]')]"
+		};
+		for (const auto* input : nestedCases)
+		{
+			std::wstring value = input;
+			Assert::IsTrue(parser.ReplaceMeasures(value), input);
+			Assert::AreEqual(L"0", value.c_str(), input);
+		}
+	}
+
+	TEST_METHOD(TestMalformedFunctionWithClosingBracketInArgument)
+	{
+		Skin skin(L"", L"", false);
+		ConfigParser& parser = skin.GetParser();
+		parser.Initialize(L"", &skin, nullptr);
+
+		MeasureScript script(&skin, L"Script");
+		// Reach the malformed-call path without loading a Lua script.
+		script.Measure::Initialize();
+		parser.AddSection(&script);
+
+		std::wstring value = L"[&Script:Echo('a]b']";
+		Assert::IsFalse(parser.ReplaceMeasures(value));
+		Assert::AreEqual(L"[&Script:Echo('a]b']", value.c_str());
+		Assert::AreEqual(L"Invalid function call: Echo('a]b'", GetLogger().GetEntries().back().message.c_str());
+
+		int matchingErrors = 0;
+		for (const auto& entry : GetLogger().GetEntries())
+		{
+			if (entry.message == L"Invalid function call: Echo('a]b'") ++matchingErrors;
+		}
+		Assert::AreEqual(1, matchingErrors);
 	}
 
 	TEST_METHOD(TestSingleLetterSectionVariables)
