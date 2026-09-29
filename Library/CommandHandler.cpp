@@ -75,7 +75,7 @@ void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* ski
 	// !SetOption may leave out the section name in favor of the section running the action.
 	if (bangInfo.bang == Bang::SetOption && skin && args.size() + 1 == bangInfo.argCount)
 	{
-		Section* section = skin->GetCurrentActionSection();
+		Section* section = skin->GetCurrentSection();
 		if (!section)
 		{
 			LogWarningF(skin, L"!%s: Section name required", bangInfo.name);
@@ -240,7 +240,7 @@ void DoSectionBang(const SectionBangInfo& bangInfo, std::vector<std::wstring>& a
 	}
 	else if (args.size() == bangInfo.argCount)
 	{
-		section = skin->GetCurrentActionSection();
+		section = skin->GetCurrentSection();
 		if (!section)
 		{
 			LogWarningF(skin, L"!%s: Section name required", bangInfo.name);

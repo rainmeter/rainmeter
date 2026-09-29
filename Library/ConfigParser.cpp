@@ -875,7 +875,7 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, std::wstring_view c
 	// section in case the current section variable is used.
 	if (depth == 0 && m_Skin && (currentSection.empty() || meter))
 	{
-		Section* section = m_Skin->GetCurrentActionSection();
+		Section* section = m_Skin->GetCurrentSection();
 		if (section || meter)
 		{
 			Section* currentActionSection = meter ? meter : section;
@@ -1005,7 +1005,7 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, std::wstring_view c
 				{
 					// [$Input] has no meter name to give, so it uses the section running the action.
 					Section* section = meter;
-					if (!section && m_Skin) section = m_Skin->GetCurrentActionSection();
+					if (!section && m_Skin) section = m_Skin->GetCurrentSection();
 
 					if (auto foundValue = GetDollarInputVariable(variable, section))
 					{

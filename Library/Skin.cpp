@@ -85,7 +85,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_MouseOver(false),
 	m_MouseInputRegistered(false),
 	m_HasMouseScrollAction(false),
-	m_CurrentActionSection(nullptr),
+	m_CurrentSection(nullptr),
 	m_BackgroundMargins(),
 	m_DragMargins(),
 	m_Position(),
