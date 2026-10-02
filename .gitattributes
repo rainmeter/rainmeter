@@ -4,3 +4,6 @@
 # These source directories intentionally use CRLF in working trees.
 Build/Skins/** text=auto eol=crlf
 Build/Layouts/** text=auto eol=crlf
+
+ThirdParty/** linguist-vendored
+Library/taglib/** linguist-vendored
