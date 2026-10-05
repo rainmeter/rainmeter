@@ -22,13 +22,14 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Bcrypt.lib;comctl32.lib;d2d1.lib;d3d11.lib;Dbghelp.lib;dwmapi.lib;dwrite.lib;dxguid.lib;gdiplus.lib;Iphlpapi.lib;netapi32.lib;Ntdll.lib;Pdh.lib;PowrProf.lib;psapi.lib;Rpcrt4.lib;shlwapi.lib;Urlmon.lib;UxTheme.lib;Version.lib;windowscodecs.lib;Wininet.lib;Winmm.lib;Wintrust.lib;wlanapi.lib;ws2_32.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Bcrypt.lib;comctl32.lib;d2d1.lib;d3d11.lib;dcomp.lib;Dbghelp.lib;dwmapi.lib;dwrite.lib;dxguid.lib;gdiplus.lib;Iphlpapi.lib;netapi32.lib;Ntdll.lib;Pdh.lib;PowrProf.lib;psapi.lib;Rpcrt4.lib;shlwapi.lib;Urlmon.lib;UxTheme.lib;Version.lib;windowscodecs.lib;Wininet.lib;Winmm.lib;Wintrust.lib;wlanapi.lib;ws2_32.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>Bcrypt.dll;dwmapi.dll;Gdiplus.dll;Iphlpapi.dll;netapi32.dll;Pdh.dll;PowrProf.dll;psapi.dll;Urlmon.dll;Version.dll;Winmm.dll;Wintrust.dll;wlanapi.dll;ws2_32.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AsyncTask.cpp" />
+    <ClCompile Include="ClickCapture.cpp" />
     <ClCompile Include="CommandHandler.cpp" />
     <ClCompile Include="IniNameRegistry.cpp" />
     <ClCompile Include="ConfigParser.cpp" />
@@ -180,6 +181,7 @@
   <ItemGroup>
     <ClInclude Include="AspectRatioMode.h" />
     <ClInclude Include="AsyncTask.h" />
+    <ClInclude Include="ClickCapture.h" />
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="IniNameRegistry.h" />
     <ClInclude Include="ConfigParser.h" />

@@ -17,10 +17,13 @@ public:
 	UINT GetTypeID() override { return TypeID<MeasureMouse>(); }
 
 	bool ExecuteAction(MOUSEACTION action, POINT screenPos, MOUSEACTION fallback = MOUSEACTION_NONE);
+	void StartCapture();
+	void CompleteScreenCapture(MOUSEACTION action, POINT screenPos);
 	void ExecuteMoveActions(POINT screenPos);
 
-	bool WantsCapture() const { return m_RequireDragging && m_Capturing; }
-	void ClearCapture() { m_Capturing = false; }
+	bool WantsDragCapture() const { return m_RequireDragging && m_Dragging; }
+	void ClearCapture() { m_Dragging = false; }
+	void Disable() override;
 
 protected:
 	void ReadOptions(ConfigParser::OptionReader& reader) override;
@@ -33,6 +36,7 @@ private:
 	void ReplaceMouseVariables(std::wstring& result, POINT screenPos) const;
 
 	Mouse m_Mouse;
+	D2D1_COLOR_F m_CaptureOverlayColor;
 	std::wstring m_MouseMoveAction;
 	std::wstring m_LeftDragAction;
 	std::wstring m_MiddleDragAction;
@@ -42,7 +46,7 @@ private:
 
 	bool m_RelativeToSkin;
 	bool m_RequireDragging;
-	bool m_Capturing;
+	bool m_Dragging;
 	UINT m_Delay;
 	ULONGLONG m_LastMoveActionTime;
 };

@@ -84,6 +84,11 @@ bool Canvas::Initialize(bool hardwareAccelerated, DeviceLostCallback deviceLostC
 	return AttachDevice();
 }
 
+HRESULT Canvas::CreateCompositionDevice(IDCompositionDevice** device)
+{
+	return DCompositionCreateDevice2(c_D2DDevice.Get(), __uuidof(IDCompositionDevice), reinterpret_cast<void**>(device));
+}
+
 bool Canvas::AttachDevice()
 {
 	c_EffectTarget.Reset();
