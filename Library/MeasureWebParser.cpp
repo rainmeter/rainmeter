@@ -815,7 +815,6 @@ bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
 			const JsonValue* value = pointer.Get(json);
 			if (!value)
 			{
-				LogErrorF(measure, L"JsonPointer error: Value not found");
 				measure->m_ResultString = measure->m_ErrorString;
 				return false;
 			}
