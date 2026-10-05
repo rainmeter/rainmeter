@@ -802,21 +802,21 @@ bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
 	bool doErrorAction = false;
 	if (!json.HasParseError())
 	{
-		auto updateResult = [&json](MeasureWebParser* measure)
+		auto updateResult = [](MeasureWebParser* measure, const JsonValue& root) -> const JsonValue*
 		{
 			JsonPointer pointer(measure->m_Expression.data(), measure->m_Expression.length());
 			if (!pointer.IsValid())
 			{
 				LogErrorF(measure, L"JsonPointer error: %S", rapidjson::GetPointerParseError_En(pointer.GetParseErrorCode()));
 				measure->m_ResultString = measure->m_ErrorString;
-				return false;
+				return nullptr;
 			}
 
-			const JsonValue* value = pointer.Get(json);
+			const JsonValue* value = pointer.Get(root);
 			if (!value)
 			{
 				measure->m_ResultString = measure->m_ErrorString;
-				return false;
+				return nullptr;
 			}
 
 			if (value->IsString())
@@ -831,31 +831,44 @@ bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
 				{
 					LogErrorF(measure, L"JSON value conversion error");
 					measure->m_ResultString = measure->m_ErrorString;
-					return false;
+					return nullptr;
 				}
 				measure->m_ResultString.assign(buffer.GetString(), buffer.GetLength());
 			}
 
-			return true;
+			return value;
 		};
 
 		// An empty expression (|JsonPointer=1|) means the measure itself does not resolve
 		// a value from the document.
 		if (!m_Expression.empty())
 		{
-			doErrorAction = !updateResult(this);
+			doErrorAction = !updateResult(this, json);
 		}
 
-		for (auto* baseMeasure : GetSkin()->GetMeasures())
+		std::vector<MeasureWebParser*> ancestors = { this };
+		auto updateChildren = [&](auto&& self, MeasureWebParser* parent, const JsonValue& root) -> void
 		{
-			auto* measure = FindMeasureUrlReference(baseMeasure).measure;
-			if (!measure || measure->m_Expression.empty()) continue;
-
-			if (updateResult(measure) && measure->m_Download)
+			for (auto* baseMeasure : GetSkin()->GetMeasures())
 			{
-				measure->StartDownloadTask();
+				auto* measure = parent->FindMeasureUrlReference(baseMeasure).measure;
+				if (!measure || std::find(ancestors.begin(), ancestors.end(), measure) != ancestors.end()) continue;
+				if (measure->m_Expression.empty() && measure->m_ParseType != ParseType::JsonPointer) continue;
+
+				const JsonValue* value = measure->m_Expression.empty() ? &root : updateResult(measure, root);
+				if (!value) continue;
+
+				if (!measure->m_Expression.empty() && measure->m_Download)
+				{
+					measure->StartDownloadTask();
+				}
+
+				ancestors.push_back(measure);
+				self(self, measure, *value);
+				ancestors.pop_back();
 			}
-		}
+		};
+		updateChildren(updateChildren, this, json);
 	}
 	else
 	{
