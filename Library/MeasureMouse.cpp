@@ -1,15 +1,28 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/StringUtil.h"
 #include "MeasureMouse.h"
+#include "CommandHandler.h"
 #include "ConfigParser.h"
 #include "Logger.h"
 #include "MonitorUtil.h"
 #include "Rainmeter.h"
+#include "ClickCapture.h"
 #include "Skin.h"
 #include "System.h"
 
 namespace {
+
+void DoStartCaptureBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	((MeasureMouse*)measure)->StartCapture();
+}
+
+void DoStopCaptureBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+{
+	ClickCapture::Stop((MeasureMouse*)measure);
+}
 
 HHOOK g_MouseHook = nullptr;
 std::vector<MeasureMouse*> g_Measures;
@@ -180,12 +193,22 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 MeasureMouse::MeasureMouse(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Mouse(skin),
+	m_CaptureOverlayColor(D2D1::ColorF(0, 0, 0, 0)),
 	m_RelativeToSkin(true),
 	m_RequireDragging(false),
-	m_Capturing(false),
+	m_Dragging(false),
 	m_Delay(16),
 	m_LastMoveActionTime()
 {
+	static const bool s_Initialized = []()
+	{
+		const UINT typeId = TypeID<MeasureMouse>();
+		CommandHandler::RegisterMeasureBang(typeId, L"Mouse:StartCapture", 0, DoStartCaptureBang);
+		CommandHandler::RegisterMeasureBang(typeId, L"Mouse:StopCapture", 0, DoStopCaptureBang);
+		ClickCapture::Initialize();
+		return true;
+	} ();
+
 	g_Measures.push_back(this);
 
 	if (!g_MouseHook)
@@ -196,9 +219,10 @@ MeasureMouse::MeasureMouse(Skin* skin, const WCHAR* name) : Measure(skin, name),
 
 MeasureMouse::~MeasureMouse()
 {
-	if (m_Capturing)
+	ClickCapture::Stop(this);
+	if (m_Dragging)
 	{
-		m_Capturing = false;
+		m_Dragging = false;
 		GetSkin()->UpdateMouseMeasureCapture();
 	}
 
@@ -218,9 +242,10 @@ MeasureMouse::~MeasureMouse()
 void MeasureMouse::ReadOptions(ConfigParser::OptionReader& reader)
 {
 	auto& parser = m_Skin->GetParser();
-	const bool wasCapturing = WantsCapture();
+	const bool wantedDragCapture = WantsDragCapture();
 
 	Measure::ReadOptions(reader);
+	if (IsDisabled() || IsPaused()) ClickCapture::Stop(this);
 
 	m_Mouse.ReadOptions(parser, reader);
 
@@ -231,16 +256,18 @@ void MeasureMouse::ReadOptions(ConfigParser::OptionReader& reader)
 	reader.ReadActionString<"X1MouseDragAction">(m_X1DragAction);
 	reader.ReadActionString<"X2MouseDragAction">(m_X2DragAction);
 
+	m_CaptureOverlayColor = reader.ReadColor<"CaptureOverlayColor">(D2D1::ColorF(0, 0, 0, 0));
+
 	m_RelativeToSkin = reader.ReadBool<"RelativeToSkin">(true);
 	m_RequireDragging = reader.ReadBool<"RequireDragging">(false);
 	m_Delay = reader.ReadUInt<"Delay">(16);
 
 	if (!m_RequireDragging)
 	{
-		m_Capturing = false;
+		m_Dragging = false;
 	}
 
-	if (wasCapturing != WantsCapture())
+	if (wantedDragCapture != WantsDragCapture())
 	{
 		GetSkin()->UpdateMouseMeasureCapture();
 	}
@@ -255,15 +282,16 @@ void MeasureMouse::Command(const std::wstring& command)
 {
 	if (m_RequireDragging)
 	{
-		if (_wcsicmp(command.c_str(), L"Start") == 0)
+		if (StringUtil::EqualsIgnoreCase(command, L"Start"))
 		{
-			m_Capturing = true;
+			ClickCapture::Stop(this);
+			m_Dragging = true;
 			GetSkin()->UpdateMouseMeasureCapture();
 			return;
 		}
-		else if (_wcsicmp(command.c_str(), L"Stop") == 0)
+		else if (StringUtil::EqualsIgnoreCase(command, L"Stop"))
 		{
-			m_Capturing = false;
+			m_Dragging = false;
 			GetSkin()->UpdateMouseMeasureCapture();
 			return;
 		}
@@ -274,7 +302,9 @@ void MeasureMouse::Command(const std::wstring& command)
 
 bool MeasureMouse::IsActive()
 {
-	return m_RequireDragging ? m_Capturing : (!IsDisabled() && !IsPaused());
+	if (ClickCapture::IsOwner(this)) return false;
+
+	return m_RequireDragging ? m_Dragging : (!IsDisabled() && !IsPaused());
 }
 
 bool MeasureMouse::ShouldRunMoveAction()
@@ -400,4 +430,28 @@ void MeasureMouse::ReplaceMouseVariables(std::wstring& result, POINT screenPos) 
 		}
 	}
 	while (true);
+}
+
+void MeasureMouse::CompleteScreenCapture(MOUSEACTION action, POINT screenPos)
+{
+	std::wstring command = m_Mouse.GetAction(action);
+	if (command.empty()) return;
+
+	ReplaceMouseVariables(command, screenPos);
+	GetRainmeter().ExecuteActionCommand(command.c_str(), this);
+}
+
+void MeasureMouse::Disable()
+{
+	ClickCapture::Stop(this);
+	Measure::Disable();
+}
+
+void MeasureMouse::StartCapture()
+{
+	if (!IsDisabled() && !IsPaused() && ClickCapture::Start(this, m_CaptureOverlayColor) && m_Dragging)
+	{
+		m_Dragging = false;
+		GetSkin()->UpdateMouseMeasureCapture();
+	}
 }

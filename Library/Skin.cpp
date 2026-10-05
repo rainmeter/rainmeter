@@ -5351,7 +5351,7 @@ void Skin::UpdateMouseMeasureCapture()
 	for (auto* measure : m_Measures)
 	{
 		if (measure->GetTypeID() == TypeID<MeasureMouse>() &&
-			((MeasureMouse*)measure)->WantsCapture())
+			((MeasureMouse*)measure)->WantsDragCapture())
 		{
 			wantsCapture = true;
 			break;

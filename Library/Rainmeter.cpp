@@ -11,6 +11,7 @@
 #include "../Common/ScopedFunction.h"
 #include "AsyncTask.h"
 #include "Rainmeter.h"
+#include "ClickCapture.h"
 #include "Export.h"
 #include "Net.h"
 #include "TrayIcon.h"
@@ -660,6 +661,7 @@ void Rainmeter::Finalize()
 	MeasureUsageMonitor::FinalizeStatic();
 	MeterStringBase::FinalizeStatic();
 
+	ClickCapture::Finalize();
 	Gfx::Canvas::Finalize();
 
 	// Change the work area back
@@ -893,6 +895,8 @@ void Rainmeter::ScheduleReattachGfxDevice()
 
 void Rainmeter::ReattachGfxDevice()
 {
+	ClickCapture::Reset();
+
 	if (!Gfx::Canvas::AttachDevice())
 	{
 		// New D3D device is not is not ready yet, perhaps...?

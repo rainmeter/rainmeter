@@ -7,6 +7,7 @@
 #include "MonitorUtil.h"
 #include "Util.h"
 #include "Rainmeter.h"
+#include "ClickCapture.h"
 #include "Skin.h"
 #include "MeasureNet.h"
 #include "WindowOcclusionTracker.h"
@@ -682,6 +683,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 	case WM_DISPLAYCHANGE:
 		LogNotice(L"System: Display settings changed");
+		ClickCapture::Reset();
 		MonitorUtil::ClearMultiMonitorInfo();
 	case WM_SETTINGCHANGE:
 		if (uMsg == WM_SETTINGCHANGE && lParam && _wcsicmp((const WCHAR*)lParam, L"intl") == 0)
@@ -722,6 +724,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		break;
 
 	case WM_POWERBROADCAST:
+		if (wParam == PBT_APMSUSPEND) ClickCapture::Reset();
 		if (wParam == PBT_APMRESUMESUSPEND)
 		{
 			// Deliver PBT_APMRESUMESUSPEND event to all meter windows
@@ -732,6 +735,12 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 	case WM_WTSSESSION_CHANGE:
 		LogDebugF(L"System: User session change detected! Session ID: 0x%08X Type: 0x%08X", lParam, wParam);
+
+		if (wParam == WTS_SESSION_LOCK || wParam == WTS_CONSOLE_DISCONNECT || wParam == WTS_REMOTE_DISCONNECT)
+		{
+			ClickCapture::Reset();
+		}
+
 		WindowOcclusionTracker::HandleSessionChange(wParam);
 
 		if (GetRainmeter().IsRedrawable())

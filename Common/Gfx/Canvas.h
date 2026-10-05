@@ -13,6 +13,7 @@
 #include <wincodec.h>
 #include <wrl/client.h>
 #include <d3d11.h>
+#include <dcomp.h>
 #include <DXGI1_2.h>
 
 template <>
@@ -74,6 +75,7 @@ public:
 	static bool Initialize(bool hardwareAccelerated, DeviceLostCallback deviceLostCallback = nullptr);
 	static void Finalize();
 	static bool AttachDevice();
+	static HRESULT CreateCompositionDevice(IDCompositionDevice** device);
 
 	static bool EnumerateInstalledFontFamilies(UINT32& familyCount, std::wstring& families);
 
