@@ -113,10 +113,6 @@ void ClickCaptureController::Initialize()
 	RegisterClass(&wc);
 }
 
-bool ClickCaptureController::CreateControlWindow()
-{
-}
-
 bool ClickCaptureController::Start(MeasureMouse* owner, const D2D1_COLOR_F& color)
 {
 	// Completion goes through a window that survives overlay destruction and replacement.
