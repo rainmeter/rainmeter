@@ -12,6 +12,7 @@ void Initialize();
 bool Start(MeasureMouse* owner, const D2D1_COLOR_F& color);
 void Stop(MeasureMouse* owner);
 bool IsOwner(const MeasureMouse* owner);
+bool IsOverlayWindow(HWND window);
 void Reset();
 void Finalize();
 

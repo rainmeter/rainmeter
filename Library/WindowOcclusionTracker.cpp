@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "WindowOcclusionTracker.h"
+#include "ClickCapture.h"
 #include "Rainmeter.h"
 #include "Skin.h"
 #include <WtsApi32.h>
@@ -74,7 +75,8 @@ bool IsWindowFullyOpaque(HWND hwnd)
 
 bool WindowCanOccludeOtherWindows(HWND hwnd, RECT* rect)
 {
-	if (!IsWindowVisible(hwnd) ||
+	if (ClickCapture::IsOverlayWindow(hwnd) ||
+		!IsWindowVisible(hwnd) ||
 		IsIconic(hwnd) ||
 		IsWindowCloaked(hwnd) ||
 		!GetWindowRect(hwnd, rect) ||
