@@ -193,7 +193,6 @@ void EnsureOcclusionHooksRegistered()
 		RegisterOcclusionHookRange(EVENT_SYSTEM_MINIMIZESTART, EVENT_SYSTEM_MINIMIZEEND);
 		RegisterOcclusionHookRange(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND);
 		RegisterOcclusionHookRange(EVENT_OBJECT_DESTROY, EVENT_OBJECT_HIDE);
-		RegisterOcclusionHookRange(EVENT_OBJECT_REORDER, EVENT_OBJECT_REORDER);
 		RegisterOcclusionHookRange(EVENT_OBJECT_STATECHANGE, EVENT_OBJECT_STATECHANGE);
 		RegisterOcclusionHookRange(EVENT_OBJECT_CLOAKED, EVENT_OBJECT_UNCLOAKED);
 	}
@@ -392,16 +391,6 @@ void ComputeWindowOcclusionState()
 void CALLBACK OcclusionWinEventProc(HWINEVENTHOOK, DWORD event, HWND hwnd, LONG idObject, LONG, DWORD, DWORD)
 {
 	if (g_TrackedOcclusionWindows.empty() || !hwnd) return;
-
-	if (event == EVENT_OBJECT_REORDER)
-	{
-		// Window reorders can be reported for the parent's client area, including the desktop.
-		if ((idObject == OBJID_WINDOW || idObject == OBJID_CLIENT) && IsTopLevelWindowRelevantForOcclusion(hwnd))
-		{
-			ScheduleOcclusionCalculationIfNeeded(g_MessageWindow);
-		}
-		return;
-	}
 
 	if (idObject != OBJID_WINDOW) return;
 
