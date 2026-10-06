@@ -47,6 +47,16 @@ Updater::Updater() :
 		}
 		s_UpdateURL = LOCAL_STATUS_FILE.c_str();
 	}
+#ifdef _WIN64
+	else
+	{
+		VersionHelper::Version windowsVersion = { GetPlatform().GetRawVersion() };
+		if (windowsVersion.IsValid() && windowsVersion >= VersionHelper::Version{ L"10.0.18362" })
+		{
+			s_UpdateURL = L"https://version.rainmeter.net/rainmeter/status-v5-capable.json";
+		}
+	}
+#endif
 
 	s_IsInDebugMode = GetRainmeter().GetDebug();
 }
