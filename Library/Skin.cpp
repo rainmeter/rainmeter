@@ -2530,6 +2530,12 @@ bool Skin::ReadSkin()
 	auto reader = m_Parser.GetOptionReader(L"Rainmeter", rainmeterID);
 
 	const int syntaxVersion = reader.ReadInt<"SyntaxVersion">(1);
+	if (syntaxVersion > 2)
+	{
+		std::wstring text = GetFormattedString(IDS_NewVersionRequired, m_FolderPath.c_str(), m_FileName.c_str(), L"5.1");
+		GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
+		return false;
+	}
 	m_Parser.SetSyntaxVersion(syntaxVersion);
 
 	// Read any default settings from the skin (ie. DefaultWindowX, DefaultWindowY, etc.)
