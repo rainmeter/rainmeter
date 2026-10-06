@@ -109,6 +109,13 @@ void SetSkinOcclusionState(HWND hwnd, SkinWindowOcclusionState state)
 {
 	if (Skin* skin = GetRainmeter().GetSkin(hwnd))
 	{
+		const auto previousState = skin->GetWindowOcclusionState();
+		if (GetRainmeter().GetDebug() && state != previousState)
+		{
+			constexpr const WCHAR* stateNames[] = { L"unknown", L"visible", L"covered", L"hidden" };
+			LogDebugF(skin, L"Occlusion: Visibility changed from %s to %s", stateNames[(int)previousState], stateNames[(int)state]);
+		}
+
 		skin->SetWindowOcclusionState(state);
 	}
 }
@@ -305,6 +312,28 @@ BOOL CALLBACK ComputeTrackedWindowOcclusionProc(HWND hwnd, LPARAM lParam)
 		SkinWindowOcclusionState::Occluded :
 		SkinWindowOcclusionState::Visible;
 
+	if (GetRainmeter().GetDebug() && tracked->second == SkinWindowOcclusionState::Occluded)
+	{
+		Skin* skin = GetRainmeter().GetSkin(hwnd);
+		if (skin && skin->GetWindowOcclusionState() != SkinWindowOcclusionState::Occluded && GetWindowRect(hwnd, &windowRect))
+		{
+			for (HWND occludingWindow : g_OccludingWindows)
+			{
+				if (occludingWindow == hwnd) continue;
+
+				RECT bounds;
+				RECT intersection;
+				if (GetWindowRect(occludingWindow, &bounds) && IntersectRect(&intersection, &windowRect, &bounds))
+				{
+					WCHAR className[256] = {};
+					GetClassName(occludingWindow, className, _countof(className));
+					LogDebugF(skin, L"Occlusion: Overlapping window above skin: hwnd=0x%p class=%s bounds=(%ld,%ld,%ld,%ld)",
+						occludingWindow, className, bounds.left, bounds.top, bounds.right, bounds.bottom);
+				}
+			}
+		}
+	}
+
 	DeleteObject(currentUnoccludedRegion);
 	return TRUE;
 }
@@ -499,6 +528,22 @@ void WindowOcclusionTracker::UntrackWindow(HWND hwnd)
 		g_OcclusionTimerInterval = 0;
 		UnregisterOcclusionHooks();
 		return;
+	}
+
+	ScheduleOcclusionCalculationIfNeeded(g_MessageWindow);
+}
+
+void WindowOcclusionTracker::HandleWindowZOrderChange(HWND hwnd)
+{
+	if (!IsTrackedWindow(hwnd)) return;
+
+	if (GetRainmeter().GetDebug())
+	{
+		Skin* skin = GetRainmeter().GetSkin(hwnd);
+		if (skin && !skin->IsWindowUnoccluded())
+		{
+			LogDebugF(skin, L"Occlusion: Stacking order changed; rechecking visibility");
+		}
 	}
 
 	ScheduleOcclusionCalculationIfNeeded(g_MessageWindow);

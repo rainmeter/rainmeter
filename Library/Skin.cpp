@@ -4627,6 +4627,17 @@ LRESULT Skin::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+LRESULT Skin::OnWindowPosChanged(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	const auto* windowPos = (const WINDOWPOS*)lParam;
+	if ((windowPos->flags & SWP_NOZORDER) == 0)
+	{
+		WindowOcclusionTracker::HandleWindowZOrderChange(m_Window);
+	}
+
+	return DefWindowProc(m_Window, uMsg, wParam, lParam);
+}
+
 LRESULT Skin::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT screenPos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
@@ -5906,6 +5917,7 @@ LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	MESSAGE(OnXButtonDoubleClick, WM_NCXBUTTONDBLCLK)
 	MESSAGE(OnCaptureChanged, WM_CAPTURECHANGED)
 	MESSAGE(OnWindowPosChanging, WM_WINDOWPOSCHANGING)
+	MESSAGE(OnWindowPosChanged, WM_WINDOWPOSCHANGED)
 	MESSAGE(OnCopyData, WM_COPYDATA)
 	MESSAGE(OnDelayedRefresh, WM_METERWINDOW_DELAYED_REFRESH)
 	MESSAGE(OnDelayedMove, WM_METERWINDOW_DELAYED_MOVE)
