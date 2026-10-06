@@ -28,6 +28,7 @@ enum class VariableType : BYTE
 {
 	Ampersand,
 	Hash,
+	Percent,
 	Dollar,
 	Backslash
 };
@@ -36,6 +37,7 @@ std::optional<VariableType> VariableTypeForKey(WCHAR key)
 {
 	if (key == L'&') return VariableType::Ampersand;
 	if (key == L'#') return VariableType::Hash;
+	if (key == L'%') return VariableType::Percent;
 	if (key == L'$') return VariableType::Dollar;
 	if (key == L'\\') return VariableType::Backslash;
 	return std::nullopt;
@@ -1009,6 +1011,18 @@ bool ConfigParser::ExpandSectionVariables(std::wstring& str, Section* currentSec
 				if (GetVariable(variable, value, currentSection, monitorVariableMode, true))
 				{
 					replaceFoundValue(std::move(value));
+					break;
+				}
+			}
+			else if (keyType == VariableType::Percent && (expandMode == VariableExpandMode::AllKeys || expandMode == VariableExpandMode::HashOnly))
+			{
+				const std::wstring name(variable);
+				WCHAR buffer[4096];
+				SetLastError(ERROR_SUCCESS);
+				const DWORD length = GetEnvironmentVariable(name.c_str(), buffer, _countof(buffer));
+				if (length < _countof(buffer) && (length != 0 || GetLastError() == ERROR_SUCCESS))
+				{
+					replaceFoundValue(std::wstring(buffer, length));
 					break;
 				}
 			}
