@@ -169,6 +169,7 @@ public:
 
 	void Initialize(const std::wstring& filename, Skin* skin = nullptr, LPCTSTR skinSection = nullptr);
 	void SetSyntaxVersion(int version) { m_SyntaxVersion = version; }
+	int GetSyntaxVersion() const { return m_SyntaxVersion; }
 
 	void AddSection(Section* section);
 	void ClearSections() { m_Sections.clear(); }

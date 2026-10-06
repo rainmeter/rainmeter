@@ -181,6 +181,7 @@ public:
 	HWND GetWindow() { return m_Window; }
 
 	ConfigParser& GetParser() { return m_Parser; }
+	int GetSyntaxVersion() const { return m_Parser.GetSyntaxVersion(); }
 	const MathParser& GetMathParser() const { return m_MathParser; }
 
 	const std::wstring& GetFolderPath() { return m_FolderPath; }

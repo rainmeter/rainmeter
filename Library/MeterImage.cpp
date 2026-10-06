@@ -112,9 +112,12 @@ void MeterImage::ReadOptions(ConfigParser::OptionReader& reader)
 	static const RECT defMargins = { 0 };
 	m_ScaleMargins = reader.ReadRECT<"ScaleMargins">(defMargins);
 
-	// Deprecated!
-	std::wstring path = reader.ReadString<"Path">(L"");
-	PathUtil::AppendBackslashIfMissing(path);
+	std::wstring path;
+	if (m_Skin->GetSyntaxVersion() < 2)
+	{
+		path = reader.ReadString<"Path">(L"");
+		PathUtil::AppendBackslashIfMissing(path);
+	}
 
 	// Read tinting options
 	m_Image.ReadOptions(parser, reader, path.c_str());

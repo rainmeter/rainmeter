@@ -419,7 +419,7 @@ void MeasureWebParser::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 
 	{
-		m_ForceReload = reader.ReadBool<"ForceReload">(false);  // Deprecated
+		m_ForceReload = m_Skin->GetSyntaxVersion() < 2 && reader.ReadBool<"ForceReload">(false);
 
 		m_InternetOpenUrlFlags = m_ForceReload ? INTERNET_FLAG_RELOAD : INTERNET_FLAG_RESYNCHRONIZE;
 		std::wstring szFlags = reader.ReadString<"Flags">(L"");

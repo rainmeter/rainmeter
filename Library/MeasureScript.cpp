@@ -109,7 +109,7 @@ void MeasureScript::ReadOptions(ConfigParser::OptionReader& reader)
 				lua_setmetatable(L, -2);
 				lua_setfield(L, -2, "SELF");
 
-				if (!m_LuaScript.IsUnicode())
+				if (m_Skin->GetSyntaxVersion() < 2 && !m_LuaScript.IsUnicode())
 				{
 					// For backwards compatibility.
 
