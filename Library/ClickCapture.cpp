@@ -19,7 +19,7 @@ public:
 	ClickCaptureController& operator=(const ClickCaptureController&) = delete;
 
 	void Initialize();
-	bool Start(MeasureMouse* owner, const D2D1_COLOR_F& color);
+	bool Start(MeasureMouse* owner, const D2D1_COLOR_F& color, MOUSECURSOR cursorType);
 	void Stop(MeasureMouse* owner);
 	void Reset();
 	void Finalize();
@@ -46,6 +46,7 @@ private:
 	void Complete();
 	void HandleButton(UINT button, bool down, POINT screenPos);
 
+	HCURSOR m_Cursor = nullptr;
 	HINSTANCE m_Instance = nullptr;
 	HWND m_ControlWindow = nullptr;
 	MeasureMouse* m_Owner = nullptr;
@@ -114,7 +115,7 @@ void ClickCaptureController::Initialize()
 	RegisterClass(&wc);
 }
 
-bool ClickCaptureController::Start(MeasureMouse* owner, const D2D1_COLOR_F& color)
+bool ClickCaptureController::Start(MeasureMouse* owner, const D2D1_COLOR_F& color, MOUSECURSOR cursorType)
 {
 	// Completion goes through a window that survives overlay destruction and replacement.
 	if (!m_ControlWindow)
@@ -138,6 +139,8 @@ bool ClickCaptureController::Start(MeasureMouse* owner, const D2D1_COLOR_F& colo
 		return false;
 	}
 
+	m_Cursor = Mouse::GetSystemCursor(cursorType);
+
 	++m_Generation;
 	m_Owner = owner;
 	m_PressedButtons = 0;
@@ -156,6 +159,8 @@ bool ClickCaptureController::Start(MeasureMouse* owner, const D2D1_COLOR_F& colo
 		SetWindowPos(overlay.window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
 	}
 
+	SetCursor(m_Cursor);
+
 	return true;
 }
 
@@ -173,7 +178,7 @@ HRESULT ClickCaptureController::CreateOverlays(const D2D1_COLOR_F& color)
 
 	Microsoft::WRL::ComPtr<ID2D1DeviceContext> context;
 	POINT offset = {};
-	result = surface->BeginDraw(nullptr, __uuidof(ID2D1DeviceContext), reinterpret_cast<void**>(context.GetAddressOf()), &offset);
+	result = surface->BeginDraw(nullptr, __uuidof(ID2D1DeviceContext), (void**)context.GetAddressOf(), &offset);
 	if (FAILED(result)) return result;
 
 	// DirectComposition supplies the drawing session and may place our pixel inside a larger
@@ -264,6 +269,12 @@ void ClickCaptureController::DestroyOverlays()
 	for (const auto& overlay : m_Overlays) DestroyWindow(overlay.window);
 	m_Overlays.clear();
 	m_Device.Reset();
+
+	if (m_Cursor)
+	{
+		if (GetCursor() == m_Cursor) SetCursor(LoadCursor(nullptr, IDC_ARROW));
+		m_Cursor = nullptr;
+	}
 }
 
 void ClickCaptureController::Reset()
@@ -398,11 +409,11 @@ void ClickCaptureController::Complete()
 
 LRESULT CALLBACK ClickCaptureController::WndProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	auto instance = reinterpret_cast<ClickCaptureController*>(GetWindowLongPtr(window, GWLP_USERDATA));
+	auto instance = (ClickCaptureController*)GetWindowLongPtr(window, GWLP_USERDATA);
 	if (message == WM_NCCREATE)
 	{
-		instance = static_cast<ClickCaptureController*>(reinterpret_cast<CREATESTRUCT*>(lParam)->lpCreateParams);
-		SetWindowLongPtr(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(instance));
+		instance = (ClickCaptureController*)((CREATESTRUCT*)lParam)->lpCreateParams;
+		SetWindowLongPtr(window, GWLP_USERDATA, (LONG_PTR)instance);
 	}
 	if (instance) return instance->HandleMessage(window, message, wParam, lParam);
 	return DefWindowProc(window, message, wParam, lParam);
@@ -428,6 +439,10 @@ LRESULT ClickCaptureController::HandleMessage(HWND window, UINT message, WPARAM 
 	{
 	case WM_NCHITTEST:
 		return HTCLIENT;
+
+	case WM_SETCURSOR:
+		SetCursor(m_Cursor ? m_Cursor : LoadCursor(nullptr, IDC_ARROW));
+		return TRUE;
 
 	case WM_MOUSEACTIVATE:
 		return MA_NOACTIVATE;
@@ -478,9 +493,9 @@ void Initialize()
 	GetController().Initialize();
 }
 
-bool Start(MeasureMouse* owner, const D2D1_COLOR_F& color)
+bool Start(MeasureMouse* owner, const D2D1_COLOR_F& color, MOUSECURSOR cursorType)
 {
-	return GetController().Start(owner, color);
+	return GetController().Start(owner, color, cursorType);
 }
 
 void Stop(MeasureMouse* owner)
