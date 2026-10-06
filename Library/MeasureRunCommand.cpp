@@ -474,9 +474,8 @@ void MeasureRunCommand::ReadOptions(ConfigParser::OptionReader& reader)
 	};
 	m_State = reader.ReadEnum<"State">((WORD)SW_HIDE, s_States);
 
-	// Grab "%COMSPEC% environment variable
 	reader.ReadString<"Program">(m_Program, L"\"%COMSPEC%\" /U /C");
-	PathUtil::ExpandEnvironmentVariables(m_Program);
+	if (reader.GetLastDefaultUsed()) PathUtil::ExpandEnvironmentVariables(m_Program);
 	if (m_Program.empty())
 	{
 		// Assume "cmd.exe" exists!

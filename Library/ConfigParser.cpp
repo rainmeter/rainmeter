@@ -127,6 +127,7 @@ ConfigParser::OptionReader ConfigParser::GetInheritableOptionReader(Section* sec
 void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR skinSection)
 {
 	m_Skin = skin;
+	m_SyntaxVersion = 1;
 
 	m_Sections.clear();
 	m_IniFiles.clear();
@@ -743,6 +744,13 @@ std::optional<std::wstring> ConfigParser::GetMonitorVariable(std::wstring_view v
 	return std::nullopt;
 }
 
+const WCHAR* ConfigParser::GetVariableSpecialChars(bool withBracket) const
+{
+	const WCHAR* specialChars = m_SyntaxVersion < 2 ? L"[%#" : L"[#";
+	if (!withBracket) ++specialChars;
+	return specialChars;
+}
+
 bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 {
 	return ReplaceVariables(result, {}, MonitorVariableMode::DEFAULT_LOGICAL, isNewStyle);
@@ -751,10 +759,11 @@ bool ConfigParser::ReplaceVariables(std::wstring& result, bool isNewStyle)
 bool ConfigParser::ReplaceVariables(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle, std::optional<size_t> firstSpecialPos)
 {
 	bool replaced = false;
-	const size_t specialPos = firstSpecialPos ? *firstSpecialPos : result.find_first_of(L"[%#");
+	const WCHAR* specialChars = GetVariableSpecialChars(true);
+	const size_t specialPos = firstSpecialPos ? *firstSpecialPos : result.find_first_of(specialChars);
 	if (specialPos == std::wstring::npos) return false;
 
-	PathUtil::ExpandEnvironmentVariables(result, specialPos);
+	if (m_SyntaxVersion < 2) PathUtil::ExpandEnvironmentVariables(result, specialPos);
 
 	// Check for new-style variables ([#VAR])
 	// Note: Most new-style variables are parsed later (when section variables are parsed),
@@ -1252,7 +1261,8 @@ void ConfigParser::ReadStringInternal(std::wstring& result, OptionReader& reader
 	// character references. The backward-compatible [#CURRENTSECTION] is still found through '#'.
 	const bool runNewStyle = reader.GetSectionID() == IniNameRegistry::InternSection<"Variables">();
 	const bool scanBrackets = options.sectionVariables || runNewStyle;
-	const size_t firstSpecialPos = result.find_first_of(scanBrackets ? L"[%#" : L"%#");
+	const WCHAR* specialChars = GetVariableSpecialChars(scanBrackets);
+	const size_t firstSpecialPos = result.find_first_of(specialChars);
 	if (firstSpecialPos != std::wstring::npos) ProcessReadString(result, reader, options, firstSpecialPos, runNewStyle);
 }
 
@@ -1281,7 +1291,8 @@ const std::wstring& ConfigParser::ReadStringInternal(OptionReader& reader, IniOp
 		// character references. The backward-compatible [#CURRENTSECTION] is still found through '#'.
 		const bool runNewStyle = reader.GetSectionID() == IniNameRegistry::InternSection<"Variables">();
 		const bool scanBrackets = options.sectionVariables || runNewStyle;
-		const size_t firstSpecialPos = value->find_first_of(scanBrackets ? L"[%#" : L"%#");
+		const WCHAR* specialChars = GetVariableSpecialChars(scanBrackets);
+		const size_t firstSpecialPos = value->find_first_of(specialChars);
 		if (firstSpecialPos == std::wstring::npos) return *value;
 
 		// Custom plugin/Lua functions can re-enter ReadString() while ExpandSectionVariables() is still

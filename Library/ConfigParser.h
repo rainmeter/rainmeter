@@ -168,6 +168,7 @@ public:
 	OptionReader GetInheritableOptionReader(Section* section, bool allowMeterStyle = false);
 
 	void Initialize(const std::wstring& filename, Skin* skin = nullptr, LPCTSTR skinSection = nullptr);
+	void SetSyntaxVersion(int version) { m_SyntaxVersion = version; }
 
 	void AddSection(Section* section);
 	void ClearSections() { m_Sections.clear(); }
@@ -255,6 +256,7 @@ private:
 	std::optional<std::wstring> GetMonitorVariable(std::wstring_view variableStr, MonitorVariableMode monitorVariableMode);
 
 	bool GetVariable(std::wstring_view strVariable, std::wstring& strValue, Section* currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle = false);
+	const WCHAR* GetVariableSpecialChars(bool withBracket) const;
 	bool ReplaceVariables(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode, bool isNewStyle = false, std::optional<size_t> firstSpecialPos = std::nullopt);
 	bool ReplaceMeasures(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode);
 	bool ExpandSectionVariables(std::wstring& result, Section* currentSection, MonitorVariableMode monitorVariableMode, const VariableExpandMode expandMode, Meter* meter = nullptr, int depth = 0, size_t start = 0);
@@ -287,4 +289,5 @@ private:
 	StringMap<std::wstring> m_OriginalVariableNames;
 
 	Skin* m_Skin;
+	int m_SyntaxVersion = 1;
 };
