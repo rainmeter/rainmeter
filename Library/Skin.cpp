@@ -2528,7 +2528,8 @@ bool Skin::ReadSkin()
 	const auto rainmeterID = IniNameRegistry::InternSection<"Rainmeter">();
 	auto reader = m_Parser.GetOptionReader(L"Rainmeter", rainmeterID);
 
-	m_Parser.SetSyntaxVersion(reader.ReadInt<"SyntaxVersion">(1));
+	const int syntaxVersion = reader.ReadInt<"SyntaxVersion">(1);
+	m_Parser.SetSyntaxVersion(syntaxVersion);
 
 	// Read any default settings from the skin (ie. DefaultWindowX, DefaultWindowY, etc.)
 	if (m_IsFirstRun)
@@ -2545,7 +2546,7 @@ bool Skin::ReadSkin()
 		ReadOptions(parser, m_FolderPath.c_str(), false);
 	}
 
-	m_Canvas.SetAccurateText(reader.ReadBool<"AccurateText">(false));
+	m_Canvas.SetAccurateText(syntaxVersion >= 2 || reader.ReadBool<"AccurateText">(false));
 
 	// Gotta have some kind of buffer during initialization
 	m_Canvas.Resize(1, 1);
