@@ -841,9 +841,11 @@ bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
 
 		// An empty expression (|JsonPointer=1|) means the measure itself does not resolve
 		// a value from the document.
+		const JsonValue* root = &json;
 		if (!m_Expression.empty())
 		{
-			doErrorAction = !updateResult(this, json);
+			root = updateResult(this, json);
+			doErrorAction = !root;
 		}
 
 		std::vector<MeasureWebParser*> ancestors = { this };
@@ -868,7 +870,7 @@ bool MeasureWebParser::ParseJsonPointer(std::wstring_view data)
 				ancestors.pop_back();
 			}
 		};
-		updateChildren(updateChildren, this, json);
+		if (root) updateChildren(updateChildren, this, *root);
 	}
 	else
 	{
