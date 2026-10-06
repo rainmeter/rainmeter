@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/WindowsTheme.h"
 #include "DialogPackage.h"
 #include "DialogInstall.h"
 #include "Language.h"
@@ -21,6 +22,7 @@ EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine)
 	if (FAILED(hr)) return 1;
 
 	InitCommonControls();
+	WindowsTheme::Initialize();
 
 	if (lpCmdLine[0] == L'"')
 	{
@@ -84,14 +86,14 @@ EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine)
 			else
 			{
 				std::wstring error = L"SkinPath not found.\nMake sure that Rainmeter has been run at least once.";
-				MessageBox(nullptr, error.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
+				WindowsTheme::ShowMessageBox(nullptr, error.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
 				return 1;
 			}
 		}
 		else
 		{
 			std::wstring error = L"Rainmeter.ini not found.\nMake sure that Rainmeter has been run at least once.";
-			MessageBox(nullptr, error.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
+			WindowsTheme::ShowMessageBox(nullptr, error.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
 			return 1;
 		}
 	}
@@ -100,7 +102,7 @@ EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine)
 	const std::wstring languageDirectory = g_Data.programPath + L"Languages\\";
 	if (!GetLanguage().LoadFromSettings(languageDirectory, g_Data.iniFile))
 	{
-		MessageBox(nullptr, L"Unable to load language file", L"Rainmeter", MB_ERROR);
+		WindowsTheme::ShowMessageBox(nullptr, L"Unable to load language file", L"Rainmeter", MB_ERROR);
 		return 1;
 	}
 

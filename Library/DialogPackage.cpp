@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/WindowsTheme.h"
 #include "DialogPackage.h"
 #include "SkinInstaller.h"
 #include "DialogInstall.h"
@@ -281,7 +282,7 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			m_PackagerThread = (HANDLE)_beginthreadex(nullptr, 0, PackagerThreadProc, this, 0, nullptr);
 			if (!m_PackagerThread)
 			{
-				MessageBox(m_Window, GetString(IDS_UnknownError), GetString(IDS_RainmeterSkinPackager), MB_ERROR);
+				WindowsTheme::ShowMessageBox(m_Window, GetString(IDS_UnknownError), GetString(IDS_RainmeterSkinPackager), MB_ERROR);
 				EndDialog(m_Window, 0);
 			}
 		}
@@ -617,7 +618,7 @@ bool DialogPackage::CreatePackage()
 		std::wstring error = GetString(IDS_UnableCreatePackage);
 		error += L"\n\n";
 		error += GetString(IDS_CloseMessage);
-		MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
+		WindowsTheme::ShowMessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 		DeleteFile(tempFile);
 		return cleanup();
 	}
@@ -643,7 +644,7 @@ bool DialogPackage::CreatePackage()
 			std::wstring error = GetFormattedString(IDS_LayoutError, (*iter).first.c_str());
 			error += L"\n\n";
 			error += GetString(IDS_CloseMessage);
-			MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
+			WindowsTheme::ShowMessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 			return cleanup();
 		}
 	}
@@ -661,7 +662,7 @@ bool DialogPackage::CreatePackage()
 				std::wstring error = GetFormattedString(IDS_PluginError, (*iter).first.c_str());
 				error += L"\n\n";
 				error += GetString(IDS_CloseMessage);
-				MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
+				WindowsTheme::ShowMessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 				return cleanup();
 			}
 		}
@@ -684,7 +685,7 @@ bool DialogPackage::CreatePackage()
 		std::wstring error = GetString(IDS_UnableCreatePackage);
 		error += L"\n\n";
 		error += GetString(IDS_CloseMessage);
-		MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
+		WindowsTheme::ShowMessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -706,7 +707,7 @@ unsigned __stdcall DialogPackage::PackagerThreadProc(void* pParam)
 		std::wstring message = GetString(IDS_RmskinSuccessfullyCreated);
 		message += L"\n\n";
 		message += GetString(IDS_CloseMessage);
-		MessageBox(c_Dialog->GetWindow(), message.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONINFORMATION);
+		WindowsTheme::ShowMessageBox(c_Dialog->GetWindow(), message.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONINFORMATION);
 	}
 	else
 	{
@@ -842,7 +843,7 @@ bool DialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring ba
 				std::wstring error = GetFormattedString(IDS_FileError, filePath.c_str());
 				error += L"\n\n";
 				error += GetString(IDS_CloseMessage);
-				MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
+				WindowsTheme::ShowMessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 				break;
 			}
 
@@ -964,7 +965,7 @@ private:
 
 		CreateControls(controls, _countof(controls), GetString);
 		Button_SetCheck(GetControl(SelectFolderDialog::Id_ExistingRadio), BST_CHECKED);
-		EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
+		WindowsTheme::EnableDialogTexture(m_Window, true);
 
 		std::wstring searchPath = m_ExistingPath + L'*';
 		WIN32_FIND_DATA fd = { 0 };
@@ -1191,7 +1192,7 @@ private:
 		};
 
 		CreateControls(controls, _countof(controls), GetString);
-		EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
+		WindowsTheme::EnableDialogTexture(m_Window, true);
 		return TRUE;
 	}
 
@@ -1222,7 +1223,7 @@ private:
 					const WCHAR* otherName = PathFindFileName(x32 ? m_Plugins.second.c_str() : m_Plugins.first.c_str());
 					if (*otherName && _wcsicmp(otherName, PathFindFileName(path->c_str())) != 0)
 					{
-						MessageBox(m_Window, GetString(IDS_PluginsSameName), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_TOPMOST);
+						WindowsTheme::ShowMessageBox(m_Window, GetString(IDS_PluginsSameName), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_TOPMOST);
 						break;
 					}
 
@@ -1243,7 +1244,7 @@ private:
 					break;
 				}
 
-				MessageBox(m_Window, GetString(IDS_InvalidPlugin), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_TOPMOST);
+				WindowsTheme::ShowMessageBox(m_Window, GetString(IDS_InvalidPlugin), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_TOPMOST);
 			}
 			break;
 
@@ -1360,7 +1361,7 @@ void DialogPackage::TabInfo::Initialize()
 	item = GetDlgItem(m_Window, DialogPackage::TabInfo::Id_ComponentsList);
 
 	DWORD extendedFlags = LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
-	SetWindowTheme(item, L"explorer", nullptr);
+	WindowsTheme::ApplyToControl(item);
 	ListView_EnableGroupView(item, TRUE);
 	ListView_SetExtendedListViewStyleEx(item, 0, extendedFlags);
 
@@ -2030,7 +2031,7 @@ INT_PTR DialogPackage::TabAdvanced::OnCommand(WPARAM wParam, LPARAM lParam)
 					error = GetFormattedString(IDS_InvalidBitmap, path->c_str());
 				}
 
-				MessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
+				WindowsTheme::ShowMessageBox(m_Window, error.c_str(), GetString(IDS_RainmeterSkinPackager), MB_OK | MB_ICONERROR);
 			}
 		}
 		break;

@@ -3,8 +3,58 @@
 #include "StdAfx.h"
 #include "DpiUtil.h"
 #include "Dialog.h"
+#include "WindowsTheme.h"
 
 namespace {
+
+constexpr WORD g_MenuArrowDown = 0x0010;  // Undocumented DrawFrameControl flag.
+
+HBITMAP CreateMenuArrowMask(HDC dc, int size)
+{
+	HDC maskDc = CreateCompatibleDC(dc);
+	if (!maskDc) return nullptr;
+
+	HBITMAP mask = CreateBitmap(size, size, 1, 1, nullptr);
+	if (mask)
+	{
+		HGDIOBJ oldBitmap = SelectObject(maskDc, mask);
+		RECT rect = { 0, 0, size, size };
+		FillRect(maskDc, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
+		const BOOL drawn = DrawFrameControl(maskDc, &rect, DFC_MENU, DFCS_TRANSPARENT | g_MenuArrowDown);
+		SelectObject(maskDc, oldBitmap);
+		if (!drawn)
+		{
+			DeleteObject(mask);
+			mask = nullptr;
+		}
+	}
+
+	DeleteDC(maskDc);
+	return mask;
+}
+
+HBITMAP GetMenuArrowMask(HDC dc, int size)
+{
+	struct MaskCache
+	{
+		HBITMAP mask = nullptr;
+		int arrowSize = 0;
+
+		~MaskCache()
+		{
+			if (mask) DeleteObject(mask);
+		}
+	};
+
+	static MaskCache cache;
+	if (cache.mask && cache.arrowSize == size) return cache.mask;
+
+	HBITMAP mask = CreateMenuArrowMask(dc, size);
+	if (cache.mask) DeleteObject(cache.mask);
+	cache.mask = mask;
+	cache.arrowSize = size;
+	return mask;
+}
 
 bool IsResizable(HWND window)
 {
@@ -96,6 +146,7 @@ void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DW
 void BaseDialog::CreateControls(const Control* cts, UINT ctCount, ControlTemplate::GetStringFunc getString)
 {
 	m_ControlTemplate.Initialize(cts, ctCount, m_Window, m_DesignSize, m_Dpi, getString);
+	WindowsTheme::ApplyToWindow(m_Window);
 }
 
 void BaseDialog::RelayoutControls()
@@ -114,6 +165,7 @@ INT_PTR CALLBACK BaseDialog::InitialDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 
 		const INT_PTR result = dialog->HandleMessage(uMsg, wParam, lParam);
 		dialog->HandleInitDialog();
+		WindowsTheme::ApplyToWindow(hWnd);
 		return result;
 	}
 
@@ -426,6 +478,44 @@ void Dialog::SetMenuButton(HWND button)
 	SetWindowSubclass(button, MenuButtonProc, 0, 0);
 }
 
+void Dialog::DrawMenuButtonArrow(HWND hWnd, HDC dc)
+{
+	DWORD_PTR data;
+	if (!GetWindowSubclass(hWnd, MenuButtonProc, 0, &data)) return;
+
+	RECT buttonRect;
+	GetClientRect(hWnd, &buttonRect);
+	const UINT dpi = GetDpiForWindow(hWnd);
+	const int arrowOffset = MulDiv(18, (int)dpi, 96);
+	const int arrowTop = MulDiv(4, (int)dpi, 96);
+	const int arrowSize = MulDiv(14, (int)dpi, 96);
+	int arrowX = buttonRect.right - arrowOffset;
+	int arrowY = buttonRect.top + arrowTop;
+	RECT arrowRect = { arrowX, arrowY, arrowX + arrowSize, arrowY + arrowSize };
+
+	DWORD drawFlags = DFCS_TRANSPARENT | g_MenuArrowDown | (IsWindowEnabled(hWnd) ? 0 : DFCS_INACTIVE);
+	if (WindowsTheme::IsUsingDarkMode())
+	{
+		HBITMAP mask = GetMenuArrowMask(dc, arrowSize);
+		HBRUSH brush = CreateSolidBrush(IsWindowEnabled(hWnd) ? WindowsTheme::GetTextColor() : WindowsTheme::GetDisabledTextColor());
+		if (mask && brush)
+		{
+			HGDIOBJ oldBrush = SelectObject(dc, brush);
+
+			// Keep the destination for white mask pixels and apply the tint for black arrow pixels.
+			const DWORD destinationCopy = 0x00AA0029;
+			MaskBlt(dc, arrowX, arrowY, arrowSize, arrowSize, dc, arrowX, arrowY, mask, 0, 0, MAKEROP4(destinationCopy, PATCOPY));
+			SelectObject(dc, oldBrush);
+		}
+
+		if (brush) DeleteObject(brush);
+	}
+	else
+	{
+		DrawFrameControl(dc, &arrowRect, DFC_MENU, drawFlags);
+	}
+}
+
 LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
 	LRESULT result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
@@ -433,24 +523,13 @@ LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	switch (uMsg)
 	{
 	case WM_PAINT:
+		if (!WindowsTheme::IsUsingDarkMode())
 		{
-			// Draw arrow on top of the button
-			RECT buttonRect;
-			GetClientRect(hWnd, &buttonRect);
-			const UINT dpi = GetDpiForWindow(hWnd);
-			const int arrowOffset = MulDiv(18, (int)dpi, 96);
-			const int arrowTop = MulDiv(4, (int)dpi, 96);
-			const int arrowSize = MulDiv(14, (int)dpi, 96);
-			int arrowX = buttonRect.right - arrowOffset;
-			int arrowY = buttonRect.top + arrowTop;
-			RECT arrowRect = { arrowX, arrowY, arrowX + arrowSize, arrowY + arrowSize };
-
 			HDC dc = GetDC(hWnd);
-			const WORD DFCS_MENUARROWDOWN = 0x0010;	// Undocumented
-			DWORD drawFlags = DFCS_TRANSPARENT | DFCS_MENUARROWDOWN | (IsWindowEnabled(hWnd) ? 0 : DFCS_INACTIVE);
-			DrawFrameControl(dc, &arrowRect, DFC_MENU, drawFlags);
+			DrawMenuButtonArrow(hWnd, dc);
 			ReleaseDC(hWnd, dc);
 		}
+
 		break;
 
 	case WM_GETTEXT:
@@ -548,7 +627,7 @@ void Dialog::Tab::CreateTabWindow(short x, short y, short w, short h, HWND paren
 	const RECT r = GetLayoutRect(m_Dpi);
 	SetWindowPos(m_Window, nullptr, r.left, r.top, r.right - r.left, r.bottom - r.top, SWP_NOACTIVATE | SWP_NOZORDER);
 
-	EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
+	WindowsTheme::EnableDialogTexture(m_Window, true);
 }
 
 RECT Dialog::Tab::GetLayoutRect(UINT dpi)
@@ -579,6 +658,7 @@ void Dialog::Tab::Activate()
 	if (!m_Initialized)
 	{
 		Initialize();
+		WindowsTheme::ApplyToWindow(m_Window);
 	}
 
 	EnableWindow(m_Window, TRUE);

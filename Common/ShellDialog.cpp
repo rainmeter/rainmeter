@@ -3,8 +3,30 @@
 #include "StdAfx.h"
 #include "ShellDialog.h"
 #include "PathUtil.h"
+#include "WindowsTheme.h"
 
 namespace {
+
+BOOL CALLBACK ApplyDialog(HWND window, LPARAM lParam)
+{
+	WCHAR className[32];
+	if (GetClassName(window, className, _countof(className)) && wcscmp(className, L"#32770") == 0)
+	{
+		WindowsTheme::ApplyToWindow(window);
+	}
+	return TRUE;
+}
+
+LRESULT CALLBACK DialogHook(int code, WPARAM wParam, LPARAM lParam)
+{
+	if (code == HCBT_ACTIVATE)
+	{
+		HWND window = (HWND)wParam;
+		ApplyDialog(window, 0);
+		EnumChildWindows(window, ApplyDialog, 0);
+	}
+	return CallNextHookEx(nullptr, code, wParam, lParam);
+}
 
 void SetInitialPath(IFileDialog* dialog, const WCHAR* initialPath)
 {
@@ -43,8 +65,13 @@ std::optional<std::wstring> ShowDialog(REFCLSID clsid, FILEOPENDIALOGOPTIONS fla
 	if (options.defaultExtension) dialog->SetDefaultExtension(options.defaultExtension);
 	SetInitialPath(dialog.Get(), options.initialPath);
 
+	WindowsTheme::Initialize();
+	HHOOK hook = SetWindowsHookEx(WH_CBT, DialogHook, nullptr, GetCurrentThreadId());
+	hr = dialog->Show(options.parent);
+	if (hook) UnhookWindowsHookEx(hook);
+
 	// Also fails if the user cancelled the dialog.
-	if (FAILED(dialog->Show(options.parent))) return std::nullopt;
+	if (FAILED(hr)) return std::nullopt;
 
 	Microsoft::WRL::ComPtr<IShellItem> item;
 	if (FAILED(dialog->GetResult(&item))) return std::nullopt;

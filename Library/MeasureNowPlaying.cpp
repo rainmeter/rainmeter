@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/WindowsTheme.h"
 #include "MeasureNowPlaying.h"
 #include "Rainmeter.h"
 #include "../Common/StringUtil.h"
@@ -223,7 +224,7 @@ void MeasureNowPlaying::ReadOptions(ConfigParser::OptionReader& reader)
 			if (fooWindow)
 			{
 				const WCHAR* error = L"Your foobar2000 plugin is out of date.\n\nDo you want to update the plugin now?";
-				if (MessageBox(nullptr, error, L"Rainmeter", MB_YESNO | MB_ICONINFORMATION | MB_TOPMOST) == IDYES)
+				if (WindowsTheme::ShowMessageBox(nullptr, error, L"Rainmeter", MB_YESNO | MB_ICONINFORMATION | MB_TOPMOST) == IDYES)
 				{
 					ShellExecute(nullptr, L"open", L"http://github.com/poiru/foo-cad#readme", nullptr, nullptr, SW_SHOWNORMAL);
 				}

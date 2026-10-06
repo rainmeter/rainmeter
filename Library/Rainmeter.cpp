@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/WindowsTheme.h"
 #include "Language.h"
 #include "../Common/Gfx/Canvas.h"
 #include "../Common/CrashDump.h"
@@ -176,11 +177,12 @@ Rainmeter::Rainmeter() :
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 	if (FAILED(hr))
 	{
-		MessageBox(nullptr, L"Failed to initialize COM object", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		WindowsTheme::ShowMessageBox(nullptr, L"Failed to initialize COM object", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		PostQuitMessage(1);
 	}
 
 	InitCommonControls();
+	WindowsTheme::Initialize();
 }
 
 Rainmeter::~Rainmeter()
@@ -204,7 +206,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 {
 	if (!IsWindows10OrGreater() || GetPlatform().GetBuildNumber() < 18362)
 	{
-		MessageBox(nullptr, L"Rainmeter requires Windows 10 version 1903 or later. To use Rainmeter on your computer, update Windows or download the older Rainmeter 4.5 version.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		WindowsTheme::ShowMessageBox(nullptr, L"Rainmeter requires Windows 10 version 1903 or later. To use Rainmeter on your computer, update Windows or download the older Rainmeter 4.5 version.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		return 1;
 	}
 
@@ -284,7 +286,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 		SetHardwareAccelerated(false);
 		if (!Gfx::Canvas::Initialize(m_HardwareAccelerated, deviceLostCallback))
 		{
-			MessageBox(nullptr, L"Rainmeter failed to initialize the graphics subsystem.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			WindowsTheme::ShowMessageBox(nullptr, L"Rainmeter failed to initialize the graphics subsystem.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 			return 1;
 		}
 	}
@@ -294,7 +296,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 #ifdef _DEBUG
 		if (IsDebuggerPresent())
 		{
-			MessageBox(nullptr, L"Started under debugger, but another instance of Rainmeter is already running.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			WindowsTheme::ShowMessageBox(nullptr, L"Started under debugger, but another instance of Rainmeter is already running.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 			return 1;
 		}
 #endif
@@ -450,7 +452,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 	// Load the configured language, falling back to English.
 	if (!GetLanguage().LoadFromSettings(m_Path + L"Languages\\", iniFile))
 	{
-		MessageBox(nullptr, L"Unable to load language file", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		WindowsTheme::ShowMessageBox(nullptr, L"Unable to load language file", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		return 1;
 	}
 
@@ -550,7 +552,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 
 		if (safeStart)
 		{
-			int result = MessageBox(
+			int result = WindowsTheme::ShowMessageBox(
 				nullptr,
 				GetString(IDS_SafeStartMessage),
 				GetString(IDS_SafeStartTitle),
@@ -2257,7 +2259,7 @@ int Rainmeter::ShowMessage(HWND parent, const WCHAR* text, UINT type)
 		type |= MB_RTLREADING;
 	}
 
-	return MessageBox(parent, text, APPNAME, type);
+	return WindowsTheme::ShowMessageBox(parent, text, APPNAME, type);
 };
 
 void Rainmeter::ShowLogFile()

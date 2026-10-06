@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/WindowsTheme.h"
 #include "../Common/IniFile.h"
 #include "../Common/MenuTemplate.h"
 #include "../Common/PathUtil.h"
@@ -217,7 +218,7 @@ INT_PTR DialogNewSkin::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	// Use arrows instead of plus/minus in the tree
 	item = m_TabNew.GetControl(TabNew::Id_ItemsTreeView);
-	SetWindowTheme(item, L"explorer", nullptr);
+	WindowsTheme::ApplyToControl(item);
 
 	return TRUE;
 }
@@ -372,6 +373,7 @@ void DialogNewSkin::TabNew::Create(HWND owner)
 		GetModuleHandle(NULL), NULL);
 
 	// Add tooltip to window
+	WindowsTheme::ApplyToTooltip(m_ParentPathTT);
 	UpdateParentPathTT(false);
 
 	// Get selected template for drop down menu

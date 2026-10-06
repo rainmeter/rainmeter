@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/WindowsTheme.h"
 #include "../Common/MenuModifier.h"
 #include "../Common/MenuTemplate.h"
 #include "Rainmeter.h"
@@ -299,15 +300,15 @@ INT_PTR DialogDebug::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
 
 	item = m_TabLog.GetControl(TabLog::Id_LogListView);
-	SetWindowTheme(item, L"explorer", nullptr);
+	WindowsTheme::ApplyToControl(item);
 	item = m_TabSkins.GetControl(TabSkins::Id_SkinsListView);
-	SetWindowTheme(item, L"explorer", nullptr);
+	WindowsTheme::ApplyToControl(item);
 	item = m_TabDisplay.GetControl(TabDisplay::Id_DisplaysListView);
-	SetWindowTheme(item, L"explorer", nullptr);
+	WindowsTheme::ApplyToControl(item);
 	item = m_TabNetwork.GetControl(TabNetwork::Id_NetworkListView);
-	SetWindowTheme(item, L"explorer", nullptr);
+	WindowsTheme::ApplyToControl(item);
 	item = m_TabPlugins.GetControl(TabPlugins::Id_PluginsListView);
-	SetWindowTheme(item, L"explorer", nullptr);
+	WindowsTheme::ApplyToControl(item);
 
 	return TRUE;
 }
@@ -1103,6 +1104,7 @@ void DialogDebug::TabSkins::Initialize()
 		m_Window, nullptr, GetModuleHandle(nullptr), nullptr);
 	if (m_RangeToolTip)
 	{
+		WindowsTheme::ApplyToTooltip(m_RangeToolTip);
 		TOOLINFO toolInfo = { 0 };
 		toolInfo.cbSize = sizeof(toolInfo);
 		toolInfo.hwnd = item;
@@ -2080,8 +2082,8 @@ INT_PTR DialogDebug::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 INT_PTR DialogDebug::TabSkins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
 {
-	static COLORREF disabled = GetSysColor(COLOR_GRAYTEXT);
-	static COLORREF paused = GetSysColor(COLOR_INFOBK);
+	const COLORREF disabled = WindowsTheme::GetDisabledTextColor();
+	const COLORREF paused = WindowsTheme::GetHotBackgroundColor();
 
 	NMLVCUSTOMDRAW* lvcd = (NMLVCUSTOMDRAW*)lParam;
 	HWND hwnd = lvcd->nmcd.hdr.hwndFrom;
@@ -2796,7 +2798,7 @@ INT_PTR DialogDebug::TabPlugins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 INT_PTR DialogDebug::TabPlugins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
 {
-	static const COLORREF disabled = GetSysColor(COLOR_GRAYTEXT);
+	const COLORREF disabled = WindowsTheme::GetDisabledTextColor();
 
 	NMLVCUSTOMDRAW* lvcd = (NMLVCUSTOMDRAW*)lParam;
 	HWND hwnd = lvcd->nmcd.hdr.hwndFrom;

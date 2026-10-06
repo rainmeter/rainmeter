@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/WindowsTheme.h"
 #include "../Common/IniFile.h"
 #include "../Common/MenuTemplate.h"
 #include "../Common/ShellDialog.h"
@@ -254,7 +255,7 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	// Use arrows instead of plus/minus in the tree for Vista+
 	item = m_TabSkins.GetControl(TabSkins::Id_SkinsTreeView);
-	SetWindowTheme(item, L"explorer", nullptr);
+	WindowsTheme::ApplyToControl(item);
 
 	return FALSE;
 }
@@ -505,6 +506,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 		GetModuleHandle(NULL), NULL);
 
 	if (!hwndTip) return;
+	WindowsTheme::ApplyToTooltip(hwndTip);
 
 	TOOLINFO toolInfo = { 0 };
 	toolInfo.cbSize = sizeof(toolInfo);
@@ -515,6 +517,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 	SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 
 	SetWindowSubclass(item, &NewSkinButtonSubclass, 1, 0);
+	SetWindowSubclass(m_Window, NewSkinButtonColorSubclass, 0, (DWORD_PTR)item);
 
 	item = GetControl(Id_SkinsTreeView);
 	SetWindowSubclass(item, &SkinsTreeViewSubclass, 1, (DWORD_PTR)this);
@@ -981,6 +984,18 @@ void DialogManage::TabSkins::ReadSkin()
 		SetWindowText(item, L"");
 		ShowScrollBar(item, SB_VERT, FALSE);
 	}
+}
+
+LRESULT CALLBACK DialogManage::TabSkins::NewSkinButtonColorSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR uId, DWORD_PTR data)
+{
+	if (msg == WM_CTLCOLORSTATIC && (HWND)lParam == (HWND)data && WindowsTheme::IsUsingDarkMode())
+	{
+		SetTextColor((HDC)wParam, WindowsTheme::GetTextColor());
+		SetBkColor((HDC)wParam, s_NewSkinBkBrush ? WindowsTheme::GetHotBackgroundColor() : WindowsTheme::GetBackgroundColor());
+		return (LRESULT)(s_NewSkinBkBrush ? WindowsTheme::GetHotBackgroundBrush() : WindowsTheme::GetBackgroundBrush());
+	}
+	if (msg == WM_NCDESTROY) RemoveWindowSubclass(hwnd, NewSkinButtonColorSubclass, uId);
+	return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK DialogManage::TabSkins::NewSkinButtonSubclass(HWND hwnd, UINT msg, WPARAM wParam,
@@ -2553,7 +2568,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 				SendMessage(GetControl(Id_UseHardwareAccelerationCheckBox), BM_GETCHECK, 0, 0) != BST_UNCHECKED;
 			GetRainmeter().SetHardwareAccelerated(hardwareAccelerated);
 
-			int result = MessageBox(
+			int result = WindowsTheme::ShowMessageBox(
 				m_Window,
 				GetString(IDS_RestartConfirm),
 				GetString(IDS_ManageRainmeter),

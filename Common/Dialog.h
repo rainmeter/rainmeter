@@ -25,6 +25,8 @@ protected:
 	// Called once the derived dialog has handled WM_INITDIALOG and created its controls.
 	virtual void HandleInitDialog() {}
 
+	// Dialogs that draw their own list items must keep receiving NM_CUSTOMDRAW.
+
 	HWND m_Window;
 	UINT m_Dpi;
 	SIZE m_DesignSize;  // Client area in dialog units.
@@ -44,6 +46,7 @@ public:
 
 	static void Initialize(HACCEL accelerator) { c_Accelerator = accelerator; }
 	static bool HandleMessage(MSG& msg);
+	static void DrawMenuButtonArrow(HWND window, HDC dc);
 
 protected:
 	class Tab : public BaseDialog

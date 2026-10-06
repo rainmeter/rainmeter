@@ -61,6 +61,7 @@
     </ClCompile>
     <ClCompile Include="StringParser.cpp" />
     <ClCompile Include="StringUtil.cpp" />
+    <ClCompile Include="WindowsTheme.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CriticalSection.h" />
@@ -105,6 +106,7 @@
     <ClInclude Include="Timer.h" />
     <ClInclude Include="UnitTest.h" />
     <ClInclude Include="Version.h" />
+    <ClInclude Include="WindowsTheme.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

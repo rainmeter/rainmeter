@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/WindowsTheme.h"
 #include "System.h"
 #include "DialogDebug.h"
 #include "LocaleUtil.h"
@@ -686,6 +687,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		ClickCapture::Reset();
 		MonitorUtil::ClearMultiMonitorInfo();
 	case WM_SETTINGCHANGE:
+		if (uMsg == WM_SETTINGCHANGE) WindowsTheme::HandleSettingChange(lParam);
 		if (uMsg == WM_SETTINGCHANGE && lParam && _wcsicmp((const WCHAR*)lParam, L"intl") == 0)
 		{
 			LogNotice(L"System: Regional settings changed");

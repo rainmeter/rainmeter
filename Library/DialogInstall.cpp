@@ -1,6 +1,7 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include "../Common/WindowsTheme.h"
 #include "DialogInstall.h"
 #include "../Common/IniFile.h"
 #include "../Common/Map.h"
@@ -100,7 +101,7 @@ void DialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 				dialog.m_ErrorMessage += GetString(IDS_SkinPackagerRequired);
 			}
 
-			MessageBox(nullptr, dialog.m_ErrorMessage.c_str(), GetString(IDS_RainmeterSkinInstaller), MB_ERROR);
+			WindowsTheme::ShowMessageBox(nullptr, dialog.m_ErrorMessage.c_str(), GetString(IDS_RainmeterSkinInstaller), MB_ERROR);
 		}
 		else
 		{
@@ -898,7 +899,7 @@ void DialogInstall::BeginInstall()
 	m_InstallThread = (HANDLE)_beginthreadex(nullptr, 0, InstallThread, this, 0, nullptr);
 	if (!m_InstallThread)
 	{
-		MessageBox(m_Window, GetString(IDS_UnableStartInstall), GetString(IDS_RainmeterSkinInstaller), MB_ERROR);
+		WindowsTheme::ShowMessageBox(m_Window, GetString(IDS_UnableStartInstall), GetString(IDS_RainmeterSkinInstaller), MB_ERROR);
 		EndDialog(m_Window, 0);
 	}
 }
@@ -909,7 +910,7 @@ UINT __stdcall DialogInstall::InstallThread(void* pParam)
 
 	if (!CloseRainmeterIfActive())
 	{
-		MessageBox(dialog->m_Window, GetString(IDS_UnableCloseRainmeter), GetString(IDS_RainmeterSkinInstaller), MB_ERROR);
+		WindowsTheme::ShowMessageBox(dialog->m_Window, GetString(IDS_UnableCloseRainmeter), GetString(IDS_RainmeterSkinInstaller), MB_ERROR);
 	}
 	else
 	{
@@ -932,7 +933,7 @@ UINT __stdcall DialogInstall::InstallThread(void* pParam)
 			dialog->m_ErrorMessage += L"\n\n";
 			dialog->m_ErrorMessage += GetString(IDS_CloseInstallerMessage);
 
-			MessageBox(dialog->m_Window, dialog->m_ErrorMessage.c_str(), GetString(IDS_RainmeterSkinInstaller), MB_ERROR);
+			WindowsTheme::ShowMessageBox(dialog->m_Window, dialog->m_ErrorMessage.c_str(), GetString(IDS_RainmeterSkinInstaller), MB_ERROR);
 
 			dialog->m_LoadSkins.clear();
 			dialog->m_LoadLayout.clear();
@@ -1459,7 +1460,7 @@ void DialogInstall::TabInstall::Initialize()
 		LVS_EX_LABELTIP |
 		LVS_EX_FULLROWSELECT |
 		LVS_EX_DOUBLEBUFFER;
-	SetWindowTheme(item, L"explorer", nullptr);
+	WindowsTheme::ApplyToControl(item);
 	ListView_EnableGroupView(item, TRUE);
 	ListView_SetExtendedListViewStyleEx(item, 0, extendedFlags);
 
@@ -1670,7 +1671,7 @@ INT_PTR DialogInstall::TabInstall::OnNotify(WPARAM wParam, LPARAM lParam)
 						// Make sure we only display a message box if the plugin is older than the installed version
 						if (wcscmp(GetString(IDS_NewerVersionInstalled), text) == 0)
 						{
-							MessageBox(hwndFrom, GetString(IDS_OlderPluginWarning), GetString(IDS_RainmeterSkinInstaller), MB_OK | MB_ICONEXCLAMATION);
+							WindowsTheme::ShowMessageBox(hwndFrom, GetString(IDS_OlderPluginWarning), GetString(IDS_RainmeterSkinInstaller), MB_OK | MB_ICONEXCLAMATION);
 						}
 					}
 

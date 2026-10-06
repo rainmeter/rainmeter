@@ -61,6 +61,7 @@
     <ClCompile Include="Gfx\RenderTexture.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
+    <ClCompile Include="WindowsTheme.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DateTimeParser.h" />
@@ -133,6 +134,7 @@
     <ClInclude Include="Gfx\RenderTexture.h">
       <Filter>Gfx</Filter>
     </ClInclude>
+    <ClInclude Include="WindowsTheme.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">
