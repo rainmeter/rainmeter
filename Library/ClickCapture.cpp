@@ -24,6 +24,7 @@ public:
 	void Reset();
 	void Finalize();
 	bool IsOwner(const MeasureMouse* owner) const { return m_Owner == owner; }
+	bool IsOverlayWindow(HWND window) const;
 
 private:
 	// WaitingForClear ignores buttons held before capture. Draining swallows releases after
@@ -248,6 +249,14 @@ HRESULT ClickCaptureController::CreateOverlays(const D2D1_COLOR_F& color)
 	m_Overlays = std::move(overlays);
 	m_Device = std::move(device);
 	return S_OK;
+}
+
+bool ClickCaptureController::IsOverlayWindow(HWND window) const
+{
+	return std::any_of(m_Overlays.begin(), m_Overlays.end(), [window](const Overlay& overlay)
+	{
+		return overlay.window == window;
+	});
 }
 
 void ClickCaptureController::DestroyOverlays()
@@ -482,6 +491,11 @@ void Stop(MeasureMouse* owner)
 bool IsOwner(const MeasureMouse* owner)
 {
 	return GetController().IsOwner(owner);
+}
+
+bool IsOverlayWindow(HWND window)
+{
+	return GetController().IsOverlayWindow(window);
 }
 
 void Reset()
