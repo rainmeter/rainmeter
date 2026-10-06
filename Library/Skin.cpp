@@ -3528,7 +3528,7 @@ bool Skin::UpdateMouseState()
 		}
 	}
 
-	return inside || m_MouseOver || m_WindowZPosition == ZPOSITION_ONTOPMOST;
+	return inside || m_MouseOver || m_ActiveFade || m_WindowZPosition == ZPOSITION_ONTOPMOST;
 }
 
 // Handles the timers. The METERTIMER updates all the measures
