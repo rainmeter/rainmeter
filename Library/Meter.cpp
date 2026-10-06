@@ -244,6 +244,7 @@ void Meter::ResizeContainerTextures()
 
 void Meter::Show()
 {
+	if (m_Hidden) m_Skin->InvalidateToolTips();
 	m_Hidden = false;
 
 	// Change the option as well to avoid reset in ReadOptions().
@@ -258,6 +259,7 @@ void Meter::Show()
 
 void Meter::Hide()
 {
+	if (!m_Hidden) m_Skin->InvalidateToolTips();
 	m_Hidden = true;
 
 	// Change the option as well to avoid reset in ReadOptions().
@@ -369,6 +371,7 @@ void Meter::ReadOptions(ConfigParser::OptionReader& reader)
 
 	bool oldHidden = m_Hidden;
 	m_Hidden = reader.ReadBool<"Hidden">(false);
+	if (oldHidden != m_Hidden) m_Skin->InvalidateToolTips();
 
 	if (oldX != m_X || oldY != m_Y || oldHidden != m_Hidden)
 	{

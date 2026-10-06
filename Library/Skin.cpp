@@ -160,6 +160,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file, const bool 
 	m_LastUpdateTime(),
 	m_SkippedUpdateCount(),
 	m_HasPendingRedraw(false),
+	m_ToolTipsDirty(false),
 	m_ResizeWindow(RESIZEMODE_NONE),
 	m_UpdateCounter(),
 	m_MouseMoveCounter(),
@@ -3032,6 +3033,15 @@ void Skin::Redraw()
 
 	m_HasPendingRedraw = false;
 	m_Canvas.SetDpiScale(m_EffectiveScale);
+
+	if (m_ToolTipsDirty)
+	{
+		for (Meter* meter : m_Meters)
+		{
+			meter->UpdateToolTip();
+		}
+		m_ToolTipsDirty = false;
+	}
 
 	if (m_ResizeWindow)
 	{

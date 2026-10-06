@@ -139,6 +139,7 @@ public:
 	void SetOption(std::wstring_view section, std::wstring_view option, std::wstring_view value, bool group);
 	bool HandleContainer(Meter* container);
 	void ResetRelativeMeters() { m_ResetRelativeMeters = true; }
+	void InvalidateToolTips() { m_ToolTipsDirty = true; }
 
 	void SetMouseLeaveEvent(bool cancel);
 	void SetHasMouseScrollAction() { m_HasMouseScrollAction = true; }
@@ -587,6 +588,7 @@ private:
 	ULONGLONG m_LastUpdateTime;
 	UINT m_SkippedUpdateCount;
 	bool m_HasPendingRedraw;
+	bool m_ToolTipsDirty;
 	RESIZEMODE m_ResizeWindow;
 
 	std::map<UINT_PTR, std::wstring> m_DelayedCommands;
