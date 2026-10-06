@@ -84,6 +84,9 @@ public:
 
 	void ReadOptions(ConfigParser& parser, ConfigParser::OptionReader& reader, bool isSkinLevel = false);
 
+	static MOUSECURSOR GetCursorTypeFromName(Skin* skin, std::wstring_view cursorName);
+	static HCURSOR GetSystemCursor(MOUSECURSOR cursorType);
+
 	MOUSECURSOR GetCursorType() const { return m_CursorType; }
 	HCURSOR GetCursor(bool isButton = false) const;
 	bool GetCursorState() const { return m_CursorState; }

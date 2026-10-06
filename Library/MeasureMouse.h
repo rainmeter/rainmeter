@@ -36,6 +36,7 @@ private:
 	void ReplaceMouseVariables(std::wstring& result, POINT screenPos) const;
 
 	Mouse m_Mouse;
+	MOUSECURSOR m_CaptureOverlayCursor = MOUSECURSOR_ARROW;
 	D2D1_COLOR_F m_CaptureOverlayColor;
 	std::wstring m_MouseMoveAction;
 	std::wstring m_LeftDragAction;

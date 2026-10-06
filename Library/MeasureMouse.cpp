@@ -257,6 +257,7 @@ void MeasureMouse::ReadOptions(ConfigParser::OptionReader& reader)
 	reader.ReadActionString<"X2MouseDragAction">(m_X2DragAction);
 
 	m_CaptureOverlayColor = reader.ReadColor<"CaptureOverlayColor">(D2D1::ColorF(0, 0, 0, 0));
+	m_CaptureOverlayCursor = Mouse::GetCursorTypeFromName(GetSkin(), reader.ReadString<"CaptureOverlayCursorName">(L"ARROW"));
 
 	m_RelativeToSkin = reader.ReadBool<"RelativeToSkin">(true);
 	m_RequireDragging = reader.ReadBool<"RequireDragging">(false);
@@ -449,7 +450,7 @@ void MeasureMouse::Disable()
 
 void MeasureMouse::StartCapture()
 {
-	if (!IsDisabled() && !IsPaused() && ClickCapture::Start(this, m_CaptureOverlayColor) && m_Dragging)
+	if (!IsDisabled() && !IsPaused() && ClickCapture::Start(this, m_CaptureOverlayColor, m_CaptureOverlayCursor) && m_Dragging)
 	{
 		m_Dragging = false;
 		GetSkin()->UpdateMouseMeasureCapture();

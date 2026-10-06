@@ -7,6 +7,104 @@
 #include "Logger.h"
 #include "Mouse.h"
 #include "../Common/StringParser.h"
+#include "../Common/StringUtil.h"
+
+namespace {
+
+constexpr ConfigParser::EnumOption<MOUSECURSOR> g_Cursors[] =
+{
+	{ L"ARROW", MOUSECURSOR_ARROW },
+	{ L"HAND", MOUSECURSOR_HAND },
+	{ L"TEXT", MOUSECURSOR_TEXT },
+	{ L"HELP", MOUSECURSOR_HELP },
+	{ L"BUSY", MOUSECURSOR_BUSY },
+	{ L"CROSS", MOUSECURSOR_CROSS },
+	{ L"PEN", MOUSECURSOR_PEN },
+	{ L"NO", MOUSECURSOR_NO },
+	{ L"SIZE_ALL", MOUSECURSOR_SIZE_ALL },
+	{ L"SIZE_NESW", MOUSECURSOR_SIZE_NESW },
+	{ L"SIZE_NS", MOUSECURSOR_SIZE_NS },
+	{ L"SIZE_NWSE", MOUSECURSOR_SIZE_NWSE },
+	{ L"SIZE_WE", MOUSECURSOR_SIZE_WE },
+	{ L"UPARROW", MOUSECURSOR_UPARROW },
+	{ L"WAIT", MOUSECURSOR_WAIT },
+};
+
+HCURSOR GetCursorHandle(MOUSECURSOR cursorType, HCURSOR customCursor)
+{
+	LPCWSTR name = IDC_ARROW;
+	switch (cursorType)
+	{
+	case MOUSECURSOR_HAND:
+		name = IDC_HAND;
+		break;
+
+	case MOUSECURSOR_TEXT:
+		name = IDC_IBEAM;
+		break;
+
+	case MOUSECURSOR_HELP:
+		name = IDC_HELP;
+		break;
+
+	case MOUSECURSOR_BUSY:
+		name = IDC_APPSTARTING;
+		break;
+
+	case MOUSECURSOR_CROSS:
+		name = IDC_CROSS;
+		break;
+
+	case MOUSECURSOR_PEN:
+		name = MAKEINTRESOURCE(32631);
+		break;
+
+	case MOUSECURSOR_NO:
+		name = IDC_NO;
+		break;
+
+	case MOUSECURSOR_SIZE_ALL:
+		name = IDC_SIZEALL;
+		break;
+
+	case MOUSECURSOR_SIZE_NESW:
+		name = IDC_SIZENESW;
+		break;
+
+	case MOUSECURSOR_SIZE_NS:
+		name = IDC_SIZENS;
+		break;
+
+	case MOUSECURSOR_SIZE_NWSE:
+		name = IDC_SIZENWSE;
+		break;
+
+	case MOUSECURSOR_SIZE_WE:
+		name = IDC_SIZEWE;
+		break;
+
+	case MOUSECURSOR_UPARROW:
+		name = IDC_UPARROW;
+		break;
+
+	case MOUSECURSOR_WAIT:
+		name = IDC_WAIT;
+		break;
+
+	case MOUSECURSOR_CUSTOM:
+		{
+			if (customCursor)
+			{
+				return customCursor;
+			}
+		}
+		break;
+	}
+
+	return LoadCursor(nullptr, name);
+}
+
+}  // namespace
 
 const struct { IniOptionID option; MOUSEACTION type; } g_MouseActionTable[] =
 {
@@ -108,24 +206,7 @@ void Mouse::ReadOptions(ConfigParser& parser, ConfigParser::OptionReader& reader
 	}
 	else
 	{
-		static constexpr ConfigParser::EnumOption<MOUSECURSOR> s_Cursors[] =
-		{
-			{ L"HAND", MOUSECURSOR_HAND },
-			{ L"TEXT", MOUSECURSOR_TEXT },
-			{ L"HELP", MOUSECURSOR_HELP },
-			{ L"BUSY", MOUSECURSOR_BUSY },
-			{ L"CROSS", MOUSECURSOR_CROSS },
-			{ L"PEN", MOUSECURSOR_PEN },
-			{ L"NO", MOUSECURSOR_NO },
-			{ L"SIZE_ALL", MOUSECURSOR_SIZE_ALL },
-			{ L"SIZE_NESW", MOUSECURSOR_SIZE_NESW },
-			{ L"SIZE_NS", MOUSECURSOR_SIZE_NS },
-			{ L"SIZE_NWSE", MOUSECURSOR_SIZE_NWSE },
-			{ L"SIZE_WE", MOUSECURSOR_SIZE_WE },
-			{ L"UPARROW", MOUSECURSOR_UPARROW },
-			{ L"WAIT", MOUSECURSOR_WAIT },
-		};
-		m_CursorType = reader.ReadEnum<"MouseActionCursorName">(MOUSECURSOR_CUSTOM, s_Cursors);
+		m_CursorType = reader.ReadEnum<"MouseActionCursorName">(MOUSECURSOR_CUSTOM, g_Cursors);
 		if (m_CursorType == MOUSECURSOR_CUSTOM)
 		{
 			if (isSkinLevel && reader.GetLastDefaultUsed())
@@ -177,76 +258,7 @@ HCURSOR Mouse::GetCursor(bool isButton) const
 		}
 	}
 
-	LPCWSTR name = IDC_ARROW;
-	switch (m_CursorType)
-	{
-	case MOUSECURSOR_HAND:
-		name = IDC_HAND;
-		break;
-
-	case MOUSECURSOR_TEXT:
-		name = IDC_IBEAM;
-		break;
-
-	case MOUSECURSOR_HELP:
-		name = IDC_HELP;
-		break;
-
-	case MOUSECURSOR_BUSY:
-		name = IDC_APPSTARTING;
-		break;
-
-	case MOUSECURSOR_CROSS:
-		name = IDC_CROSS;
-		break;
-
-	case MOUSECURSOR_PEN:
-		name = MAKEINTRESOURCE(32631);
-		break;
-
-	case MOUSECURSOR_NO:
-		name = IDC_NO;
-		break;
-
-	case MOUSECURSOR_SIZE_ALL:
-		name = IDC_SIZEALL;
-		break;
-
-	case MOUSECURSOR_SIZE_NESW:
-		name = IDC_SIZENESW;
-		break;
-
-	case MOUSECURSOR_SIZE_NS:
-		name = IDC_SIZENS;
-		break;
-
-	case MOUSECURSOR_SIZE_NWSE:
-		name = IDC_SIZENWSE;
-		break;
-
-	case MOUSECURSOR_SIZE_WE:
-		name = IDC_SIZEWE;
-		break;
-
-	case MOUSECURSOR_UPARROW:
-		name = IDC_UPARROW;
-		break;
-
-	case MOUSECURSOR_WAIT:
-		name = IDC_WAIT;
-		break;
-
-	case MOUSECURSOR_CUSTOM:
-		{
-			if (m_CustomCursor)
-			{
-				return m_CustomCursor;
-			}
-		}
-		break;
-	}
-
-	return LoadCursor(nullptr, name);
+	return GetCursorHandle(m_CursorType, m_CustomCursor);
 }
 
 void Mouse::DestroyCustomCursor()
@@ -445,4 +457,23 @@ MOUSEACTION Mouse::OptionStringToMouseActions(const std::wstring& options) const
 	});
 
 	return invalid ? MOUSEACTION_NONE : (MOUSEACTION)result;
+}
+
+MOUSECURSOR Mouse::GetCursorTypeFromName(Skin* skin, std::wstring_view cursorName)
+{
+	for (const auto& entry : g_Cursors)
+	{
+		if (StringUtil::EqualsIgnoreCase(cursorName, entry.name))
+		{
+			return entry.value;
+		}
+	}
+
+	LogErrorF(skin, L"Invalid cursor: %.*s", (int)cursorName.size(), cursorName.data());
+	return MOUSECURSOR_ARROW;
+}
+
+HCURSOR Mouse::GetSystemCursor(MOUSECURSOR cursorType)
+{
+	return GetCursorHandle(cursorType, nullptr);
 }
