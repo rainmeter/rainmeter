@@ -30,6 +30,49 @@ namespace {
 constexpr UINT WM_AUTOREFRESH_CHANGE = WM_APP + 100;
 constexpr DWORD AUTOREFRESH_IGNORE_DURATION = 100;
 
+HICON CreateGrayscaleIcon(HICON icon)
+{
+	ICONINFO iconInfo = { 0 };
+	if (!GetIconInfo(icon, &iconInfo)) return nullptr;
+
+	HICON grayscaleIcon = nullptr;
+	BITMAP bitmap = { 0 };
+	if (iconInfo.hbmColor && GetObject(iconInfo.hbmColor, sizeof(bitmap), &bitmap))
+	{
+		BITMAPINFO bitmapInfo = { 0 };
+		bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		bitmapInfo.bmiHeader.biWidth = bitmap.bmWidth;
+		bitmapInfo.bmiHeader.biHeight = -bitmap.bmHeight;
+		bitmapInfo.bmiHeader.biPlanes = 1;
+		bitmapInfo.bmiHeader.biBitCount = 32;
+		bitmapInfo.bmiHeader.biCompression = BI_RGB;
+
+		HDC dc = GetDC(nullptr);
+		DWORD* pixels = nullptr;
+		HBITMAP grayscaleBitmap = CreateDIBSection(dc, &bitmapInfo, DIB_RGB_COLORS, (void**)&pixels, nullptr, 0);
+		if (grayscaleBitmap && GetDIBits(dc, iconInfo.hbmColor, 0, bitmap.bmHeight, pixels, &bitmapInfo, DIB_RGB_COLORS) == bitmap.bmHeight)
+		{
+			for (size_t i = 0; i < (size_t)bitmap.bmWidth * bitmap.bmHeight; ++i)
+			{
+				const DWORD pixel = pixels[i];
+				const DWORD gray = (299 * ((pixel >> 16) & 0xff) + 587 * ((pixel >> 8) & 0xff) + 114 * (pixel & 0xff)) / 1000;
+				pixels[i] = (pixel & 0xff000000) | (gray << 16) | (gray << 8) | gray;
+			}
+
+			ICONINFO grayscaleInfo = iconInfo;
+			grayscaleInfo.hbmColor = grayscaleBitmap;
+			grayscaleIcon = CreateIconIndirect(&grayscaleInfo);
+		}
+
+		if (grayscaleBitmap) DeleteObject(grayscaleBitmap);
+		ReleaseDC(nullptr, dc);
+	}
+
+	if (iconInfo.hbmColor) DeleteObject(iconInfo.hbmColor);
+	if (iconInfo.hbmMask) DeleteObject(iconInfo.hbmMask);
+	return grayscaleIcon;
+}
+
 void CopyListViewRows(HWND list, bool selectedOnly)
 {
 	HWND header = ListView_GetHeader(list);
@@ -452,14 +495,29 @@ void DialogDebug::TabLog::CreateImageList()
 {
 	HWND list = GetControl(Id_LogListView);
 	const int iconSize = m_ControlTemplate.ScaleDialogUnits(16);
-	HIMAGELIST imageList = ImageList_Create(iconSize, iconSize, ILC_COLOR32, 3, 1);
-	HMODULE user = GetModuleHandle(L"user32");
-	const UINT iconIds[] = { 103, 101, 104 };
-	for (UINT iconId : iconIds)
+	HIMAGELIST imageList = ImageList_Create(iconSize, iconSize, ILC_COLOR32, 4, 1);
+	const SHSTOCKICONID iconIds[] = { SIID_ERROR, SIID_WARNING, SIID_INFO, SIID_HELP };
+	for (size_t i = 0; i < _countof(iconIds); ++i)
 	{
-		HICON icon = (HICON)LoadImage(user, MAKEINTRESOURCE(iconId), IMAGE_ICON,
-			iconSize, iconSize, LR_DEFAULTCOLOR);
-		ImageList_AddIcon(imageList, icon);
+		HICON icon = nullptr;
+		SHSTOCKICONINFO iconInfo = { 0 };
+		iconInfo.cbSize = sizeof(iconInfo);
+		if (SUCCEEDED(SHGetStockIconInfo(iconIds[i], SHGSI_ICONLOCATION, &iconInfo)))
+		{
+			SHDefExtractIcon(iconInfo.szPath, iconInfo.iIcon, 0, &icon, nullptr, iconSize);
+		}
+
+		if (iconIds[i] == SIID_HELP)
+		{
+			HICON debugIcon = CreateGrayscaleIcon(icon);
+			ImageList_AddIcon(imageList, debugIcon ? debugIcon : icon);
+			if (debugIcon) DestroyIcon(debugIcon);
+		}
+		else
+		{
+			ImageList_AddIcon(imageList, icon);
+		}
+
 		DestroyIcon(icon);
 	}
 
@@ -537,7 +595,7 @@ void DialogDebug::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR sou
 	case Logger::Level::Debug:
 		if (!m_Debug) return;
 		vitem.pszText = (WCHAR*)GetString(IDS_Debug);
-		vitem.iImage = I_IMAGENONE;
+		vitem.iImage = 3;
 		break;
 	}
 
