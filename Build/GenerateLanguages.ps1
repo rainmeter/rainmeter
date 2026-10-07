@@ -129,6 +129,21 @@ function Assert-Placeholder {
 	}
 }
 
+function Assert-EndingPunctuation {
+	param([string]$Key, [string]$Value, [string]$BaseValue, [string]$Path)
+
+	$endings = [ordered]@{
+		'full stop' = '(?<!\.)[.\u3002\uFF0E\u06D4]$'
+		'colon' = '[:\uFF1A]$'
+		'ellipsis' = '(\u2026|\.{3})$'
+	}
+	foreach ($ending in $endings.GetEnumerator()) {
+		if ([regex]::IsMatch($Value, $ending.Value) -ne [regex]::IsMatch($BaseValue, $ending.Value)) {
+			throw "Mismatched trailing $($ending.Key) for $Key in $Path"
+		}
+	}
+}
+
 function Read-LanguageFile {
 	param(
 		[string]$Path,
@@ -203,6 +218,7 @@ function Read-LanguageFile {
 		foreach ($string in $BaseLanguage.InstallerStrings) {
 			$value = if ($installerStrings.Contains($string.Key) -and $installerStrings[$string.Key].Length -gt 0) { $installerStrings[$string.Key] } else { $string.Value }
 			Assert-Placeholder -Key $string.Key -Value $value -BaseValue $string.Value -Path $Path
+			Assert-EndingPunctuation -Key $string.Key -Value $value -BaseValue $string.Value -Path $Path
 			[void]$mergedInstallerStrings.Add([pscustomobject]@{ Key = $string.Key; Value = $value })
 			$installerStrings.Remove($string.Key)
 		}
@@ -214,6 +230,7 @@ function Read-LanguageFile {
 		foreach ($string in $BaseLanguage.RuntimeStrings) {
 			$value = if ($runtimeStrings.Contains($string.Key) -and $runtimeStrings[$string.Key].Value.Length -gt 0) { $runtimeStrings[$string.Key].Value } else { $string.Value }
 			Assert-Placeholder -Key $string.Key -Value $value -BaseValue $string.Value -Path $Path
+			Assert-EndingPunctuation -Key $string.Key -Value $value -BaseValue $string.Value -Path $Path
 			[void]$mergedRuntimeStrings.Add([pscustomobject]@{ Key = $string.Key; Id = $string.Id; Value = $value })
 			$runtimeStrings.Remove($string.Key)
 		}
