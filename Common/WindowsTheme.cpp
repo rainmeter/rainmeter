@@ -170,18 +170,12 @@ void DrawArrow(HDC dc, RECT rect, bool up, COLORREF color, HWND window)
 	DeleteObject(brush);
 }
 
-std::wstring GetControlText(HWND window)
-{
-	std::wstring text(GetWindowTextLength(window) + 1, L'\0');
-	text.resize(GetWindowText(window, text.data(), (int)text.size()));
-	return text;
-}
-
 void DrawLabel(HWND window, HDC dc, RECT rect, UINT flags)
 {
-	const std::wstring text = GetControlText(window);
+	WCHAR text[4096];
+	GetWindowText(window, text, _countof(text));
 	if (SendMessage(window, WM_QUERYUISTATE, 0, 0) & UISF_HIDEACCEL) flags |= DT_HIDEPREFIX;
-	DrawText(dc, text.c_str(), -1, &rect, flags);
+	DrawText(dc, text, -1, &rect, flags);
 }
 
 void DrawControlFrame(HWND window, HDC dc, const RECT& rect, const WCHAR* className, int part, int status, HBRUSH background, RECT* content = nullptr)
@@ -246,9 +240,10 @@ void DrawButton(HWND window, HDC dc, RECT rect)
 		RECT frame = rect;
 		frame.top += metrics.tmHeight / 2;
 		FrameRect(dc, &frame, state.edge);
-		const std::wstring text = GetControlText(window);
+		WCHAR text[4096];
+		const int length = GetWindowText(window, text, _countof(text));
 		SIZE size;
-		GetTextExtentPoint32(dc, text.c_str(), (int)text.size(), &size);
+		GetTextExtentPoint32(dc, text, length, &size);
 		RECT label = { Scale(window, 8), 0, Scale(window, 12) + size.cx, metrics.tmHeight };
 		FillRect(dc, &label, GetSurfaceBrush(window));
 		DrawLabel(window, dc, label, DT_LEFT | DT_SINGLELINE);
@@ -304,9 +299,10 @@ void DrawButton(HWND window, HDC dc, RECT rect)
 	{
 		if (check)
 		{
-			const std::wstring text = GetControlText(window);
+			WCHAR text[4096];
+			GetWindowText(window, text, _countof(text));
 			RECT label = rect;
-			DrawText(dc, text.c_str(), -1, &label, DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
+			DrawText(dc, text, -1, &label, DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
 			const LONG height = label.bottom - label.top;
 			label.top = (rect.top + rect.bottom - height) / 2;
 			label.bottom = label.top + height;
@@ -446,13 +442,16 @@ void DrawListBox(HWND window, HDC dc, RECT rect)
 		// Keep the system selection colors so selected text retains its usual contrast.
 		if (highlight) FillRect(dc, &item, GetSysColorBrush(COLOR_HIGHLIGHT));
 		SetTextColor(dc, !IsWindowEnabled(window) ? g_DisabledText : highlight ? GetSysColor(COLOR_HIGHLIGHTTEXT) : g_Text);
+
 		const int length = (int)SendMessage(window, LB_GETTEXTLEN, i, 0);
 		if (length == LB_ERR) continue;
 
-		std::wstring text(length + 1, L'\0');
-		SendMessage(window, LB_GETTEXT, i, (LPARAM)text.data());
+		WCHAR text[8192];
+		if (length >= _countof(text)) continue;
+
+		SendMessage(window, LB_GETTEXT, i, (LPARAM)text);
 		item.left += 2;
-		DrawText(dc, text.c_str(), -1, &item, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+		DrawText(dc, text, -1, &item, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
 	}
 }
 
