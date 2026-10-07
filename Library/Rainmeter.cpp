@@ -177,12 +177,11 @@ Rainmeter::Rainmeter() :
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 	if (FAILED(hr))
 	{
-		WindowsTheme::ShowMessageBox(nullptr, L"Failed to initialize COM object", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		MessageBox(nullptr, L"Failed to initialize COM object", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		PostQuitMessage(1);
 	}
 
 	InitCommonControls();
-	WindowsTheme::Initialize();
 }
 
 Rainmeter::~Rainmeter()
@@ -206,12 +205,13 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 {
 	if (!IsWindows10OrGreater() || GetPlatform().GetBuildNumber() < 18362)
 	{
-		WindowsTheme::ShowMessageBox(nullptr, L"Rainmeter requires Windows 10 version 1903 or later. To use Rainmeter on your computer, update Windows or download the older Rainmeter 4.5 version.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		MessageBox(nullptr, L"Rainmeter requires Windows 10 version 1903 or later. To use Rainmeter on your computer, update Windows or download the older Rainmeter 4.5 version.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		return 1;
 	}
 
 	m_Instance = GetModuleHandle(L"Rainmeter");
 
+	WindowsTheme::Initialize();
 	Dialog::Initialize(LoadAccelerators(m_Instance, MAKEINTRESOURCE(IDR_DIALOG_ACCELERATORS)));
 
 	WCHAR buffer[MAX_LINE_LENGTH];

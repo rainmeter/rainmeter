@@ -65,7 +65,6 @@ std::optional<std::wstring> ShowDialog(REFCLSID clsid, FILEOPENDIALOGOPTIONS fla
 	if (options.defaultExtension) dialog->SetDefaultExtension(options.defaultExtension);
 	SetInitialPath(dialog.Get(), options.initialPath);
 
-	WindowsTheme::Initialize();
 	HHOOK hook = SetWindowsHookEx(WH_CBT, DialogHook, nullptr, GetCurrentThreadId());
 	hr = dialog->Show(options.parent);
 	if (hook) UnhookWindowsHookEx(hook);
