@@ -8,9 +8,11 @@ on:
       - 'RainLexer/**'
       - '.github/workflows/*rainlexer*'
 
+  pull_request:
+
 jobs:
   rainmeter:
-    if: "!contains(github.event.head_commit.message, 'skipci') && !contains(github.event.head_commit.message, 'ciskip')"
+    if: "github.event_name == 'pull_request' || (!contains(github.event.head_commit.message, 'skipci') && !contains(github.event.head_commit.message, 'ciskip'))"
     runs-on: windows-2025-vs2026
     steps:
       - name: Clone repo
@@ -37,6 +39,7 @@ jobs:
         background: true
 
       - name: Cache build
+        if: github.event_name != 'pull_request'
         uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: BuildOut/Release64/Obj
@@ -45,6 +48,7 @@ jobs:
             rainmeter-msbuild-v3-release-64-
 
       - name: Prepare build cache
+        if: github.event_name != 'pull_request'
         run: .\Build\PrepareBuildCache.ps1 "BuildOut\Release64\Obj"
         shell: pwsh
 
@@ -53,6 +57,7 @@ jobs:
         shell: pwsh
 
       - name: Save build cache
+        if: github.event_name != 'pull_request'
         id: save-build-cache
         uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
@@ -69,6 +74,7 @@ jobs:
       - wait: generate-languages
 
       - name: Upload build
+        if: github.event_name != 'pull_request'
         id: upload-build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -80,6 +86,7 @@ jobs:
         background: true
 
       - name: Upload debug symbols
+        if: github.event_name != 'pull_request'
         id: upload-debug-symbols
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -99,6 +106,7 @@ jobs:
       - wait: build-installer
 
       - name: Upload installer
+        if: github.event_name != 'pull_request'
         id: upload-installer
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
