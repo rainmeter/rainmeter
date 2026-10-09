@@ -109,6 +109,7 @@ enum class Bang
 	WriteKeyValue,
 	LoadLayout,
 	SetClip,
+	SendKey,
 	SetWallpaper,
 	About,
 	Debug,

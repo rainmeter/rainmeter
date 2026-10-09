@@ -781,6 +781,45 @@ void DoSetClipBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Sk
 	}
 }
 
+void DoSendKeyBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
+{
+	if (args.size() != 1)
+	{
+		LogErrorF(skin, L"!SendKey: Incorrect number of arguments");
+		return;
+	}
+
+	static const struct
+	{
+		const WCHAR* name;
+		WORD key;
+	} keys[] =
+	{
+		{ L"MediaNextTrack", VK_MEDIA_NEXT_TRACK },
+		{ L"MediaPrevTrack", VK_MEDIA_PREV_TRACK },
+		{ L"MediaStop", VK_MEDIA_STOP },
+		{ L"MediaPlayPause", VK_MEDIA_PLAY_PAUSE },
+		{ L"VolumeMute", VK_VOLUME_MUTE },
+		{ L"VolumeDown", VK_VOLUME_DOWN },
+		{ L"VolumeUp", VK_VOLUME_UP }
+	};
+
+	for (const auto& key : keys)
+	{
+		if (_wcsicmp(args[0].c_str(), key.name) == 0)
+		{
+			if (!System::SendKey(key.key))
+			{
+				LogErrorF(skin, L"!SendKey: Failed to send key: %s", key.name);
+			}
+
+			return;
+		}
+	}
+
+	LogErrorF(skin, L"!SendKey: Unknown key: %s", args[0].c_str());
+}
+
 void DoSetWallpaperBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Skin* skin)
 {
 	const size_t argsSize = args.size();
@@ -1239,6 +1278,7 @@ const BangInfo g_Bangs[] =
 	{ Bang::WriteKeyValue, L"WriteKeyValue", 0, DoWriteKeyValueBang },
 	{ Bang::LoadLayout, L"LoadLayout", 0, DoLoadLayoutBang },
 	{ Bang::SetClip, L"SetClip", 0, DoSetClipBang },
+	{ Bang::SendKey, L"SendKey", 0, DoSendKeyBang },
 	{ Bang::SetWallpaper, L"SetWallpaper", 0, DoSetWallpaperBang },
 	{ Bang::About, L"About", 0, DoAboutBang },
 	{ Bang::Debug, L"Debug", 0, DoDebugBang },

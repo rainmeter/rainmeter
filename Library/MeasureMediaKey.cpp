@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "MeasureMediaKey.h"
 #include "Logger.h"
+#include "System.h"
 
 MeasureMediaKey::MeasureMediaKey(Skin* skin, const WCHAR* name) : Measure(skin, name)
 {
@@ -12,52 +13,36 @@ MeasureMediaKey::~MeasureMediaKey()
 {
 }
 
-void SendKey(WORD key)
-{
-	KEYBDINPUT kbi;
-	kbi.wVk = key;
-	kbi.wScan = 0;
-	kbi.dwFlags = 0;
-	kbi.time = 0;
-	kbi.dwExtraInfo = (ULONG_PTR)GetMessageExtraInfo();
-
-	INPUT input;
-	input.type = INPUT_KEYBOARD;
-	input.ki   = kbi;
-
-	SendInput(1, &input, sizeof(INPUT));
-}
-
 void MeasureMediaKey::Command(const std::wstring& command)
 {
 	const WCHAR* args = command.c_str();
 	if (_wcsicmp(args, L"NextTrack") == 0)
 	{
-		SendKey(VK_MEDIA_NEXT_TRACK);
+		System::SendKey(VK_MEDIA_NEXT_TRACK);
 	}
 	else if (_wcsicmp(args, L"PrevTrack") == 0)
 	{
-		SendKey(VK_MEDIA_PREV_TRACK);
+		System::SendKey(VK_MEDIA_PREV_TRACK);
 	}
 	else if (_wcsicmp(args, L"Stop") == 0)
 	{
-		SendKey(VK_MEDIA_STOP);
+		System::SendKey(VK_MEDIA_STOP);
 	}
 	else if (_wcsicmp(args, L"PlayPause") == 0)
 	{
-		SendKey(VK_MEDIA_PLAY_PAUSE);
+		System::SendKey(VK_MEDIA_PLAY_PAUSE);
 	}
 	else if (_wcsicmp(args, L"VolumeMute") == 0)
 	{
-		SendKey(VK_VOLUME_MUTE);
+		System::SendKey(VK_VOLUME_MUTE);
 	}
 	else if (_wcsicmp(args, L"VolumeDown") == 0)
 	{
-		SendKey(VK_VOLUME_DOWN);
+		System::SendKey(VK_VOLUME_DOWN);
 	}
 	else if (_wcsicmp(args, L"VolumeUp") == 0)
 	{
-		SendKey(VK_VOLUME_UP);
+		System::SendKey(VK_VOLUME_UP);
 	}
 	else
 	{

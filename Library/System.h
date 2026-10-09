@@ -39,6 +39,8 @@ public:
 	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = nullptr);
 	static void ResetWorkingDirectory();
 
+	static bool SendKey(WORD key);
+
 	static void SetClipboardText(const std::wstring& text);
 	static std::optional<std::wstring> GetClipboardText();
 	static void SetWallpaper(const std::wstring& wallpaper, const std::wstring& style);

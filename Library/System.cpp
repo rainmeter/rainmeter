@@ -1094,3 +1094,15 @@ bool System::IsProcessRunningCached(const std::wstring& lowercaseName)
 
 	return s_Processes.count(lowercaseName) != 0;
 }
+
+bool System::SendKey(WORD key)
+{
+	INPUT inputs[2] = {};
+	inputs[0].type = INPUT_KEYBOARD;
+	inputs[0].ki.wVk = key;
+	inputs[0].ki.dwExtraInfo = (ULONG_PTR)GetMessageExtraInfo();
+	inputs[1] = inputs[0];
+	inputs[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+	return SendInput(_countof(inputs), inputs, sizeof(INPUT)) == _countof(inputs);
+}
