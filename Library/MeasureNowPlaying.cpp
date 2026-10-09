@@ -34,80 +34,6 @@ struct ParentMeasure
 
 HINSTANCE g_Instance = nullptr;
 
-namespace {
-
-void DoPlayBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->Play();
-}
-
-void DoPauseBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->Pause();
-}
-
-void DoPlayPauseBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->PlayPause();
-}
-
-void DoStopBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->Stop();
-}
-
-void DoNextBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->Next();
-}
-
-void DoPreviousBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->Previous();
-}
-
-void DoOpenPlayerBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->OpenPlayer();
-}
-
-void DoClosePlayerBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->ClosePlayer();
-}
-
-void DoTogglePlayerBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->TogglePlayer();
-}
-
-void DoSetPositionBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->SetPosition(args[0].c_str());
-}
-
-void DoSetRatingBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->SetRating(args[0].c_str());
-}
-
-void DoSetVolumeBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->SetVolume(args[0].c_str());
-}
-
-void DoSetShuffleBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->SetShuffle(args[0].c_str());
-}
-
-void DoSetRepeatBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureNowPlaying*)measure)->SetRepeat(args[0].c_str());
-}
-
-}  // namespace
-
 MeasureNowPlaying::MeasureNowPlaying(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(MEASURE_NONE),
 	m_Parent()
@@ -115,20 +41,20 @@ MeasureNowPlaying::MeasureNowPlaying(Skin* skin, const WCHAR* name) : Measure(sk
 	static const bool s_BangsRegistered = []()
 	{
 		const UINT typeId = TypeID<MeasureNowPlaying>();
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Play", 0, DoPlayBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Pause", 0, DoPauseBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:TogglePlay", 0, DoPlayPauseBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Stop", 0, DoStopBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Next", 0, DoNextBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:Previous", 0, DoPreviousBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:OpenPlayer", 0, DoOpenPlayerBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:ClosePlayer", 0, DoClosePlayerBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:TogglePlayer", 0, DoTogglePlayerBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetPosition", 1, DoSetPositionBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetRating", 1, DoSetRatingBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetVolume", 1, DoSetVolumeBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetShuffle", 1, DoSetShuffleBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"NowPlaying:SetRepeat", 1, DoSetRepeatBang);
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::Play>(typeId, L"NowPlaying:Play");
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::Pause>(typeId, L"NowPlaying:Pause");
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::PlayPause>(typeId, L"NowPlaying:TogglePlay");
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::Stop>(typeId, L"NowPlaying:Stop");
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::Next>(typeId, L"NowPlaying:Next");
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::Previous>(typeId, L"NowPlaying:Previous");
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::OpenPlayer>(typeId, L"NowPlaying:OpenPlayer");
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::ClosePlayer>(typeId, L"NowPlaying:ClosePlayer");
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::TogglePlayer>(typeId, L"NowPlaying:TogglePlayer");
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::SetPosition>(typeId, L"NowPlaying:SetPosition");
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::SetRating>(typeId, L"NowPlaying:SetRating");
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::SetVolume>(typeId, L"NowPlaying:SetVolume");
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::SetShuffle>(typeId, L"NowPlaying:SetShuffle");
+		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::SetRepeat>(typeId, L"NowPlaying:SetRepeat");
 		return true;
 	} ();
 }

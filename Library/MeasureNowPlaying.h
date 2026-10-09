@@ -23,6 +23,11 @@ public:
 
 	void Command(const std::wstring& command) override;
 
+protected:
+	void ReadOptions(ConfigParser::OptionReader& reader) override;
+	void UpdateValue() override;
+
+private:
 	void Play();
 	void Pause();
 	void PlayPause();
@@ -38,11 +43,6 @@ public:
 	void SetShuffle(const WCHAR* arg);
 	void SetRepeat(const WCHAR* arg);
 
-protected:
-	void ReadOptions(ConfigParser::OptionReader& reader) override;
-	void UpdateValue() override;
-
-private:
 	Player* GetInitializedPlayer() const;
 
 	ParentMeasure* m_Parent;

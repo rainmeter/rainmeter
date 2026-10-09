@@ -227,20 +227,6 @@ void ClearProxySetting(ProxySetting& setting)
 	setting.agent.clear();
 }
 
-namespace {
-
-void DoUpdateDataBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureWebParser*)measure)->ResetCounter();
-}
-
-void DoResetDataBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeasureWebParser*)measure)->ResetValue();
-}
-
-}  // namespace
-
 MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_NumberFormat(LocaleUtil::NumberFormat::Default),
 	m_ParseType(ParseType::RegExp),
@@ -262,8 +248,8 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 	static const bool s_BangsRegistered = []()
 	{
 		const UINT typeId = TypeID<MeasureWebParser>();
-		CommandHandler::RegisterMeasureBang(typeId, L"WebParser:UpdateData", 0, DoUpdateDataBang);
-		CommandHandler::RegisterMeasureBang(typeId, L"WebParser:ResetData", 0, DoResetDataBang);
+		CommandHandler::RegisterMeasureBang<MeasureWebParser, &MeasureWebParser::ResetCounter>(typeId, L"WebParser:UpdateData");
+		CommandHandler::RegisterMeasureBang<MeasureWebParser, &MeasureWebParser::ResetValue>(typeId, L"WebParser:ResetData");
 		return true;
 	} ();
 

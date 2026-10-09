@@ -149,5 +149,24 @@ public:
 
 	static void RegisterMeterBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeterBangFunc handlerFunc);
 	static void RegisterMeasureBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeasureBangFunc handlerFunc);
+
+	template<typename T, void (T::*Handler)()>
+	static void RegisterMeasureBang(UINT typeId, const WCHAR* name)
+	{
+		RegisterMeasureBang(typeId, name, 0, [](Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+		{
+			(((T*)measure)->*Handler)();
+		});
+	}
+
+	template<typename T, void (T::*Handler)(const WCHAR*)>
+	static void RegisterMeasureBang(UINT typeId, const WCHAR* name)
+	{
+		RegisterMeasureBang(typeId, name, 1, [](Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+		{
+			(((T*)measure)->*Handler)(args[0].c_str());
+		});
+	}
+
 	static void RegisterSkinBang(const WCHAR* name, uint8_t argCount, SkinBangFunc handlerFunc);
 };

@@ -17,7 +17,6 @@ public:
 	UINT GetTypeID() override { return TypeID<MeasureMouse>(); }
 
 	bool ExecuteAction(MOUSEACTION action, POINT screenPos, MOUSEACTION fallback = MOUSEACTION_NONE);
-	void StartCapture();
 	void CompleteScreenCapture(MOUSEACTION action, POINT screenPos);
 	void ExecuteMoveActions(POINT screenPos);
 
@@ -31,6 +30,7 @@ protected:
 	void Command(const std::wstring& command) override;
 
 private:
+	void StartCapture();
 	bool IsActive();
 	bool ShouldRunMoveAction();
 	void ReplaceMouseVariables(std::wstring& result, POINT screenPos) const;

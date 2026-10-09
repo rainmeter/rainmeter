@@ -29,15 +29,15 @@ public:
 
 	void AdvanceUpdateCounter(UINT count) override;
 
-	void ResetCounter();
-	void ResetValue();
-
 protected:
 	void ReadOptions(ConfigParser::OptionReader& reader) override;
 	void UpdateValue() override;
 	void Command(const std::wstring& command) override;
 
 private:
+	void ResetCounter();
+	void ResetValue();
+
 	enum class ParseType : BYTE
 	{
 		RegExp,
