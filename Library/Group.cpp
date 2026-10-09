@@ -33,7 +33,7 @@ void Group::InitializeGroup(const std::wstring& groups)
 
 bool Group::AddToGroup(const std::wstring& group)
 {
-	if (!group.empty() && !BelongsToGroup(group))
+	if (!group.empty() && m_Groups.find(VerifyGroup(group)) == m_Groups.end())
 	{
 		if (!m_OldGroups.empty())
 		{
@@ -56,7 +56,18 @@ bool Group::AddToGroup(const std::wstring& group)
 
 bool Group::BelongsToGroup(std::wstring_view group) const
 {
-	return (m_Groups.find(VerifyGroup(group)) != m_Groups.end());
+	StringParser parser(group);
+	while (!parser.IsConsumed())
+	{
+		const auto token = parser.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
+		if (!token.empty() && m_Groups.find(VerifyGroup(token)) != m_Groups.end())
+		{
+			return true;
+		}
+
+	}
+
+	return false;
 }
 
 std::wstring& Group::CreateGroup(std::wstring& str) const
