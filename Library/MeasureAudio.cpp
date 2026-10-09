@@ -2,8 +2,12 @@
 
 #include "StdAfx.h"
 #include "MeasureAudio.h"
+#include "CommandHandler.h"
 #include "Logger.h"
 
+#include <cerrno>
+#include <cwchar>
+#include <cwctype>
 #include <Endpointvolume.h>
 #include <Functiondiscoverykeys_devpkey.h>
 #include <Mmdeviceapi.h>
@@ -100,6 +104,19 @@ bool ReadCommandArgument(const std::wstring& command, std::wstring* bang, std::w
 	return true;
 }
 
+bool ReadAudioArgument(const WCHAR* arg, long& value, bool& relative)
+{
+	while (iswspace(*arg)) ++arg;
+	relative = *arg == L'+' || *arg == L'-';
+	errno = 0;
+	WCHAR* end = nullptr;
+	value = wcstol(arg, &end, 10);
+	if (end == arg || errno == ERANGE) return false;
+
+	while (iswspace(*end)) ++end;
+	return *end == L'\0';
+}
+
 }  // namespace
 
 MeasureAudio::MeasureAudio(Skin* skin, const WCHAR* name) : Measure(skin, name),
@@ -107,6 +124,17 @@ MeasureAudio::MeasureAudio(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_MasterVolume(0.5f)
 {
 	m_MaxValue = 100.0;
+
+	static const bool s_BangsRegistered = []()
+	{
+		const UINT typeId = TypeID<MeasureAudio>();
+		CommandHandler::RegisterMeasureBang<MeasureAudio, &MeasureAudio::SetVolumeBang>(typeId, L"Audio:SetVolume");
+		CommandHandler::RegisterMeasureBang<MeasureAudio, &MeasureAudio::SetOutputIndexBang>(typeId, L"Audio:SetOutputIndex");
+		CommandHandler::RegisterMeasureBang<MeasureAudio, &MeasureAudio::Mute>(typeId, L"Audio:Mute");
+		CommandHandler::RegisterMeasureBang<MeasureAudio, &MeasureAudio::Unmute>(typeId, L"Audio:Unmute");
+		CommandHandler::RegisterMeasureBang<MeasureAudio, &MeasureAudio::ToggleMute>(typeId, L"Audio:ToggleMute");
+		return true;
+	} ();
 }
 
 MeasureAudio::~MeasureAudio()
@@ -183,116 +211,145 @@ void MeasureAudio::Command(const std::wstring& command)
 	std::wstring argument;
 	if (ReadCommandArgument(command, &bang, &argument))
 	{
-		if (_wcsicmp(bang.c_str(), L"SetOutputIndex") == 0)
+		const bool output = _wcsicmp(bang.c_str(), L"SetOutputIndex") == 0;
+		const bool volume = _wcsicmp(bang.c_str(), L"SetVolume") == 0;
+		const bool relative = _wcsicmp(bang.c_str(), L"ChangeVolume") == 0;
+		if (!output && !volume && !relative)
 		{
-			int index = 0;
-			if (swscanf_s(argument.c_str(), L"%d", &index) == 1)
-			{
-				EnumerateEndpoints();
-				if (m_EndpointIDs.empty())
-				{
-					LogWarningF(this, L"Audio: No device found");
-					return;
-				}
-
-				if (index <= 0)
-				{
-					index = 1;
-				}
-				else if (index > (int)m_EndpointIDs.size())
-				{
-					index = (int)m_EndpointIDs.size();
-				}
-
-				RegisterDevice(m_EndpointIDs[index - 1].c_str());
-			}
-			else
-			{
-				LogWarningF(this, L"Audio: Incorrect number of arguments for bang");
-			}
+			LogWarningF(this, L"Audio: Unknown bang");
+			return;
 		}
-		else if (_wcsicmp(bang.c_str(), L"SetVolume") == 0)
+
+		int value = 0;
+		if (swscanf_s(argument.c_str(), L"%d", &value) != 1 || (relative && value == 0))
 		{
-			int volume = 0;
-			if (swscanf_s(argument.c_str(), L"%d", &volume) == 1)
-			{
-				if (!SetVolume(volume < 0 ? 0 : (volume > 100 ? 100 : (UINT)volume)))
-				{
-					LogErrorF(this, L"Audio: Error setting volume");
-				}
-			}
-			else
-			{
-				LogWarningF(this, L"Audio: Incorrect number of arguments for bang");
-			}
+			LogWarningF(this, L"Audio: Incorrect number of arguments for bang");
+			return;
 		}
-		else if (_wcsicmp(bang.c_str(), L"ChangeVolume") == 0)
+
+		if (output)
 		{
-			int offset = 0;
-			if (swscanf_s(argument.c_str(), L"%d", &offset) == 1 && offset)
-			{
-				if (!SetVolume(0, offset))
-				{
-					LogErrorF(this, L"Audio: Error changing volume");
-				}
-			}
-			else
-			{
-				LogWarningF(this, L"Audio: Incorrect number of arguments for bang");
-			}
+			SetOutputIndex(value, false, true);
 		}
 		else
 		{
-			LogWarningF(this, L"Audio: Unknown bang");
+			SetVolume(value, relative, true);
 		}
+
 	}
 	else if (_wcsicmp(command.c_str(), L"ToggleNext") == 0)
 	{
-		EnumerateEndpoints();
-		const UINT index = GetDefaultEndpointIndex();
-		if (index)
-		{
-			RegisterDevice(m_EndpointIDs[(index == m_EndpointIDs.size()) ? 0 : index].c_str());
-		}
-		else
-		{
-			LogErrorF(this, L"Audio: Update error");
-		}
+		SetOutputIndex(1, true);
 	}
 	else if (_wcsicmp(command.c_str(), L"TogglePrevious") == 0)
 	{
-		EnumerateEndpoints();
-		const UINT index = GetDefaultEndpointIndex();
-		if (index)
-		{
-			RegisterDevice(m_EndpointIDs[(index == 1) ? m_EndpointIDs.size() - 1 : index - 2].c_str());
-		}
-		else
-		{
-			LogErrorF(this, L"Audio: Update error");
-		}
+		SetOutputIndex(-1, true);
 	}
 	else if (_wcsicmp(command.c_str(), L"ToggleMute") == 0)
 	{
-		GetAudioState(VolumeAction::ToggleMute);
+		ToggleMute();
 	}
 	else if (_wcsicmp(command.c_str(), L"Mute") == 0)
 	{
-		if (!m_IsMute)
-		{
-			GetAudioState(VolumeAction::ToggleMute);
-		}
+		Mute();
 	}
 	else if (_wcsicmp(command.c_str(), L"Unmute") == 0)
 	{
-		if (m_IsMute)
-		{
-			GetAudioState(VolumeAction::ToggleMute);
-		}
+		Unmute();
 	}
 	else
 	{
 		LogWarningF(this, L"Audio: Unknown bang");
+	}
+}
+
+void MeasureAudio::SetVolumeBang(const WCHAR* arg)
+{
+	long value = 0;
+	bool relative = false;
+	if (!ReadAudioArgument(arg, value, relative))
+	{
+		LogErrorF(this, L"!Audio:SetVolume: Invalid volume: %s", arg);
+		return;
+	}
+
+	SetVolume(value, relative);
+}
+
+void MeasureAudio::SetOutputIndexBang(const WCHAR* arg)
+{
+	long value = 0;
+	bool relative = false;
+	if (!ReadAudioArgument(arg, value, relative))
+	{
+		LogErrorF(this, L"!Audio:SetOutputIndex: Invalid output index: %s", arg);
+		return;
+	}
+
+	SetOutputIndex(value, relative);
+}
+
+void MeasureAudio::SetOutputIndex(long value, bool relative, bool clamp)
+{
+	if (relative && value == 0) return;
+
+	EnumerateEndpoints();
+	const long long count = (long long)m_EndpointIDs.size();
+	if (count == 0)
+	{
+		LogErrorF(this, L"Audio: No output device found");
+		return;
+	}
+
+	long long index = value;
+	if (relative)
+	{
+		const UINT currentIndex = GetDefaultEndpointIndex();
+		if (!currentIndex)
+		{
+			LogErrorF(this, L"Audio: Could not find default output");
+			return;
+		}
+
+		index = (((long long)currentIndex - 1 + value) % count + count) % count + 1;
+	}
+	else if (clamp)
+	{
+		index = (index < 1) ? 1 : ((index > count) ? count : index);
+	}
+	else if (index < 1 || index > count)
+	{
+		LogErrorF(this, L"Audio: Output index out of range: %li", value);
+		return;
+	}
+
+	const HRESULT hr = RegisterDevice(m_EndpointIDs[(size_t)(index - 1)].c_str());
+	if (FAILED(hr))
+	{
+		LogErrorF(this, L"Audio: Error setting output (%li)", (long)hr);
+	}
+}
+
+void MeasureAudio::Mute()
+{
+	SetMute(VolumeAction::Mute);
+}
+
+void MeasureAudio::Unmute()
+{
+	SetMute(VolumeAction::Unmute);
+}
+
+void MeasureAudio::ToggleMute()
+{
+	SetMute(VolumeAction::ToggleMute);
+}
+
+void MeasureAudio::SetMute(VolumeAction action)
+{
+	if (!GetAudioState(action))
+	{
+		LogErrorF(this, L"Audio: Error setting mute state");
 	}
 }
 
@@ -350,16 +407,26 @@ bool MeasureAudio::GetAudioState(VolumeAction action)
 			IAudioEndpointVolume* endpointVolume = nullptr;
 			if (endpoint->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, nullptr, (void**)&endpointVolume) == S_OK)
 			{
-				if (endpointVolume->GetMute(&m_IsMute) == S_OK && action == VolumeAction::ToggleMute)
+				if (action == VolumeAction::Mute || action == VolumeAction::Unmute || action == VolumeAction::ToggleMute)
 				{
-					success = endpointVolume->SetMute(m_IsMute ? FALSE : TRUE, nullptr) == S_OK;
+					BOOL mute = action == VolumeAction::Mute;
+					success = action != VolumeAction::ToggleMute || endpointVolume->GetMute(&mute) == S_OK;
+					if (success)
+					{
+						if (action == VolumeAction::ToggleMute) mute = !mute;
+						success = endpointVolume->SetMute(mute, nullptr) == S_OK;
+						if (success) m_IsMute = mute;
+					}
 				}
-
-				float volume = 0.0f;
-				if (action != VolumeAction::ToggleMute && endpointVolume->GetMasterVolumeLevelScalar(&volume) == S_OK)
+				else
 				{
-					m_MasterVolume = volume;
-					success = true;
+					float volume = 0.0f;
+					endpointVolume->GetMute(&m_IsMute);
+					if (endpointVolume->GetMasterVolumeLevelScalar(&volume) == S_OK)
+					{
+						m_MasterVolume = volume;
+						success = true;
+					}
 				}
 			}
 			SafeRelease(endpointVolume);
@@ -371,8 +438,10 @@ bool MeasureAudio::GetAudioState(VolumeAction action)
 	return success;
 }
 
-bool MeasureAudio::SetVolume(UINT volume, int offset)
+void MeasureAudio::SetVolume(long value, bool relative, bool unmute)
 {
+	if (relative && value == 0) return;
+
 	bool success = false;
 	IMMDeviceEnumerator* enumerator = nullptr;
 	if (CreateEnumerator(this, &enumerator))
@@ -383,20 +452,21 @@ bool MeasureAudio::SetVolume(UINT volume, int offset)
 			IAudioEndpointVolume* endpointVolume = nullptr;
 			if (endpoint->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, nullptr, (void**)&endpointVolume) == S_OK)
 			{
-				endpointVolume->SetMute(FALSE, nullptr);
-
 				float newVolume = 0.0f;
-				if (offset != 0)
+				success = !relative || endpointVolume->GetMasterVolumeLevelScalar(&newVolume) == S_OK;
+				if (success && unmute)
 				{
-					newVolume = m_MasterVolume + (float)offset / 100.0f;
-					newVolume = (newVolume < 0.0f) ? 0.0f : ((newVolume > 1.0f) ? 1.0f : newVolume);
-				}
-				else
-				{
-					newVolume = (float)volume / 100.0f;
+					success = endpointVolume->SetMute(FALSE, nullptr) == S_OK;
+					if (success) m_IsMute = FALSE;
 				}
 
-				success = endpointVolume->SetMasterVolumeLevelScalar(newVolume, nullptr) == S_OK;
+				if (success)
+				{
+					newVolume += (float)value / 100.0f;
+					newVolume = (newVolume < 0.0f) ? 0.0f : ((newVolume > 1.0f) ? 1.0f : newVolume);
+					success = endpointVolume->SetMasterVolumeLevelScalar(newVolume, nullptr) == S_OK;
+				}
+
 				if (success)
 				{
 					success = endpointVolume->GetMasterVolumeLevelScalar(&newVolume) == S_OK;
@@ -412,7 +482,10 @@ bool MeasureAudio::SetVolume(UINT volume, int offset)
 	}
 
 	SafeRelease(enumerator);
-	return success;
+	if (!success)
+	{
+		LogErrorF(this, L"Audio: Error setting volume");
+	}
 }
 
 UINT MeasureAudio::GetDefaultEndpointIndex()

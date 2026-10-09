@@ -26,13 +26,23 @@ private:
 	enum class VolumeAction
 	{
 		Initialize,
+		Mute,
+		Unmute,
 		ToggleMute,
 		GetVolume
 	};
 
+	void SetVolumeBang(const WCHAR* arg);
+	void SetOutputIndexBang(const WCHAR* arg);
+	void Mute();
+	void Unmute();
+	void ToggleMute();
+	void SetMute(VolumeAction action);
+
 	void EnumerateEndpoints();
 	bool GetAudioState(VolumeAction action);
-	bool SetVolume(UINT volume, int offset = 0);
+	void SetVolume(long value, bool relative, bool unmute = false);
+	void SetOutputIndex(long value, bool relative, bool clamp = false);
 	UINT GetDefaultEndpointIndex();
 	HRESULT RegisterDevice(const WCHAR* deviceID);
 
