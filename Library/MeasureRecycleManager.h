@@ -22,6 +22,11 @@ protected:
 	void UpdateValue() override;
 
 private:
+	void EmptyBin();
+	void EmptyBinSilent();
+	void EmptyBinWithFlags(DWORD flags);
+	void OpenBin();
+
 	enum class Type;
 	Type m_Type;
 };

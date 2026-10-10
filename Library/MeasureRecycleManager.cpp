@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "MeasureRecycleManager.h"
+#include "CommandHandler.h"
 #include "ConfigParser.h"
 #include "Logger.h"
 
@@ -130,6 +131,14 @@ enum class MeasureRecycleManager::Type
 MeasureRecycleManager::MeasureRecycleManager(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(Type::None)
 {
+	static const bool s_BangsRegistered = []()
+	{
+		REGISTER_MEASURE_BANG(MeasureRecycleManager, EmptyBin, L"RecycleManager:EmptyBin");
+		REGISTER_MEASURE_BANG(MeasureRecycleManager, EmptyBinSilent, L"RecycleManager:EmptyBinSilent");
+		REGISTER_MEASURE_BANG(MeasureRecycleManager, OpenBin, L"RecycleManager:OpenBin");
+		return true;
+	} ();
+
 	++g_InstanceCount;
 }
 
@@ -191,27 +200,40 @@ void MeasureRecycleManager::Command(const std::wstring& command)
 	const WCHAR* args = command.c_str();
 	if (_wcsicmp(args, L"EmptyBin") == 0)
 	{
-		if (!g_Emptying.exchange(true))
-		{
-			if (!QueueUserWorkItem(EmptyRecycleBinThreadProc, nullptr, 0))
-			{
-				g_Emptying = false;
-			}
-		}
+		EmptyBin();
 	}
 	else if (_wcsicmp(args, L"EmptyBinSilent") == 0)
 	{
-		if (!g_Emptying.exchange(true))
-		{
-			const DWORD flags = SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND;
-			if (!QueueUserWorkItem(EmptyRecycleBinThreadProc, (void*)(UINT_PTR)flags, 0))
-			{
-				g_Emptying = false;
-			}
-		}
+		EmptyBinSilent();
 	}
 	else if (_wcsicmp(args, L"OpenBin") == 0)
 	{
-		ShellExecute(nullptr, L"open", L"explorer.exe", L"/N,::{645FF040-5081-101B-9F08-00AA002F954E}", nullptr, SW_SHOW);
+		OpenBin();
 	}
+}
+
+void MeasureRecycleManager::EmptyBin()
+{
+	EmptyBinWithFlags(0);
+}
+
+void MeasureRecycleManager::EmptyBinSilent()
+{
+	EmptyBinWithFlags(SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND);
+}
+
+void MeasureRecycleManager::EmptyBinWithFlags(DWORD flags)
+{
+	if (!g_Emptying.exchange(true))
+	{
+		if (!QueueUserWorkItem(EmptyRecycleBinThreadProc, (void*)(UINT_PTR)flags, 0))
+		{
+			g_Emptying = false;
+		}
+	}
+}
+
+void MeasureRecycleManager::OpenBin()
+{
+	ShellExecute(nullptr, L"open", L"explorer.exe", L"/N,::{645FF040-5081-101B-9F08-00AA002F954E}", nullptr, SW_SHOW);
 }
