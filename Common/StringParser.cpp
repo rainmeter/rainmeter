@@ -275,7 +275,7 @@ bool StringParser::ConsumeRest(WCHAR ch, Option option)
 	return true;
 }
 
-const WCHAR* StringParser::ScanToDelimiter(WCHAR delimiter, Option option)
+const WCHAR* StringParser::ScanToDelimiter(std::wstring_view delimiters, Option option)
 {
 	if (HasOption(option, SkipWhitespace))
 	{
@@ -294,7 +294,7 @@ const WCHAR* StringParser::ScanToDelimiter(WCHAR delimiter, Option option)
 		else if (skipQuoted && (ch == L'"' || ch == L'\'')) quote = ch;
 		else if (skipNested && ch == L'(') ++depth;
 		else if (skipNested && ch == L')') --depth;
-		else if (ch == delimiter && depth == 0) break;
+		else if (depth == 0 && delimiters.find(ch) != std::wstring_view::npos) break;
 
 		++m_Current;
 	}
@@ -304,7 +304,13 @@ const WCHAR* StringParser::ScanToDelimiter(WCHAR delimiter, Option option)
 
 std::wstring_view StringParser::ConsumeUntil(WCHAR delimiter, Option option)
 {
-	const WCHAR* start = ScanToDelimiter(delimiter, option);
+	return ConsumeUntil(std::wstring_view(&delimiter, 1), option);
+}
+
+std::wstring_view StringParser::ConsumeUntil(std::wstring_view delimiters, Option option, WCHAR* matchedDelimiter)
+{
+	const WCHAR* start = ScanToDelimiter(delimiters, option);
+	if (matchedDelimiter) *matchedDelimiter = m_Current < m_End ? *m_Current : L'\0';
 	if (m_Current == m_End) return {};
 
 	return TrimValue(start, m_Current++, option);
@@ -327,8 +333,14 @@ std::wstring_view StringParser::ConsumeUntilLast(WCHAR delimiter, WCHAR stop)
 
 std::wstring_view StringParser::ConsumeUntilOrRest(WCHAR delimiter, Option option)
 {
-	const WCHAR* start = ScanToDelimiter(delimiter, option);
+	return ConsumeUntilOrRest(std::wstring_view(&delimiter, 1), option);
+}
+
+std::wstring_view StringParser::ConsumeUntilOrRest(std::wstring_view delimiters, Option option, WCHAR* matchedDelimiter)
+{
+	const WCHAR* start = ScanToDelimiter(delimiters, option);
 	const WCHAR* valueEnd = m_Current;
+	if (matchedDelimiter) *matchedDelimiter = m_Current < m_End ? *m_Current : L'\0';
 	if (m_Current < m_End)
 	{
 		++m_Current;  // Skip the delimiter
