@@ -56,18 +56,44 @@ bool Group::AddToGroup(const std::wstring& group)
 
 bool Group::BelongsToGroup(std::wstring_view group) const
 {
-	StringParser parser(group);
-	while (!parser.IsConsumed())
+	enum class MatchMode
 	{
-		const auto token = parser.ConsumeUntilOrRest(L'|', StringParser::SkipWhitespace);
-		if (!token.empty() && m_Groups.find(VerifyGroup(token)) != m_Groups.end())
+		Single,
+		Any,
+		All
+	};
+
+	MatchMode mode = MatchMode::Single;
+	StringParser parser(group);
+	bool matches = false;
+	bool first = true;
+	while (true)
+	{
+		WCHAR delimiter;
+		const auto token = parser.ConsumeUntilOrRest(L"&|", StringParser::SkipWhitespace, &delimiter);
+		if (delimiter)
 		{
-			return true;
+			const MatchMode nextMode = delimiter == L'&' ? MatchMode::All : MatchMode::Any;
+			if (mode != MatchMode::Single && mode != nextMode) return false;
+
+			mode = nextMode;
 		}
 
-	}
+		const auto name = VerifyGroup(token);
+		const bool belongs = !name.empty() && m_Groups.find(name) != m_Groups.end();
+		if (first)
+		{
+			matches = belongs;
+		}
+		else
+		{
+			matches = mode == MatchMode::All ? matches && belongs : matches || belongs;
+		}
 
-	return false;
+		if (!delimiter) return matches;
+
+		first = false;
+	}
 }
 
 std::wstring& Group::CreateGroup(std::wstring& str) const
