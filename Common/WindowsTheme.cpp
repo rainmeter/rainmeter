@@ -1181,8 +1181,7 @@ BOOL CALLBACK RefreshWindow(HWND window, LPARAM lParam)
 
 BOOL CALLBACK RefreshTopLevelWindow(HWND window, LPARAM lParam)
 {
-	DWORD_PTR data;
-	if (HasClass(window, TOOLTIPS_CLASS) && GetWindowSubclass(GetWindow(window, GW_OWNER), WindowProc, 0, &data)) WindowsTheme::ApplyToTooltip(window);
+	if (HasClass(window, TOOLTIPS_CLASS)) WindowsTheme::ApplyToTooltip(window);
 	RefreshWindow(window, lParam);
 	EnumChildWindows(window, RefreshWindow, lParam);
 	return TRUE;

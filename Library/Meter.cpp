@@ -19,6 +19,7 @@
 #include "../Common/Gfx/Canvas.h"
 #include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
+#include "../Common/WindowsTheme.h"
 
 Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_X(),
@@ -671,6 +672,7 @@ void Meter::CreateToolTip()
 
 	if (hwndTT)
 	{
+		WindowsTheme::ApplyToTooltip(hwndTT);
 		SetWindowPos(hwndTT, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
 		RECT rc = { 0 };
