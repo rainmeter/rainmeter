@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "MeasureActionTimer.h"
 #include "AsyncTask.h"
+#include "CommandHandler.h"
 #include "ConfigParser.h"
 #include "Logger.h"
 #include "Rainmeter.h"
@@ -97,6 +98,12 @@ MeasureActionTimer::MeasureActionTimer(Skin* skin, const WCHAR* name) : Measure(
 	m_Data(std::make_shared<SharedData>(skin)),
 	m_IgnoreWarnings(false)
 {
+	static const bool s_BangsRegistered = []()
+	{
+		REGISTER_MEASURE_BANG(MeasureActionTimer, ExecuteBang, L"ActionTimer:Execute");
+		REGISTER_MEASURE_BANG(MeasureActionTimer, StopBang, L"ActionTimer:Stop");
+		return true;
+	} ();
 }
 
 MeasureActionTimer::~MeasureActionTimer()
@@ -195,59 +202,60 @@ void MeasureActionTimer::ReadOptions(ConfigParser::OptionReader& reader)
 void MeasureActionTimer::Command(const std::wstring& command)
 {
 	const WCHAR* args = command.c_str();
-
-	auto parseIndex = [&](size_t& number, size_t length)
-	{
-		args += length;
-		number = (size_t)(_wtoi(args) - 1);
-	};
-
 	if (_wcsnicmp(args, L"EXECUTE", 7) == 0)
 	{
-		size_t number = 0;
-		parseIndex(number, 7);
-
-		CriticalSectionLock lock(*m_Data->criticalSection);
-		if (number < m_Data->actions.size())
-		{
-			if (!m_Data->actions[number].task)
-			{
-				m_Data->actions[number].task = ActionTimerTask::Create(this, number);
-			}
-			else if (!m_IgnoreWarnings)
-			{
-				LogWarningF(this, L"'ActionList%i' is currently running", (int)number + 1);
-			}
-		}
-		else if (!m_IgnoreWarnings)
-		{
-			LogWarningF(this, L"Invalid index '%i'", (int)number + 1);
-		}
+		ExecuteBang(args + 7);
 	}
 	else if (_wcsnicmp(args, L"STOP", 4) == 0)
 	{
-		size_t number = 0;
-		parseIndex(number, 4);
-
-		CriticalSectionLock lock(*m_Data->criticalSection);
-		if (number < m_Data->actions.size())
-		{
-			if (m_Data->actions[number].task)
-			{
-				m_Data->actions[number].task->AbortWhenPossible();
-				m_Data->actions[number].task = nullptr;
-			}
-
-			++m_Data->actions[number].generation;
-		}
-		else if (!m_IgnoreWarnings)
-		{
-			LogWarningF(this, L"Invalid index '%i'", (int)number + 1);
-		}
+		StopBang(args + 4);
 	}
 	else
 	{
 		LogErrorF(this, L"Unknown command: %s", args);
+	}
+}
+
+void MeasureActionTimer::ExecuteBang(const WCHAR* index)
+{
+	const size_t number = (size_t)(_wtoi(index) - 1);
+
+	CriticalSectionLock lock(*m_Data->criticalSection);
+	if (number < m_Data->actions.size())
+	{
+		if (!m_Data->actions[number].task)
+		{
+			m_Data->actions[number].task = ActionTimerTask::Create(this, number);
+		}
+		else if (!m_IgnoreWarnings)
+		{
+			LogWarningF(this, L"'ActionList%i' is currently running", (int)number + 1);
+		}
+	}
+	else if (!m_IgnoreWarnings)
+	{
+		LogWarningF(this, L"Invalid index '%i'", (int)number + 1);
+	}
+}
+
+void MeasureActionTimer::StopBang(const WCHAR* index)
+{
+	const size_t number = (size_t)(_wtoi(index) - 1);
+
+	CriticalSectionLock lock(*m_Data->criticalSection);
+	if (number < m_Data->actions.size())
+	{
+		if (m_Data->actions[number].task)
+		{
+			m_Data->actions[number].task->AbortWhenPossible();
+			m_Data->actions[number].task = nullptr;
+		}
+
+		++m_Data->actions[number].generation;
+	}
+	else if (!m_IgnoreWarnings)
+	{
+		LogWarningF(this, L"Invalid index '%i'", (int)number + 1);
 	}
 }
 

@@ -24,6 +24,9 @@ protected:
 	void Command(const std::wstring& command) override;
 
 private:
+	void ExecuteBang(const WCHAR* index);
+	void StopBang(const WCHAR* index);
+
 	class ActionTimerTask;
 
 	struct Action
