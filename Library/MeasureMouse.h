@@ -31,6 +31,7 @@ protected:
 
 private:
 	void StartCapture();
+	void StopCapture();
 	bool IsActive();
 	bool ShouldRunMoveAction();
 	void ReplaceMouseVariables(std::wstring& result, POINT screenPos) const;

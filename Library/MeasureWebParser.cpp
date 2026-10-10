@@ -247,9 +247,8 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 {
 	static const bool s_BangsRegistered = []()
 	{
-		const UINT typeId = TypeID<MeasureWebParser>();
-		CommandHandler::RegisterMeasureBang<MeasureWebParser, &MeasureWebParser::ResetCounter>(typeId, L"WebParser:UpdateData");
-		CommandHandler::RegisterMeasureBang<MeasureWebParser, &MeasureWebParser::ResetValue>(typeId, L"WebParser:ResetData");
+		REGISTER_MEASURE_BANG(MeasureWebParser, ResetCounter, L"WebParser:UpdateData");
+		REGISTER_MEASURE_BANG(MeasureWebParser, ResetValue, L"WebParser:ResetData");
 		return true;
 	} ();
 

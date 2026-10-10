@@ -83,76 +83,58 @@ private:
 	std::wstring m_FocusCommand;
 };
 
-void DoFocusBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+}  // namespace
+
+void MeterTextEdit::FocusBang()
 {
-	auto* editMeter = (MeterTextEdit*)meter;
-	if (!editMeter->AcceptsInput())
+	if (!AcceptsInput())
 	{
-		LogWarningF(skin, L"!TextEdit:Focus: [%s] does not accept input", meter->GetName());
+		LogWarningF(m_Skin, L"!TextEdit:Focus: [%s] does not accept input", GetName());
 		return;
 	}
 
-	FocusMeterScope focus(editMeter, skin);
+	FocusMeterScope focus(this, m_Skin);
 }
 
-void DoDismissBang(std::vector<std::wstring>& args, Skin* skin)
+void MeterTextEdit::SelectBang(const WCHAR* indexArg, const WCHAR* lengthArg)
 {
-	skin->DismissInputFocus();
+	ConfigParser& parser = m_Skin->GetParser();
+	const int index = parser.ParseInt(indexArg, 0);
+	const int length = parser.ParseInt(lengthArg, -1);
+
+	FocusMeterScope focus(this, m_Skin);
+	SelectRange(index, length);
 }
 
-void DoSubmitBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+void MeterTextEdit::SelectAllBang()
 {
-	((MeterTextEdit*)meter)->Submit();
+	FocusMeterScope focus(this, m_Skin);
+	SelectAll();
 }
 
-void DoSelectBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+void MeterTextEdit::SetTextBang(const WCHAR* text)
 {
-	ConfigParser& parser = skin->GetParser();
-	const int index = parser.ParseInt(args[0].c_str(), 0);
-	const int length = parser.ParseInt(args[1].c_str(), -1);
-
-	auto* editMeter = (MeterTextEdit*)meter;
-	FocusMeterScope focus(editMeter, skin);
-	editMeter->SelectRange(index, length);
+	SetText(text);
+	m_Skin->RequestWindowSizeCheck();
 }
 
-void DoSelectAllBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+void MeterTextEdit::ScrollByLineBang(const WCHAR* linesArg)
 {
-	auto* editMeter = (MeterTextEdit*)meter;
-	FocusMeterScope focus(editMeter, skin);
-	editMeter->SelectAll();
+	const int lines = m_Skin->GetParser().ParseInt(linesArg, 0);
+	ScrollByLine(lines);
 }
 
-void DoSetTextBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+void MeterTextEdit::ClearBang()
 {
-	((MeterTextEdit*)meter)->SetText(args[0]);
-	skin->RequestWindowSizeCheck();
+	Clear();
+	m_Skin->RequestWindowSizeCheck();
 }
 
-void DoScrollByLineBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+void MeterTextEdit::ResetBang()
 {
-	const int lines = skin->GetParser().ParseInt(args[0].c_str(), 0);
-	((MeterTextEdit*)meter)->ScrollByLine(lines);
+	Reset();
+	m_Skin->RequestWindowSizeCheck();
 }
-
-void DoResetScrollBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeterTextEdit*)meter)->ResetScroll();
-}
-
-void DoClearBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeterTextEdit*)meter)->Clear();
-	skin->RequestWindowSizeCheck();
-}
-
-void DoResetBang(Meter* meter, std::vector<std::wstring>& args, Skin* skin)
-{
-	((MeterTextEdit*)meter)->Reset();
-	skin->RequestWindowSizeCheck();
-}
-
-}  // namespace
 
 MeterTextEdit::MeterTextEdit(Skin* skin, const WCHAR* name) : MeterStringBase(skin, name),
 	m_AcceptsInput(true),
@@ -185,17 +167,16 @@ MeterTextEdit::MeterTextEdit(Skin* skin, const WCHAR* name) : MeterStringBase(sk
 {
 	static const bool s_BangsRegistered = []()
 	{
-		const UINT typeId = TypeID<MeterTextEdit>();
-		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Focus", 0, DoFocusBang);
-		CommandHandler::RegisterSkinBang(L"TextEdit:Dismiss", 0, DoDismissBang);
-		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Submit", 0, DoSubmitBang);
-		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Select", 2, DoSelectBang);
-		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SelectAll", 0, DoSelectAllBang);
-		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:SetText", 1, DoSetTextBang);
-		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:ScrollByLine", 1, DoScrollByLineBang);
-		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:ResetScroll", 0, DoResetScrollBang);
-		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Clear", 0, DoClearBang);
-		CommandHandler::RegisterMeterBang(typeId, L"TextEdit:Reset", 0, DoResetBang);
+		REGISTER_METER_BANG(MeterTextEdit, FocusBang, L"TextEdit:Focus");
+		REGISTER_SKIN_BANG(DismissInputFocus, L"TextEdit:Dismiss");
+		REGISTER_METER_BANG(MeterTextEdit, Submit, L"TextEdit:Submit");
+		REGISTER_METER_BANG(MeterTextEdit, SelectBang, L"TextEdit:Select");
+		REGISTER_METER_BANG(MeterTextEdit, SelectAllBang, L"TextEdit:SelectAll");
+		REGISTER_METER_BANG(MeterTextEdit, SetTextBang, L"TextEdit:SetText");
+		REGISTER_METER_BANG(MeterTextEdit, ScrollByLineBang, L"TextEdit:ScrollByLine");
+		REGISTER_METER_BANG(MeterTextEdit, ResetScroll, L"TextEdit:ResetScroll");
+		REGISTER_METER_BANG(MeterTextEdit, ClearBang, L"TextEdit:Clear");
+		REGISTER_METER_BANG(MeterTextEdit, ResetBang, L"TextEdit:Reset");
 		return true;
 	} ();
 }

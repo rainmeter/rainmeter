@@ -127,12 +127,11 @@ MeasureAudio::MeasureAudio(Skin* skin, const WCHAR* name) : Measure(skin, name),
 
 	static const bool s_BangsRegistered = []()
 	{
-		const UINT typeId = TypeID<MeasureAudio>();
-		CommandHandler::RegisterMeasureBang<MeasureAudio, &MeasureAudio::SetVolumeBang>(typeId, L"Audio:SetVolume");
-		CommandHandler::RegisterMeasureBang<MeasureAudio, &MeasureAudio::SetOutputIndexBang>(typeId, L"Audio:SetOutputIndex");
-		CommandHandler::RegisterMeasureBang<MeasureAudio, &MeasureAudio::Mute>(typeId, L"Audio:Mute");
-		CommandHandler::RegisterMeasureBang<MeasureAudio, &MeasureAudio::Unmute>(typeId, L"Audio:Unmute");
-		CommandHandler::RegisterMeasureBang<MeasureAudio, &MeasureAudio::ToggleMute>(typeId, L"Audio:ToggleMute");
+		REGISTER_MEASURE_BANG(MeasureAudio, SetVolumeBang, L"Audio:SetVolume");
+		REGISTER_MEASURE_BANG(MeasureAudio, SetOutputIndexBang, L"Audio:SetOutputIndex");
+		REGISTER_MEASURE_BANG(MeasureAudio, Mute, L"Audio:Mute");
+		REGISTER_MEASURE_BANG(MeasureAudio, Unmute, L"Audio:Unmute");
+		REGISTER_MEASURE_BANG(MeasureAudio, ToggleMute, L"Audio:ToggleMute");
 		return true;
 	} ();
 }

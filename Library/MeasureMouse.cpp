@@ -14,11 +14,6 @@
 
 namespace {
 
-void DoStopCaptureBang(Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-{
-	ClickCapture::Stop((MeasureMouse*)measure);
-}
-
 HHOOK g_MouseHook = nullptr;
 std::vector<MeasureMouse*> g_Measures;
 
@@ -214,9 +209,8 @@ MeasureMouse::MeasureMouse(Skin* skin, const WCHAR* name) : Measure(skin, name),
 {
 	static const bool s_Initialized = []()
 	{
-		const UINT typeId = TypeID<MeasureMouse>();
-		CommandHandler::RegisterMeasureBang<MeasureMouse, &MeasureMouse::StartCapture>(typeId, L"Mouse:StartCapture");
-		CommandHandler::RegisterMeasureBang(typeId, L"Mouse:StopCapture", 0, DoStopCaptureBang);
+		REGISTER_MEASURE_BANG(MeasureMouse, StartCapture, L"Mouse:StartCapture");
+		REGISTER_MEASURE_BANG(MeasureMouse, StopCapture, L"Mouse:StopCapture");
 		ClickCapture::Initialize();
 		return true;
 	} ();
@@ -467,4 +461,9 @@ void MeasureMouse::StartCapture()
 		m_Dragging = false;
 		GetSkin()->UpdateMouseMeasureCapture();
 	}
+}
+
+void MeasureMouse::StopCapture()
+{
+	ClickCapture::Stop(this);
 }

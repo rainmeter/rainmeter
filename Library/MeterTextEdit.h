@@ -94,6 +94,14 @@ protected:
 	void BindMeasures(ConfigParser::OptionReader& reader) override;
 
 private:
+	void FocusBang();
+	void SelectBang(const WCHAR* indexArg, const WCHAR* lengthArg);
+	void SelectAllBang();
+	void SetTextBang(const WCHAR* text);
+	void ScrollByLineBang(const WCHAR* linesArg);
+	void ClearBang();
+	void ResetBang();
+
 	// What the last edit was, so that a run of the same kind collapses into one undo step instead
 	// of making the user undo a burst of typing one character at a time.
 	enum class EditKind : BYTE

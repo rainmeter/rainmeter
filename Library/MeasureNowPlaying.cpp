@@ -40,21 +40,20 @@ MeasureNowPlaying::MeasureNowPlaying(Skin* skin, const WCHAR* name) : Measure(sk
 {
 	static const bool s_BangsRegistered = []()
 	{
-		const UINT typeId = TypeID<MeasureNowPlaying>();
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::Play>(typeId, L"NowPlaying:Play");
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::Pause>(typeId, L"NowPlaying:Pause");
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::PlayPause>(typeId, L"NowPlaying:TogglePlay");
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::Stop>(typeId, L"NowPlaying:Stop");
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::Next>(typeId, L"NowPlaying:Next");
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::Previous>(typeId, L"NowPlaying:Previous");
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::OpenPlayer>(typeId, L"NowPlaying:OpenPlayer");
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::ClosePlayer>(typeId, L"NowPlaying:ClosePlayer");
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::TogglePlayer>(typeId, L"NowPlaying:TogglePlayer");
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::SetPosition>(typeId, L"NowPlaying:SetPosition");
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::SetRating>(typeId, L"NowPlaying:SetRating");
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::SetVolume>(typeId, L"NowPlaying:SetVolume");
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::SetShuffle>(typeId, L"NowPlaying:SetShuffle");
-		CommandHandler::RegisterMeasureBang<MeasureNowPlaying, &MeasureNowPlaying::SetRepeat>(typeId, L"NowPlaying:SetRepeat");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, Play, L"NowPlaying:Play");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, Pause, L"NowPlaying:Pause");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, PlayPause, L"NowPlaying:TogglePlay");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, Stop, L"NowPlaying:Stop");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, Next, L"NowPlaying:Next");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, Previous, L"NowPlaying:Previous");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, OpenPlayer, L"NowPlaying:OpenPlayer");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, ClosePlayer, L"NowPlaying:ClosePlayer");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, TogglePlayer, L"NowPlaying:TogglePlayer");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, SetPosition, L"NowPlaying:SetPosition");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, SetRating, L"NowPlaying:SetRating");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, SetVolume, L"NowPlaying:SetVolume");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, SetShuffle, L"NowPlaying:SetShuffle");
+		REGISTER_MEASURE_BANG(MeasureNowPlaying, SetRepeat, L"NowPlaying:SetRepeat");
 		return true;
 	} ();
 }

@@ -7,6 +7,15 @@
 #include <string_view>
 #include <vector>
 
+#define REGISTER_METER_BANG(type, handler, name) \
+	CommandHandler::RegisterMeterBang<type, &type::handler>(TypeID<type>(), name)
+
+#define REGISTER_MEASURE_BANG(type, handler, name) \
+	CommandHandler::RegisterMeasureBang<type, &type::handler>(TypeID<type>(), name)
+
+#define REGISTER_SKIN_BANG(handler, name) \
+	CommandHandler::RegisterSkinBang<&Skin::handler>(name)
+
 class ConfigParser;
 class Measure;
 class Meter;
@@ -151,6 +160,33 @@ public:
 	static void RegisterMeasureBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeasureBangFunc handlerFunc);
 
 	template<typename T, void (T::*Handler)()>
+	static void RegisterMeterBang(UINT typeId, const WCHAR* name)
+	{
+		RegisterMeterBang(typeId, name, 0, [](Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+		{
+			(((T*)meter)->*Handler)();
+		});
+	}
+
+	template<typename T, void (T::*Handler)(const WCHAR*)>
+	static void RegisterMeterBang(UINT typeId, const WCHAR* name)
+	{
+		RegisterMeterBang(typeId, name, 1, [](Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+		{
+			(((T*)meter)->*Handler)(args[0].c_str());
+		});
+	}
+
+	template<typename T, void (T::*Handler)(const WCHAR*, const WCHAR*)>
+	static void RegisterMeterBang(UINT typeId, const WCHAR* name)
+	{
+		RegisterMeterBang(typeId, name, 2, [](Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+		{
+			(((T*)meter)->*Handler)(args[0].c_str(), args[1].c_str());
+		});
+	}
+
+	template<typename T, void (T::*Handler)()>
 	static void RegisterMeasureBang(UINT typeId, const WCHAR* name)
 	{
 		RegisterMeasureBang(typeId, name, 0, [](Measure* measure, std::vector<std::wstring>& args, Skin* skin)
@@ -169,4 +205,13 @@ public:
 	}
 
 	static void RegisterSkinBang(const WCHAR* name, uint8_t argCount, SkinBangFunc handlerFunc);
+
+	template<void (Skin::*Handler)()>
+	static void RegisterSkinBang(const WCHAR* name)
+	{
+		RegisterSkinBang(name, 0, [](std::vector<std::wstring>& args, Skin* skin)
+		{
+			(skin->*Handler)();
+		});
+	}
 };
