@@ -4,6 +4,8 @@
 
 #include "Measure.h"
 
+struct BangInteger;
+
 class MeasureAudio : public Measure
 {
 public:
@@ -32,8 +34,8 @@ private:
 		GetVolume
 	};
 
-	void SetVolumeBang(const WCHAR* arg);
-	void SetOutputIndexBang(const WCHAR* arg);
+	void SetVolumeBang(BangInteger arg);
+	void SetOutputIndexBang(BangInteger arg);
 	void Mute();
 	void Unmute();
 	void ToggleMute();

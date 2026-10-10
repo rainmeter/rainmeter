@@ -95,10 +95,10 @@ protected:
 
 private:
 	void FocusBang();
-	void SelectBang(const WCHAR* indexArg, const WCHAR* lengthArg);
+	void SelectBang(int index, int length);
 	void SelectAllBang();
 	void SetTextBang(const WCHAR* text);
-	void ScrollByLineBang(const WCHAR* linesArg);
+	void ScrollByLineBang(int lines);
 	void ClearBang();
 	void ResetBang();
 

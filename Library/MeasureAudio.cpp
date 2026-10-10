@@ -5,9 +5,7 @@
 #include "CommandHandler.h"
 #include "Logger.h"
 
-#include <cerrno>
 #include <cwchar>
-#include <cwctype>
 #include <Endpointvolume.h>
 #include <Functiondiscoverykeys_devpkey.h>
 #include <Mmdeviceapi.h>
@@ -102,19 +100,6 @@ bool ReadCommandArgument(const std::wstring& command, std::wstring* bang, std::w
 	*bang = command.substr(0, pos);
 	*argument = command.substr(pos + 1);
 	return true;
-}
-
-bool ReadAudioArgument(const WCHAR* arg, long& value, bool& relative)
-{
-	while (iswspace(*arg)) ++arg;
-	relative = *arg == L'+' || *arg == L'-';
-	errno = 0;
-	WCHAR* end = nullptr;
-	value = wcstol(arg, &end, 10);
-	if (end == arg || errno == ERANGE) return false;
-
-	while (iswspace(*end)) ++end;
-	return *end == L'\0';
 }
 
 }  // namespace
@@ -262,30 +247,14 @@ void MeasureAudio::Command(const std::wstring& command)
 	}
 }
 
-void MeasureAudio::SetVolumeBang(const WCHAR* arg)
+void MeasureAudio::SetVolumeBang(BangInteger arg)
 {
-	long value = 0;
-	bool relative = false;
-	if (!ReadAudioArgument(arg, value, relative))
-	{
-		LogErrorF(this, L"!Audio:SetVolume: Invalid volume: %s", arg);
-		return;
-	}
-
-	SetVolume(value, relative);
+	SetVolume(arg.value, arg.relative);
 }
 
-void MeasureAudio::SetOutputIndexBang(const WCHAR* arg)
+void MeasureAudio::SetOutputIndexBang(BangInteger arg)
 {
-	long value = 0;
-	bool relative = false;
-	if (!ReadAudioArgument(arg, value, relative))
-	{
-		LogErrorF(this, L"!Audio:SetOutputIndex: Invalid output index: %s", arg);
-		return;
-	}
-
-	SetOutputIndex(value, relative);
+	SetOutputIndex(arg.value, arg.relative);
 }
 
 void MeasureAudio::SetOutputIndex(long value, bool relative, bool clamp)

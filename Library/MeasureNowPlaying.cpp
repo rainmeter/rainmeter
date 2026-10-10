@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "../Common/WindowsTheme.h"
 #include "MeasureNowPlaying.h"
+#include "CommandHandler.h"
 #include "Rainmeter.h"
 #include "../Common/StringUtil.h"
 #include "NowPlaying/PlayerAIMP.h"
@@ -12,6 +13,9 @@
 #include "NowPlaying/PlayerWinamp.h"
 #include "NowPlaying/PlayerWLM.h"
 #include "NowPlaying/PlayerWMP.h"
+
+#include <cmath>
+#include <limits>
 
 struct ParentMeasure
 {
@@ -415,61 +419,51 @@ void MeasureNowPlaying::TogglePlayer()
 	GetInitializedPlayer() ? ClosePlayer() : OpenPlayer();
 }
 
-void MeasureNowPlaying::SetPosition(const WCHAR* arg)
+void MeasureNowPlaying::SetPosition(BangNumber arg)
 {
 	Player* player = GetInitializedPlayer();
 	if (!player) return;
 
-	int position = (int)(_wtof(arg) * (double)player->GetDuration()) / 100;
-	if (arg[0] == L'+' || arg[0] == L'-')
+	if (!std::isfinite(arg.value)) return;
+	double position = std::trunc(arg.value * (double)player->GetDuration() / 100);
+	if (arg.relative)
 	{
 		position += player->GetPosition();
 	}
 
-	player->SetPosition(position);
+	player->SetPosition((int)std::clamp(position, (double)(std::numeric_limits<int>::min)(), (double)(std::numeric_limits<int>::max)()));
 }
 
-void MeasureNowPlaying::SetRating(const WCHAR* arg)
+void MeasureNowPlaying::SetRating(int rating)
 {
 	Player* player = GetInitializedPlayer();
 	if (!player) return;
 
-	int rating = _wtoi(arg);
 	if (rating >= 0 && rating <= 5)
 	{
 		player->SetRating(rating);
 	}
 }
 
-void MeasureNowPlaying::SetVolume(const WCHAR* arg)
+void MeasureNowPlaying::SetVolume(BangInteger arg)
 {
 	Player* player = GetInitializedPlayer();
 	if (!player) return;
 
-	int volume = _wtoi(arg);
-	if (arg[0] == L'+' || arg[0] == L'-')
+	long long volume = arg.value;
+	if (arg.relative)
 	{
-		// Relative to current volume
 		volume += player->GetVolume();
 	}
 
-	if (volume < 0)
-	{
-		volume = 0;
-	}
-	else if (volume > 100)
-	{
-		volume = 100;
-	}
-	player->SetVolume(volume);
+	player->SetVolume((int)std::clamp(volume, (long long)0, (long long)100));
 }
 
-void MeasureNowPlaying::SetShuffle(const WCHAR* arg)
+void MeasureNowPlaying::SetShuffle(int state)
 {
 	Player* player = GetInitializedPlayer();
 	if (!player) return;
 
-	int state = _wtoi(arg);
 	if (state == -1)
 	{
 		player->SetShuffle(!player->GetShuffle());
@@ -480,12 +474,11 @@ void MeasureNowPlaying::SetShuffle(const WCHAR* arg)
 	}
 }
 
-void MeasureNowPlaying::SetRepeat(const WCHAR* arg)
+void MeasureNowPlaying::SetRepeat(int state)
 {
 	Player* player = GetInitializedPlayer();
 	if (!player) return;
 
-	int state = _wtoi(arg);
 	if (state == -1)
 	{
 		player->SetRepeat(!player->GetRepeat());
@@ -546,23 +539,23 @@ void MeasureNowPlaying::Command(const std::wstring& command)
 
 			if (_wcsnicmp(args, L"SetPosition", 11) == 0)
 			{
-				SetPosition(arg);
+				SetPosition(BangNumber{ _wtof(arg), arg[0] == L'+' || arg[0] == L'-' });
 			}
 			else if (_wcsnicmp(args, L"SetRating", 9) == 0)
 			{
-				SetRating(arg);
+				SetRating(_wtoi(arg));
 			}
 			else if (_wcsnicmp(args, L"SetVolume", 9) == 0)
 			{
-				SetVolume(arg);
+				SetVolume(BangInteger{ _wtoi(arg), arg[0] == L'+' || arg[0] == L'-' });
 			}
 			else if (_wcsnicmp(args, L"SetShuffle", 9) == 0)
 			{
-				SetShuffle(arg);
+				SetShuffle(_wtoi(arg));
 			}
 			else if (_wcsnicmp(args, L"SetRepeat", 9) == 0)
 			{
-				SetRepeat(arg);
+				SetRepeat(_wtoi(arg));
 			}
 			else
 			{

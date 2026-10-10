@@ -6,6 +6,8 @@
 
 enum MeasureType;
 struct ParentMeasure;
+struct BangNumber;
+struct BangInteger;
 class Player;
 
 class MeasureNowPlaying : public Measure
@@ -37,11 +39,11 @@ private:
 	void OpenPlayer();
 	void ClosePlayer();
 	void TogglePlayer();
-	void SetPosition(const WCHAR* arg);
-	void SetRating(const WCHAR* arg);
-	void SetVolume(const WCHAR* arg);
-	void SetShuffle(const WCHAR* arg);
-	void SetRepeat(const WCHAR* arg);
+	void SetPosition(BangNumber arg);
+	void SetRating(int rating);
+	void SetVolume(BangInteger arg);
+	void SetShuffle(int state);
+	void SetRepeat(int state);
 
 	Player* GetInitializedPlayer() const;
 

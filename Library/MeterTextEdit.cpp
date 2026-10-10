@@ -96,12 +96,8 @@ void MeterTextEdit::FocusBang()
 	FocusMeterScope focus(this, m_Skin);
 }
 
-void MeterTextEdit::SelectBang(const WCHAR* indexArg, const WCHAR* lengthArg)
+void MeterTextEdit::SelectBang(int index, int length)
 {
-	ConfigParser& parser = m_Skin->GetParser();
-	const int index = parser.ParseInt(indexArg, 0);
-	const int length = parser.ParseInt(lengthArg, -1);
-
 	FocusMeterScope focus(this, m_Skin);
 	SelectRange(index, length);
 }
@@ -118,9 +114,8 @@ void MeterTextEdit::SetTextBang(const WCHAR* text)
 	m_Skin->RequestWindowSizeCheck();
 }
 
-void MeterTextEdit::ScrollByLineBang(const WCHAR* linesArg)
+void MeterTextEdit::ScrollByLineBang(int lines)
 {
-	const int lines = m_Skin->GetParser().ParseInt(linesArg, 0);
 	ScrollByLine(lines);
 }
 
