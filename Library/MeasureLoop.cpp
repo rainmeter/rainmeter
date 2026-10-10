@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "MeasureLoop.h"
+#include "CommandHandler.h"
 #include "Rainmeter.h"
 
 MeasureLoop::MeasureLoop(Skin* skin, const WCHAR* name) : Measure(skin, name),
@@ -13,6 +14,11 @@ MeasureLoop::MeasureLoop(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_SkipFirst(true),
 	m_HasOverRun(false)
 {
+	static const bool s_BangsRegistered = []()
+	{
+		REGISTER_MEASURE_BANG(MeasureLoop, Reset, L"Loop:Reset");
+		return true;
+	} ();
 }
 
 MeasureLoop::~MeasureLoop()
