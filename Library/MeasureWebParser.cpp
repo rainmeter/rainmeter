@@ -247,8 +247,8 @@ MeasureWebParser::MeasureWebParser(Skin* skin, const WCHAR* name) : Measure(skin
 {
 	static const bool s_BangsRegistered = []()
 	{
-		REGISTER_MEASURE_BANG(MeasureWebParser, ResetCounter, L"WebParser:UpdateData");
-		REGISTER_MEASURE_BANG(MeasureWebParser, ResetValue, L"WebParser:ResetData");
+		REGISTER_MEASURE_BANG(MeasureWebParser, RequestRefetch, L"WebParser:Refetch");
+		REGISTER_MEASURE_BANG(MeasureWebParser, ClearResults, L"WebParser:ClearResults");
 		return true;
 	} ();
 
@@ -1239,7 +1239,7 @@ void LogWininetError(MeasureWebParser* measure, DWORD errorCode, const WCHAR* de
 	}
 }
 
-void MeasureWebParser::ResetCounter()
+void MeasureWebParser::RequestRefetch()
 {
 	if (m_FetchTask)
 	{
@@ -1256,7 +1256,7 @@ void MeasureWebParser::ResetCounter()
 	m_UpdateRateCounter = 0;
 }
 
-void MeasureWebParser::ResetValue()
+void MeasureWebParser::ClearResults()
 {
 	m_ResultString.clear();
 	m_DownloadedFile.clear();
@@ -1277,11 +1277,11 @@ void MeasureWebParser::Command(const std::wstring& command)
 
 	if (_wcsicmp(args, L"UPDATE") == 0)
 	{
-		ResetCounter();
+		RequestRefetch();
 	}
 	else if (_wcsicmp(args, L"RESET") == 0)
 	{
-		ResetValue();
+		ClearResults();
 	}
 }
 

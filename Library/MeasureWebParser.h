@@ -35,8 +35,8 @@ protected:
 	void Command(const std::wstring& command) override;
 
 private:
-	void ResetCounter();
-	void ResetValue();
+	void RequestRefetch();
+	void ClearResults();
 
 	enum class ParseType : BYTE
 	{
