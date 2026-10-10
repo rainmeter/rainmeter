@@ -7,6 +7,9 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 #define REGISTER_METER_BANG(type, handler, name) \
 	CommandHandler::RegisterMeterBang<type, &type::handler>(TypeID<type>(), name)
@@ -21,6 +24,7 @@ class ConfigParser;
 class Measure;
 class Meter;
 class Skin;
+class Section;
 
 enum class Bang
 {
@@ -176,59 +180,103 @@ public:
 	static void RegisterMeterBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeterBangFunc handlerFunc);
 	static void RegisterMeasureBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeasureBangFunc handlerFunc);
 
-	template<typename T, void (T::*Handler)()>
+	// BangNumber and BangInteger allow relative values; plain numeric arguments are absolute.
+	template<typename T, auto Handler>
 	static void RegisterMeterBang(UINT typeId, const WCHAR* name)
 	{
-		RegisterMeterBang(typeId, name, 0, [](Meter* meter, std::vector<std::wstring>& args, Skin* skin)
+		RegisterMeterBang(typeId, name, GetBangArgumentCount(Handler), [](Meter* meter, std::vector<std::wstring>& args, Skin* skin)
 		{
-			(((T*)meter)->*Handler)();
+			InvokeBang((T*)meter, args, skin, Handler);
 		});
 	}
 
-	template<typename T, void (T::*Handler)(const WCHAR*)>
-	static void RegisterMeterBang(UINT typeId, const WCHAR* name)
-	{
-		RegisterMeterBang(typeId, name, 1, [](Meter* meter, std::vector<std::wstring>& args, Skin* skin)
-		{
-			(((T*)meter)->*Handler)(args[0].c_str());
-		});
-	}
-
-	template<typename T, void (T::*Handler)(const WCHAR*, const WCHAR*)>
-	static void RegisterMeterBang(UINT typeId, const WCHAR* name)
-	{
-		RegisterMeterBang(typeId, name, 2, [](Meter* meter, std::vector<std::wstring>& args, Skin* skin)
-		{
-			(((T*)meter)->*Handler)(args[0].c_str(), args[1].c_str());
-		});
-	}
-
-	template<typename T, void (T::*Handler)()>
+	template<typename T, auto Handler>
 	static void RegisterMeasureBang(UINT typeId, const WCHAR* name)
 	{
-		RegisterMeasureBang(typeId, name, 0, [](Measure* measure, std::vector<std::wstring>& args, Skin* skin)
+		RegisterMeasureBang(typeId, name, GetBangArgumentCount(Handler), [](Measure* measure, std::vector<std::wstring>& args, Skin* skin)
 		{
-			(((T*)measure)->*Handler)();
-		});
-	}
-
-	template<typename T, void (T::*Handler)(const WCHAR*)>
-	static void RegisterMeasureBang(UINT typeId, const WCHAR* name)
-	{
-		RegisterMeasureBang(typeId, name, 1, [](Measure* measure, std::vector<std::wstring>& args, Skin* skin)
-		{
-			(((T*)measure)->*Handler)(args[0].c_str());
+			InvokeBang((T*)measure, args, skin, Handler);
 		});
 	}
 
 	static void RegisterSkinBang(const WCHAR* name, uint8_t argCount, SkinBangFunc handlerFunc);
 
-	template<void (Skin::*Handler)()>
+	template<auto Handler>
 	static void RegisterSkinBang(const WCHAR* name)
 	{
-		RegisterSkinBang(name, 0, [](std::vector<std::wstring>& args, Skin* skin)
+		RegisterSkinBang(name, GetBangArgumentCount(Handler), [](std::vector<std::wstring>& args, Skin* skin)
 		{
-			(skin->*Handler)();
+			InvokeBang(skin, args, skin, Handler);
 		});
+	}
+
+private:
+	static const ConfigParser& GetBangParser(Skin* skin);
+	static void ReportInvalidBangArgument(Section* section, size_t index, const std::wstring& argument);
+	static void ReportInvalidBangArgument(Skin* skin, size_t index, const std::wstring& argument);
+
+	template<typename T, typename... Args>
+	static constexpr uint8_t GetBangArgumentCount(void (T::*handler)(Args...))
+	{
+		static_assert(sizeof...(Args) <= 255);
+		return (uint8_t)sizeof...(Args);
+	}
+
+	template<typename T>
+	static std::optional<T> ParseBangArgument(Skin* skin, const std::wstring& argument)
+	{
+		static_assert(std::is_same_v<T, const WCHAR*> || std::is_same_v<T, int> || std::is_same_v<T, double> || std::is_same_v<T, BangInteger> || std::is_same_v<T, BangNumber>, "Unsupported bang argument type");
+		if constexpr (std::is_same_v<T, const WCHAR*>)
+		{
+			return argument.c_str();
+		}
+		else if constexpr (std::is_same_v<T, int> || std::is_same_v<T, BangInteger>)
+		{
+			const auto number = ParseBangInteger(GetBangParser(skin), argument, std::is_same_v<T, BangInteger>);
+			if (!number) return std::nullopt;
+
+			if constexpr (std::is_same_v<T, int>)
+			{
+				return number->value;
+			}
+			else
+			{
+				return number;
+			}
+		}
+		else
+		{
+			const auto number = ParseBangNumber(GetBangParser(skin), argument, std::is_same_v<T, BangNumber>);
+			if (!number) return std::nullopt;
+
+			if constexpr (std::is_same_v<T, double>)
+			{
+				return number->value;
+			}
+			else
+			{
+				return number;
+			}
+		}
+	}
+
+	template<typename SectionType, typename T, typename... Args>
+	static void InvokeBang(SectionType* section, std::vector<std::wstring>& args, Skin* skin, void (T::*handler)(Args...))
+	{
+		InvokeBang(section, args, skin, handler, std::index_sequence_for<Args...>{});
+	}
+
+	template<typename SectionType, typename T, typename... Args, size_t... Indices>
+	static void InvokeBang(SectionType* section, std::vector<std::wstring>& args, Skin* skin, void (T::*handler)(Args...), std::index_sequence<Indices...>)
+	{
+		const std::tuple<std::optional<Args>...> parsed{ ParseBangArgument<Args>(skin, args[Indices])... };
+		if ((std::get<Indices>(parsed).has_value() && ...))
+		{
+			(section->*handler)(*std::get<Indices>(parsed)...);
+		}
+		else
+		{
+			((std::get<Indices>(parsed).has_value() ? (void)0 : ReportInvalidBangArgument(section, Indices, args[Indices])), ...);
+		}
 	}
 };

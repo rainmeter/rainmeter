@@ -15,6 +15,7 @@
 #include "Meter.h"
 #include "Logger.h"
 #include "Rainmeter.h"
+#include "Skin.h"
 #include "System.h"
 #include "TrayIcon.h"
 #include "resource.h"
@@ -1447,6 +1448,21 @@ void CommandHandler::ExecuteBang(std::wstring_view name, std::vector<std::wstrin
 	}
 
 	LogErrorF(skin, L"Invalid bang: !%.*s", (int)name.length(), name.data());
+}
+
+const ConfigParser& CommandHandler::GetBangParser(Skin* skin)
+{
+	return skin->GetParser();
+}
+
+void CommandHandler::ReportInvalidBangArgument(Section* section, size_t index, const std::wstring& argument)
+{
+	LogErrorF(section, L"Invalid numeric bang argument %zu: %s", index + 1, argument.c_str());
+}
+
+void CommandHandler::ReportInvalidBangArgument(Skin* skin, size_t index, const std::wstring& argument)
+{
+	LogErrorF(skin, L"Invalid numeric bang argument %zu: %s", index + 1, argument.c_str());
 }
 
 std::optional<BangNumber> CommandHandler::ParseBangNumber(const ConfigParser& parser, std::wstring_view argument, bool allowRelative)

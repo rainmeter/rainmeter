@@ -3,11 +3,99 @@
 #include "StdAfx.h"
 #include "CommandHandler.h"
 #include "ConfigParser.h"
+#include "Measure.h"
+#include "Meter.h"
+#include "Skin.h"
 #include "../Common/UnitTest.h"
+
+class BangTestMeasure : public Measure
+{
+public:
+	BangTestMeasure(Skin* skin) : Measure(skin, L"BangTestMeasure") {}
+	UINT GetTypeID() override { return TypeID<BangTestMeasure>(); }
+
+	void SetValues(int integer, double number, BangInteger relativeInteger, BangNumber relativeNumber, const WCHAR* text)
+	{
+		++calls;
+		Assert::AreEqual(5, integer);
+		Assert::AreEqual(-2.5, number);
+		Assert::AreEqual(-3, relativeInteger.value);
+		Assert::IsTrue(relativeInteger.relative);
+		Assert::AreEqual(1.5, relativeNumber.value);
+		Assert::IsTrue(relativeNumber.relative);
+		Assert::AreEqual(L"(unparsed text)", text);
+	}
+
+	void Run() { ++calls; }
+	int calls = 0;
+
+protected:
+	void UpdateValue() override {}
+};
+
+class BangTestMeter : public Meter
+{
+public:
+	BangTestMeter(Skin* skin) : Meter(skin, L"BangTestMeter") {}
+	UINT GetTypeID() override { return TypeID<BangTestMeter>(); }
+
+	void SetValues(int index, int length)
+	{
+		++calls;
+		Assert::AreEqual(3, index);
+		Assert::AreEqual(-1, length);
+	}
+
+	int calls = 0;
+};
 
 TEST_CLASS(Library_CommandHandler_Test)
 {
 public:
+	TEST_METHOD(TestTypedMeasureRegistration)
+	{
+		Skin skin(L"", L"", false);
+		skin.GetParser().Initialize(L"", &skin, nullptr);
+		BangTestMeasure measure(&skin);
+		CurrentSectionScope currentSection(&skin, &measure);
+		CommandHandler::RegisterMeasureBang<BangTestMeasure, &BangTestMeasure::SetValues>(measure.GetTypeID(), L"BangTest:Values");
+		CommandHandler::RegisterMeasureBang<BangTestMeasure, &BangTestMeasure::Run>(measure.GetTypeID(), L"BangTest:Run");
+		CommandHandler handler;
+
+		std::vector<std::wstring> args = { L"(2 + 3)", L"-2.5", L"-(7 / 2)", L"+(3 / 2)", L"(unparsed text)" };
+		handler.ExecuteBang(L"BangTest:Values", args, &skin);
+		Assert::AreEqual(1, measure.calls);
+
+		args[1] = L"invalid";
+		handler.ExecuteBang(L"BangTest:Values", args, &skin);
+		Assert::AreEqual(1, measure.calls);
+
+		args.pop_back();
+		handler.ExecuteBang(L"BangTest:Values", args, &skin);
+		Assert::AreEqual(1, measure.calls);
+
+		args.clear();
+		handler.ExecuteBang(L"BangTest:Run", args, &skin);
+		Assert::AreEqual(2, measure.calls);
+	}
+
+	TEST_METHOD(TestTypedMeterRegistration)
+	{
+		Skin skin(L"", L"", false);
+		skin.GetParser().Initialize(L"", &skin, nullptr);
+		BangTestMeter meter(&skin);
+		CurrentSectionScope currentSection(&skin, &meter);
+		CommandHandler::RegisterMeterBang<BangTestMeter, &BangTestMeter::SetValues>(meter.GetTypeID(), L"BangTest:Select");
+		CommandHandler handler;
+		std::vector<std::wstring> args = { L"(6 / 2)", L"-1" };
+		handler.ExecuteBang(L"BangTest:Select", args, &skin);
+		Assert::AreEqual(1, meter.calls);
+
+		args[1] = L"2147483648";
+		handler.ExecuteBang(L"BangTest:Select", args, &skin);
+		Assert::AreEqual(1, meter.calls);
+	}
+
 	TEST_METHOD(TestNumbersAndFormulas)
 	{
 		ConfigParser parser;
