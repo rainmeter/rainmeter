@@ -176,6 +176,7 @@ public:
 	// A leading sign selects relative mode only when allowed. Parenthesized signs are part of the formula.
 	static std::optional<BangNumber> ParseBangNumber(const ConfigParser& parser, std::wstring_view argument, bool allowRelative = false);
 	static std::optional<BangInteger> ParseBangInteger(const ConfigParser& parser, std::wstring_view argument, bool allowRelative = false);
+	static std::optional<UINT> ParseBangUInt(const ConfigParser& parser, std::wstring_view argument);
 
 	static void RegisterMeterBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeterBangFunc handlerFunc);
 	static void RegisterMeasureBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeasureBangFunc handlerFunc);
@@ -225,10 +226,14 @@ private:
 	template<typename T>
 	static std::optional<T> ParseBangArgument(Skin* skin, const std::wstring& argument)
 	{
-		static_assert(std::is_same_v<T, const WCHAR*> || std::is_same_v<T, int> || std::is_same_v<T, double> || std::is_same_v<T, BangInteger> || std::is_same_v<T, BangNumber>, "Unsupported bang argument type");
+		static_assert(std::is_same_v<T, const WCHAR*> || std::is_same_v<T, int> || std::is_same_v<T, UINT> || std::is_same_v<T, double> || std::is_same_v<T, BangInteger> || std::is_same_v<T, BangNumber>, "Unsupported bang argument type");
 		if constexpr (std::is_same_v<T, const WCHAR*>)
 		{
 			return argument.c_str();
+		}
+		else if constexpr (std::is_same_v<T, UINT>)
+		{
+			return ParseBangUInt(GetBangParser(skin), argument);
 		}
 		else if constexpr (std::is_same_v<T, int> || std::is_same_v<T, BangInteger>)
 		{

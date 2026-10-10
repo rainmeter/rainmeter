@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "MeasureWindowMessage.h"
+#include "CommandHandler.h"
 #include "ConfigParser.h"
 #include "Logger.h"
 
@@ -13,6 +14,11 @@ MeasureWindowMessage::MeasureWindowMessage(Skin* skin, const WCHAR* name) : Meas
 	m_LParam(0),
 	m_Message(0)
 {
+	static const bool s_BangsRegistered = []()
+	{
+		REGISTER_MEASURE_BANG(MeasureWindowMessage, Send, L"WindowMessage:Send");
+		return true;
+	} ();
 }
 
 MeasureWindowMessage::~MeasureWindowMessage()
@@ -92,15 +98,7 @@ void MeasureWindowMessage::Command(const std::wstring& command)
 			UINT lParam = 0;
 			if (swscanf_s(pos, L"%u %u %u", &message, &wParam, &lParam) == 3)
 			{
-				HWND hwnd = FindTargetWindow();
-				if (hwnd)
-				{
-					PostMessage(hwnd, message, wParam, lParam);
-				}
-				else
-				{
-					LogErrorF(this, L"Unable to find window");
-				}
+				Send(message, wParam, lParam);
 			}
 			else
 			{
@@ -112,6 +110,19 @@ void MeasureWindowMessage::Command(const std::wstring& command)
 	}
 
 	LogWarningF(this, L"Unknown bang");
+}
+
+void MeasureWindowMessage::Send(UINT message, UINT wParam, UINT lParam)
+{
+	HWND hwnd = FindTargetWindow();
+	if (hwnd)
+	{
+		PostMessage(hwnd, message, wParam, lParam);
+	}
+	else
+	{
+		LogErrorF(this, L"Unable to find window");
+	}
 }
 
 HWND MeasureWindowMessage::FindTargetWindow() const

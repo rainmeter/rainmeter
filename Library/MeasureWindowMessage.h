@@ -23,6 +23,7 @@ protected:
 	virtual void Command(const std::wstring& command);
 
 private:
+	void Send(UINT message, UINT wParam, UINT lParam);
 	HWND FindTargetWindow() const;
 
 	std::wstring m_WindowName;

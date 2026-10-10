@@ -1490,6 +1490,17 @@ std::optional<BangInteger> CommandHandler::ParseBangInteger(const ConfigParser& 
 	return BangInteger{ (int)value, number->relative };
 }
 
+std::optional<UINT> CommandHandler::ParseBangUInt(const ConfigParser& parser, std::wstring_view argument)
+{
+	const auto number = ParseBangNumber(parser, argument);
+	if (!number) return std::nullopt;
+
+	const double value = std::trunc(number->value);
+	if (value < 0.0 || value > (double)(std::numeric_limits<UINT>::max)()) return std::nullopt;
+
+	return (UINT)value;
+}
+
 void CommandHandler::RegisterMeterBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeterBangFunc handlerFunc)
 {
 	RegisterSectionBang({
