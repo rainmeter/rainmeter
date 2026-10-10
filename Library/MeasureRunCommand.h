@@ -30,6 +30,11 @@ protected:
 	void Command(const std::wstring& command) override;
 
 private:
+	void Run();
+	void Close();
+	void Kill();
+	void Terminate(bool force);
+
 	class RunCommandTask;
 	struct SharedData;
 

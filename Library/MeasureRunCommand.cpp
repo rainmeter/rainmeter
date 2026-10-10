@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "MeasureRunCommand.h"
 #include "AsyncTask.h"
+#include "CommandHandler.h"
 #include "ConfigParser.h"
 #include "Logger.h"
 #include "Rainmeter.h"
@@ -428,6 +429,14 @@ MeasureRunCommand::MeasureRunCommand(Skin* skin, const WCHAR* name) : Measure(sk
 	m_Data(std::make_shared<SharedData>(this)),
 	m_Task(nullptr)
 {
+	static const bool s_BangsRegistered = []()
+	{
+		REGISTER_MEASURE_BANG(MeasureRunCommand, Run, L"RunCommand:Run");
+		REGISTER_MEASURE_BANG(MeasureRunCommand, Close, L"RunCommand:Close");
+		REGISTER_MEASURE_BANG(MeasureRunCommand, Kill, L"RunCommand:Kill");
+		return true;
+	} ();
+
 	m_Value = -1.0;
 }
 
@@ -503,46 +512,68 @@ std::optional<std::wstring_view> MeasureRunCommand::GetStringValue()
 void MeasureRunCommand::Command(const std::wstring& command)
 {
 	const WCHAR* args = command.c_str();
-
 	if (_wcsicmp(args, L"RUN") == 0)
 	{
-		if (!m_Task && !m_Program.empty())
-		{
-			m_Value = 0.0;
-			m_Task = RunCommandTask::Create(this, m_Data, m_Program, m_Parameter, m_FinishAction, m_OutputFile, m_Folder, m_State, m_Timeout, m_OutputType);
-			if (!m_Task)
-			{
-				m_Value = 103.0;
-				LogErrorF(this, err_Process, m_Program.c_str());
-			}
-		}
-		else
-		{
-			m_Value = 101.0;
-			LogNoticeF(this, err_CmdRunning, m_Program.c_str());
-		}
+		Run();
 	}
-	else if (_wcsicmp(args, L"CLOSE") == 0 || _wcsicmp(args, L"KILL") == 0)
+	else if (_wcsicmp(args, L"CLOSE") == 0)
 	{
-		CriticalSectionLock lock(m_Data->criticalSection);
-		if (m_Task && m_Data->processId != 0)
-		{
-			const auto kill = _wcsicmp(args, L"KILL") == 0;
-			if (!TerminateTarget(m_Data->m_ProcessHandle, m_Data->m_JobHandle, m_Data->processId, kill))
-			{
-				m_Value = 105.0;
-				LogErrorF(this, err_Terminate, m_Program.c_str());
-			}
-		}
-		else
-		{
-			m_Value = 102.0;
-			LogErrorF(this, err_NotRunning, m_Program.c_str());
-		}
+		Close();
+	}
+	else if (_wcsicmp(args, L"KILL") == 0)
+	{
+		Kill();
 	}
 	else
 	{
 		m_Value = 100.0;
 		LogNoticeF(this, err_UnknownCmd, args);
+	}
+}
+
+void MeasureRunCommand::Run()
+{
+	if (!m_Task && !m_Program.empty())
+	{
+		m_Value = 0.0;
+		m_Task = RunCommandTask::Create(this, m_Data, m_Program, m_Parameter, m_FinishAction, m_OutputFile, m_Folder, m_State, m_Timeout, m_OutputType);
+		if (!m_Task)
+		{
+			m_Value = 103.0;
+			LogErrorF(this, err_Process, m_Program.c_str());
+		}
+	}
+	else
+	{
+		m_Value = 101.0;
+		LogNoticeF(this, err_CmdRunning, m_Program.c_str());
+	}
+}
+
+void MeasureRunCommand::Close()
+{
+	Terminate(false);
+}
+
+void MeasureRunCommand::Kill()
+{
+	Terminate(true);
+}
+
+void MeasureRunCommand::Terminate(bool force)
+{
+	CriticalSectionLock lock(m_Data->criticalSection);
+	if (m_Task && m_Data->processId != 0)
+	{
+		if (!TerminateTarget(m_Data->m_ProcessHandle, m_Data->m_JobHandle, m_Data->processId, force))
+		{
+			m_Value = 105.0;
+			LogErrorF(this, err_Terminate, m_Program.c_str());
+		}
+	}
+	else
+	{
+		m_Value = 102.0;
+		LogErrorF(this, err_NotRunning, m_Program.c_str());
 	}
 }
