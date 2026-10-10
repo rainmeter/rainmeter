@@ -4,6 +4,7 @@
 #include "../Common/IniFile.h"
 #include "../Common/Map.h"
 #include "../Common/PathUtil.h"
+#include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
 #include "CommandHandler.h"
 #include "ConfigParser.h"
@@ -17,6 +18,9 @@
 #include "System.h"
 #include "TrayIcon.h"
 #include "resource.h"
+
+#include <cmath>
+#include <limits>
 
 namespace {
 
@@ -1443,6 +1447,31 @@ void CommandHandler::ExecuteBang(std::wstring_view name, std::vector<std::wstrin
 	}
 
 	LogErrorF(skin, L"Invalid bang: !%.*s", (int)name.length(), name.data());
+}
+
+std::optional<BangNumber> CommandHandler::ParseBangNumber(const ConfigParser& parser, std::wstring_view argument, bool allowRelative)
+{
+	StringParser input(argument);
+	input.ConsumeWhitespace();
+	const bool negative = input.Consume(L'-');
+	const bool signedValue = negative || input.Consume(L'+');
+	if (signedValue && (input.Remaining().starts_with(L'+') || input.Remaining().starts_with(L'-'))) return std::nullopt;
+
+	const auto value = input.ConsumeRestDoubleOrFormula(parser.GetMathParser(), StringParser::SkipWhitespace);
+	if (!value || !std::isfinite(*value)) return std::nullopt;
+
+	return BangNumber{ negative ? -*value : *value, allowRelative && signedValue };
+}
+
+std::optional<BangInteger> CommandHandler::ParseBangInteger(const ConfigParser& parser, std::wstring_view argument, bool allowRelative)
+{
+	const auto number = ParseBangNumber(parser, argument, allowRelative);
+	if (!number) return std::nullopt;
+
+	const double value = std::trunc(number->value);
+	if (value < (double)(std::numeric_limits<int>::min)() || value > (double)(std::numeric_limits<int>::max)()) return std::nullopt;
+
+	return BangInteger{ (int)value, number->relative };
 }
 
 void CommandHandler::RegisterMeterBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeterBangFunc handlerFunc)

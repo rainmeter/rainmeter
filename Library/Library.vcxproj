@@ -31,6 +31,9 @@
     <ClCompile Include="AsyncTask.cpp" />
     <ClCompile Include="ClickCapture.cpp" />
     <ClCompile Include="CommandHandler.cpp" />
+    <ClCompile Include="CommandHandler_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="IniNameRegistry.cpp" />
     <ClCompile Include="ConfigParser.cpp" />
     <ClCompile Include="ConfigParser_Test.cpp">

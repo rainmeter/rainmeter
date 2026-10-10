@@ -3,6 +3,7 @@
 #pragma once
 
 #include <Windows.h>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -144,6 +145,18 @@ using MeterBangFunc = void (*)(Meter* meter, std::vector<std::wstring>& args, Sk
 using MeasureBangFunc = void (*)(Measure* measure, std::vector<std::wstring>& args, Skin* skin);
 using SkinBangFunc = void (*)(std::vector<std::wstring>& args, Skin* skin);
 
+struct BangNumber
+{
+	double value;
+	bool relative;
+};
+
+struct BangInteger
+{
+	int value;
+	bool relative;
+};
+
 // Parses and executes commands and bangs.
 class CommandHandler
 {
@@ -155,6 +168,10 @@ public:
 	static void RunFile(const std::wstring& file, const std::wstring& args = {});
 
 	static std::vector<std::wstring> ParseString(const WCHAR* str, ConfigParser* parser = nullptr);
+
+	// A leading sign selects relative mode only when allowed. Parenthesized signs are part of the formula.
+	static std::optional<BangNumber> ParseBangNumber(const ConfigParser& parser, std::wstring_view argument, bool allowRelative = false);
+	static std::optional<BangInteger> ParseBangInteger(const ConfigParser& parser, std::wstring_view argument, bool allowRelative = false);
 
 	static void RegisterMeterBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeterBangFunc handlerFunc);
 	static void RegisterMeasureBang(UINT typeId, const WCHAR* name, uint8_t argCount, MeasureBangFunc handlerFunc);

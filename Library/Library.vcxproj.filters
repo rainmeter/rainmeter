@@ -55,6 +55,7 @@
     </ClCompile>
     <ClCompile Include="ClickCapture.cpp" />
     <ClCompile Include="CommandHandler.cpp" />
+    <ClCompile Include="CommandHandler_Test.cpp" />
     <ClCompile Include="IniNameRegistry.cpp" />
     <ClCompile Include="ConfigParser.cpp" />
     <ClCompile Include="ConfigParser_Test.cpp" />
