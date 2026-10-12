@@ -326,7 +326,7 @@ static bool RunUninstallDialog()
 	SecureZeroMemory(&config, sizeof(config));
 	config.cbSize = sizeof(config);
 	config.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | TDF_POSITION_RELATIVE_TO_WINDOW | TDF_USE_HICON_MAIN;
-	config.cxWidth = 300;
+	config.cxWidth = 180;
 	config.dwCommonButtons = TDCBF_CANCEL_BUTTON;
 	config.pszWindowTitle = uninstallRainmeter;
 	config.hMainIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_RAINMETER));
