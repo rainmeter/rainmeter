@@ -1312,7 +1312,7 @@ const std::wstring& ConfigParser::ReadStringInternal(OptionReader& reader, IniOp
 	return result;
 }
 
-size_t ConfigParser::MatchEnumOption(OptionReader& reader, IniOptionID option, const WCHAR* const* names, size_t count, size_t stride)
+size_t ConfigParser::MatchEnumOption(OptionReader& reader, IniOptionID option, const WCHAR* const* names, size_t count, size_t stride, std::wstring_view optionName)
 {
 	const auto* value = ReadString(reader, option, L"").c_str();
 	if (!*value) return count;
@@ -1324,8 +1324,7 @@ size_t ConfigParser::MatchEnumOption(OptionReader& reader, IniOptionID option, c
 		if (_wcsicmp(value, name) == 0) return i;
 	}
 
-	const std::wstring& optionName = GetOptionName(option);
-	LogErrorF(GetSection(reader.GetSectionID()), L"%s=%s is not valid", optionName.c_str(), value);
+	LogErrorF(GetSection(reader.GetSectionID()), L"%.*s=%s is not valid", (int)optionName.size(), optionName.data(), value);
 	return count;
 }
 
@@ -1383,7 +1382,7 @@ Meter* ConfigParser::GetMeter(std::wstring_view name)
 	return (section && section->GetBaseTypeID() == TypeID<Meter>()) ? (Meter*)section : nullptr;
 }
 
-int ConfigParser::ReadInt(OptionReader& reader, IniOptionID option, int defValue)
+int ConfigParser::ReadInt(OptionReader& reader, IniOptionID option, int defValue, std::wstring_view optionName)
 {
 	const std::wstring& result = ReadString(reader, option, L"");
 
@@ -1399,7 +1398,6 @@ int ConfigParser::ReadInt(OptionReader& reader, IniOptionID option, int defValue
 				return (int)dblValue;
 			}
 
-			const std::wstring& optionName = GetOptionName(option);
 			LogFormulaKeyError(m_Skin, errMsg, reader.GetSectionName(), optionName);
 		}
 		else if (*str)
@@ -1416,7 +1414,7 @@ int ConfigParser::ReadInt(OptionReader& reader, IniOptionID option, int defValue
 	return defValue;
 }
 
-uint32_t ConfigParser::ReadUInt(OptionReader& reader, IniOptionID option, uint32_t defValue)
+uint32_t ConfigParser::ReadUInt(OptionReader& reader, IniOptionID option, uint32_t defValue, std::wstring_view optionName)
 {
 	const std::wstring& result = ReadString(reader, option, L"");
 
@@ -1432,7 +1430,6 @@ uint32_t ConfigParser::ReadUInt(OptionReader& reader, IniOptionID option, uint32
 				return (uint32_t)dblValue;
 			}
 
-			const std::wstring& optionName = GetOptionName(option);
 			LogFormulaKeyError(m_Skin, errMsg, reader.GetSectionName(), optionName);
 		}
 		else if (*str)
@@ -1449,7 +1446,7 @@ uint32_t ConfigParser::ReadUInt(OptionReader& reader, IniOptionID option, uint32
 	return defValue;
 }
 
-uint64_t ConfigParser::ReadUInt64(OptionReader& reader, IniOptionID option, uint64_t defValue)
+uint64_t ConfigParser::ReadUInt64(OptionReader& reader, IniOptionID option, uint64_t defValue, std::wstring_view optionName)
 {
 	const std::wstring& result = ReadString(reader, option, L"");
 
@@ -1465,7 +1462,6 @@ uint64_t ConfigParser::ReadUInt64(OptionReader& reader, IniOptionID option, uint
 				return (uint64_t)dblValue;
 			}
 
-			const std::wstring& optionName = GetOptionName(option);
 			LogFormulaKeyError(m_Skin, errMsg, reader.GetSectionName(), optionName);
 		}
 		else if (*str)
@@ -1482,7 +1478,7 @@ uint64_t ConfigParser::ReadUInt64(OptionReader& reader, IniOptionID option, uint
 	return defValue;
 }
 
-double ConfigParser::ReadFloat(OptionReader& reader, IniOptionID option, double defValue)
+double ConfigParser::ReadFloat(OptionReader& reader, IniOptionID option, double defValue, std::wstring_view optionName)
 {
 	const std::wstring& result = ReadString(reader, option, L"");
 
@@ -1498,7 +1494,6 @@ double ConfigParser::ReadFloat(OptionReader& reader, IniOptionID option, double 
 				return value;
 			}
 
-			const std::wstring& optionName = GetOptionName(option);
 			LogFormulaKeyError(m_Skin, errMsg, reader.GetSectionName(), optionName);
 		}
 		else if (*str)
@@ -1834,11 +1829,6 @@ IniOptionID ConfigParser::FindOptionID(std::wstring_view option) const
 {
 	const auto id = IniNameRegistry::FindOption(option);
 	return id ? *id : IniOptionID{};
-}
-
-const std::wstring& ConfigParser::GetOptionName(IniOptionID option) const
-{
-	return IniNameRegistry::GetOptionName(option);
 }
 
 const std::wstring* ConfigParser::GetValue(IniSectionID section, IniOptionID option) const

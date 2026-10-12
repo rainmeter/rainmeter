@@ -69,15 +69,4 @@ std::optional<IniOptionID> FindOption(std::wstring_view name)
 	return normalized ? FindName(g_Options, *normalized) : std::nullopt;
 }
 
-const std::wstring& GetOptionName(IniOptionID id)
-{
-	for (const auto& option : g_Options)
-	{
-		if (option.second == id) return option.first;
-	}
-
-	static const std::wstring empty;
-	return empty;
-}
-
 }  // namespace IniNameRegistry

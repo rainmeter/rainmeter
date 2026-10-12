@@ -95,6 +95,5 @@ IniOptionID InternOption()
 
 std::optional<IniSectionID> FindSection(std::wstring_view name);
 std::optional<IniOptionID> FindOption(std::wstring_view name);
-const std::wstring& GetOptionName(IniOptionID id);
 
 }  // namespace IniNameRegistry

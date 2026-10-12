@@ -92,29 +92,23 @@ public:
 		const std::wstring& ReadActionString(std::wstring_view option, std::wstring_view defValue = {}) { return ReadActionString(m_Parser.FindOptionID(option), defValue); }
 		template<FixedWString Name> const std::wstring& ReadActionString(std::wstring_view defValue = {}) { return ReadActionString(IniNameRegistry::InternOption<Name>(), defValue); }
 
-		template<typename T, size_t N> T ReadEnum(IniOptionID option, T defValue, const EnumOption<T> (&options)[N]) { return m_Parser.ReadEnum(*this, option, defValue, options); }
-		template<typename T, size_t N> T ReadEnum(std::wstring_view option, T defValue, const EnumOption<T> (&options)[N]) { return ReadEnum(m_Parser.FindOptionID(option), defValue, options); }
-		template<FixedWString Name, typename T, size_t N> T ReadEnum(T defValue, const EnumOption<T> (&options)[N]) { return ReadEnum(IniNameRegistry::InternOption<Name>(), defValue, options); }
+		template<typename T, size_t N> T ReadEnum(std::wstring_view option, T defValue, const EnumOption<T> (&options)[N]) { return m_Parser.ReadEnum(*this, m_Parser.FindOptionID(option), defValue, options, option); }
+		template<FixedWString Name, typename T, size_t N> T ReadEnum(T defValue, const EnumOption<T> (&options)[N]) { return m_Parser.ReadEnum(*this, IniNameRegistry::InternOption<Name>(), defValue, options, Name.View()); }
 
-		bool ReadBool(IniOptionID option, bool defValue) { return m_Parser.ReadBool(*this, option, defValue); }
-		bool ReadBool(std::wstring_view option, bool defValue) { return ReadBool(m_Parser.FindOptionID(option), defValue); }
-		template<FixedWString Name> bool ReadBool(bool defValue) { return ReadBool(IniNameRegistry::InternOption<Name>(), defValue); }
+		bool ReadBool(std::wstring_view option, bool defValue) { return m_Parser.ReadBool(*this, m_Parser.FindOptionID(option), defValue, option); }
+		template<FixedWString Name> bool ReadBool(bool defValue) { return m_Parser.ReadBool(*this, IniNameRegistry::InternOption<Name>(), defValue, Name.View()); }
 
-		int ReadInt(IniOptionID option, int defValue) { return m_Parser.ReadInt(*this, option, defValue); }
-		int ReadInt(std::wstring_view option, int defValue) { return ReadInt(m_Parser.FindOptionID(option), defValue); }
-		template<FixedWString Name> int ReadInt(int defValue) { return ReadInt(IniNameRegistry::InternOption<Name>(), defValue); }
+		int ReadInt(std::wstring_view option, int defValue) { return m_Parser.ReadInt(*this, m_Parser.FindOptionID(option), defValue, option); }
+		template<FixedWString Name> int ReadInt(int defValue) { return m_Parser.ReadInt(*this, IniNameRegistry::InternOption<Name>(), defValue, Name.View()); }
 
-		uint32_t ReadUInt(IniOptionID option, uint32_t defValue) { return m_Parser.ReadUInt(*this, option, defValue); }
-		uint32_t ReadUInt(std::wstring_view option, uint32_t defValue) { return ReadUInt(m_Parser.FindOptionID(option), defValue); }
-		template<FixedWString Name> uint32_t ReadUInt(uint32_t defValue) { return ReadUInt(IniNameRegistry::InternOption<Name>(), defValue); }
+		uint32_t ReadUInt(std::wstring_view option, uint32_t defValue) { return m_Parser.ReadUInt(*this, m_Parser.FindOptionID(option), defValue, option); }
+		template<FixedWString Name> uint32_t ReadUInt(uint32_t defValue) { return m_Parser.ReadUInt(*this, IniNameRegistry::InternOption<Name>(), defValue, Name.View()); }
 
-		uint64_t ReadUInt64(IniOptionID option, uint64_t defValue) { return m_Parser.ReadUInt64(*this, option, defValue); }
-		uint64_t ReadUInt64(std::wstring_view option, uint64_t defValue) { return ReadUInt64(m_Parser.FindOptionID(option), defValue); }
-		template<FixedWString Name> uint64_t ReadUInt64(uint64_t defValue) { return ReadUInt64(IniNameRegistry::InternOption<Name>(), defValue); }
+		uint64_t ReadUInt64(std::wstring_view option, uint64_t defValue) { return m_Parser.ReadUInt64(*this, m_Parser.FindOptionID(option), defValue, option); }
+		template<FixedWString Name> uint64_t ReadUInt64(uint64_t defValue) { return m_Parser.ReadUInt64(*this, IniNameRegistry::InternOption<Name>(), defValue, Name.View()); }
 
-		double ReadFloat(IniOptionID option, double defValue) { return m_Parser.ReadFloat(*this, option, defValue); }
-		double ReadFloat(std::wstring_view option, double defValue) { return ReadFloat(m_Parser.FindOptionID(option), defValue); }
-		template<FixedWString Name> double ReadFloat(double defValue) { return ReadFloat(IniNameRegistry::InternOption<Name>(), defValue); }
+		double ReadFloat(std::wstring_view option, double defValue) { return m_Parser.ReadFloat(*this, m_Parser.FindOptionID(option), defValue, option); }
+		template<FixedWString Name> double ReadFloat(double defValue) { return m_Parser.ReadFloat(*this, IniNameRegistry::InternOption<Name>(), defValue, Name.View()); }
 
 		D2D1_COLOR_F ReadColor(IniOptionID option, const D2D1_COLOR_F& defValue) { return m_Parser.ReadColor(*this, option, defValue); }
 		D2D1_COLOR_F ReadColor(std::wstring_view option, const D2D1_COLOR_F& defValue) { return ReadColor(m_Parser.FindOptionID(option), defValue); }
@@ -229,17 +223,17 @@ private:
 	const std::wstring& ReadString(OptionReader& reader, IniOptionID option, std::wstring_view defValue = {}, ReadOptions options = {});
 
 	template<typename T, size_t N>
-	T ReadEnum(OptionReader& reader, IniOptionID option, T defValue, const EnumOption<T> (&options)[N])
+	T ReadEnum(OptionReader& reader, IniOptionID option, T defValue, const EnumOption<T> (&options)[N], std::wstring_view optionName)
 	{
-		const size_t index = MatchEnumOption(reader, option, &options[0].name, N, sizeof(EnumOption<T>));
+		const size_t index = MatchEnumOption(reader, option, &options[0].name, N, sizeof(EnumOption<T>), optionName);
 		return index < N ? options[index].value : defValue;
 	}
 
-	bool ReadBool(OptionReader& reader, IniOptionID option, bool defValue) { return ReadInt(reader, option, (int)defValue) != 0; }
-	int ReadInt(OptionReader& reader, IniOptionID option, int defValue);
-	uint32_t ReadUInt(OptionReader& reader, IniOptionID option, uint32_t defValue);
-	uint64_t ReadUInt64(OptionReader& reader, IniOptionID option, uint64_t defValue);
-	double ReadFloat(OptionReader& reader, IniOptionID option, double defValue);
+	bool ReadBool(OptionReader& reader, IniOptionID option, bool defValue, std::wstring_view optionName) { return ReadInt(reader, option, (int)defValue, optionName) != 0; }
+	int ReadInt(OptionReader& reader, IniOptionID option, int defValue, std::wstring_view optionName);
+	uint32_t ReadUInt(OptionReader& reader, IniOptionID option, uint32_t defValue, std::wstring_view optionName);
+	uint64_t ReadUInt64(OptionReader& reader, IniOptionID option, uint64_t defValue, std::wstring_view optionName);
+	double ReadFloat(OptionReader& reader, IniOptionID option, double defValue, std::wstring_view optionName);
 	D2D1_COLOR_F ReadColor(OptionReader& reader, IniOptionID option, const D2D1_COLOR_F& defValue);
 	D2D1_RECT_F ReadRect(OptionReader& reader, IniOptionID option, const D2D1_RECT_F& defValue);
 	RECT ReadRECT(OptionReader& reader, IniOptionID option, const RECT& defValue);
@@ -268,8 +262,7 @@ private:
 	const std::wstring& ReadStringInternal(OptionReader& reader, IniOptionID option, std::wstring_view defValue, ReadOptions options);
 	IniSectionID FindSectionID(std::wstring_view section) const;
 	IniOptionID FindOptionID(std::wstring_view option) const;
-	const std::wstring& GetOptionName(IniOptionID option) const;
-	size_t MatchEnumOption(OptionReader& reader, IniOptionID option, const WCHAR* const* names, size_t count, size_t stride);
+	size_t MatchEnumOption(OptionReader& reader, IniOptionID option, const WCHAR* const* names, size_t count, size_t stride, std::wstring_view optionName);
 
 	static std::wstring StrToUpper(std::wstring_view str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
