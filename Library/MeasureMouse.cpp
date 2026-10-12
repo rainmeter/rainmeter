@@ -108,15 +108,6 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 		return CallNextHookEx(g_MouseHook, nCode, wParam, lParam);
 	}
 
-	// Capture can send the skin events that belong to Rainmeter's dialogs and controls.
-	const HWND target = GetAncestor(WindowFromPoint(screenPos), GA_ROOT);
-	DWORD processId = 0;
-	if (target && GetWindowThreadProcessId(target, &processId) &&
-		processId == GetCurrentProcessId() && !GetRainmeter().GetSkin(target))
-	{
-		return CallNextHookEx(g_MouseHook, nCode, wParam, lParam);
-	}
-
 	switch (msg)
 	{
 	case WM_NCMOUSEMOVE:
