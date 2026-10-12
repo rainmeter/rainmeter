@@ -75,18 +75,23 @@ bool Updater::InstallUpdate()
 	const std::wstring& dataFile = rainmeter.GetDataFile();
 	const std::wstring path = rainmeter.GetSettingsPath() + L"Updates\\";
 	const auto fileName = IniFile::ReadKey(dataFile, L"Rainmeter", L"InstallerName", L"");
-	const auto sha256 = IniFile::ReadKey(dataFile, L"Rainmeter", L"InstallerSha256", L"");
-	const std::wstring fullPath = path + fileName;
-	const bool runInstaller = !fileName.empty() && !sha256.empty() && VerifyInstaller(path, fileName, sha256, false);
+	bool runInstaller = false;
 
-	IniFile::Writer ini(dataFile);
-	ini.DeleteKey(L"Rainmeter", L"InstallerName");
-	ini.DeleteKey(L"Rainmeter", L"InstallerSha256");
-	ini.DeleteKey(L"Rainmeter", L"DeleteInstaller");
-	ini.Save();
+	if (!fileName.empty())
+	{
+		const auto sha256 = IniFile::ReadKey(dataFile, L"Rainmeter", L"InstallerSha256", L"");
+		runInstaller = !sha256.empty() && VerifyInstaller(path, fileName, sha256, false);
+
+		IniFile::Writer ini(dataFile);
+		ini.DeleteKey(L"Rainmeter", L"InstallerName");
+		ini.DeleteKey(L"Rainmeter", L"InstallerSha256");
+		ini.DeleteKey(L"Rainmeter", L"DeleteInstaller");
+		ini.Save();
+	}
 
 	if (runInstaller)
 	{
+		const std::wstring fullPath = path + fileName;
 		const std::wstring& installPath = rainmeter.GetPath();
 		const std::wstring isPortable = _wcsicmp(installPath.c_str(), rainmeter.GetSettingsPath().c_str()) == 0 ? L"1" : L"0";
 		const std::wstring is64Bit = wcscmp(APPBITS, L"64-bit") == 0 ? L"64" : L"32";
