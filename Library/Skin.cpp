@@ -712,8 +712,8 @@ void Skin::UpdateWindowBounds(UINT flags)
 {
 	POINT pos;
 
-	// SetWindowPos synchronously sends WM_MOVE. Preserve a virtualized position while applying it;
-	// native moves and drags will still replace it with the physical point received by OnMove.
+	// SetWindowPos synchronously sends WM_MOVE. Preserve the virtualized position only if
+	// snapping and screen limits leave it unchanged, so redraws use the actual window position.
 	const bool restoreVirtualized = m_Position.IsVirtualized();
 	POINT restorePos = {};
 	bool dpiChanged = false;
@@ -745,7 +745,16 @@ void Skin::UpdateWindowBounds(UINT flags)
 		flags | SWP_NOZORDER | SWP_NOACTIVATE);
 	if (restoreVirtualized)
 	{
-		m_Position.SetVirtualized(restorePos, SkinPositionOrigin::Options);
+		RECT windowRect;
+		if (GetWindowRect(m_Window, &windowRect) && (windowRect.left != pos.x || windowRect.top != pos.y))
+		{
+			m_Position.SetPhysical({ windowRect.left, windowRect.top }, SkinPositionOrigin::Options);
+		}
+		else
+		{
+			m_Position.SetVirtualized(restorePos, SkinPositionOrigin::Options);
+		}
+
 	}
 
 	if (m_SelectionOverlay) m_SelectionOverlay->Update();
