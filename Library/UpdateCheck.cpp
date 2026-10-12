@@ -31,7 +31,7 @@ std::wstring LOCAL_STATUS_FILE = L"";
 }  // namespace
 
 bool Updater::s_IsInDebugMode = false;
-LPCWSTR Updater::s_UpdateURL = L"https://version.rainmeter.net/rainmeter/status.json";
+LPCWSTR Updater::s_UpdateURL = L"https://version.rainmeter.net/rainmeter/status-v4.json";
 LPCWSTR Updater::s_DownloadServer1 = L"https://github.com/rainmeter/rainmeter/";
 LPCWSTR Updater::s_DownloadServer2 = L"https://builds.rainmeter.net/";
 
