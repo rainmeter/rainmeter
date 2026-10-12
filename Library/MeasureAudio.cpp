@@ -382,7 +382,7 @@ bool MeasureAudio::GetAudioState(VolumeAction action)
 					if (success)
 					{
 						if (action == VolumeAction::ToggleMute) mute = !mute;
-						success = endpointVolume->SetMute(mute, nullptr) == S_OK;
+						success = SUCCEEDED(endpointVolume->SetMute(mute, nullptr));
 						if (success) m_IsMute = mute;
 					}
 				}
@@ -424,7 +424,7 @@ void MeasureAudio::SetVolume(long value, bool relative, bool unmute)
 				success = !relative || endpointVolume->GetMasterVolumeLevelScalar(&newVolume) == S_OK;
 				if (success && unmute)
 				{
-					success = endpointVolume->SetMute(FALSE, nullptr) == S_OK;
+					success = SUCCEEDED(endpointVolume->SetMute(FALSE, nullptr));
 					if (success) m_IsMute = FALSE;
 				}
 
