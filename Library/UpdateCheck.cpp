@@ -69,6 +69,48 @@ void Updater::CheckForUpdates(bool download)
 	}
 }
 
+bool Updater::InstallUpdate()
+{
+	auto& rainmeter = GetRainmeter();
+	const std::wstring& dataFile = rainmeter.GetDataFile();
+	const std::wstring path = rainmeter.GetSettingsPath() + L"Updates\\";
+	const auto fileName = IniFile::ReadKey(dataFile, L"Rainmeter", L"InstallerName", L"");
+	const auto sha256 = IniFile::ReadKey(dataFile, L"Rainmeter", L"InstallerSha256", L"");
+	const std::wstring fullPath = path + fileName;
+	const bool runInstaller = !fileName.empty() && !sha256.empty() && VerifyInstaller(path, fileName, sha256, false);
+
+	IniFile::Writer ini(dataFile);
+	ini.DeleteKey(L"Rainmeter", L"InstallerName");
+	ini.DeleteKey(L"Rainmeter", L"InstallerSha256");
+	ini.DeleteKey(L"Rainmeter", L"DeleteInstaller");
+	ini.Save();
+
+	if (runInstaller)
+	{
+		const std::wstring& installPath = rainmeter.GetPath();
+		const std::wstring isPortable = _wcsicmp(installPath.c_str(), rainmeter.GetSettingsPath().c_str()) == 0 ? L"1" : L"0";
+		const std::wstring is64Bit = wcscmp(APPBITS, L"64-bit") == 0 ? L"64" : L"32";
+		const std::wstring args = fmt::format(L"/S /RESTART=1 /PORTABLE={} /VERSION={} /D={}", isPortable, is64Bit, installPath);
+
+		SHELLEXECUTEINFO info = { sizeof(info) };
+		info.fMask = SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI;
+		info.lpVerb = L"open";
+		info.lpFile = fullPath.c_str();
+		info.lpParameters = args.c_str();
+		info.lpDirectory = path.c_str();
+		info.nShow = SW_SHOWNORMAL;
+		if (ShellExecuteEx(&info)) return true;
+
+		LogErrorF(L"Installer launch failed (ErrorCode=0x%08X): %s", GetLastError(), fullPath.c_str());
+	}
+	else if (PathFileExists(path.c_str()))
+	{
+		System::RemoveFolder(path);
+	}
+
+	return false;
+}
+
 void Updater::CheckLanguageObsoleteStatus()
 {
 	if (m_ObsoleteLanguages.empty()) return;

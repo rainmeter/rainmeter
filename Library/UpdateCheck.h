@@ -12,9 +12,9 @@ public:
 
 	void CheckForUpdates(bool download);
 	void CheckLanguageObsoleteStatus();
+	bool InstallUpdate();
 
-	static bool VerifyInstaller(const std::wstring& path, const std::wstring& fileName,
-		const std::wstring& sha256, bool writeToDataFile);
+	static bool VerifyInstaller(const std::wstring& path, const std::wstring& fileName, const std::wstring& sha256, bool writeToDataFile);
 
 private:
 	Updater();

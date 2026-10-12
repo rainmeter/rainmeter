@@ -11,6 +11,7 @@
 #include "DialogDebug.h"
 #include "DialogManage.h"
 #include "System.h"
+#include "UpdateCheck.h"
 #include "RainmeterQuery.h"
 #include "resource.h"
 #include <ole2.h>  // For Gdiplus.h.
@@ -545,7 +546,7 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			break;
 
 		case IDM_INSTALL_NEW_VERSION:
-			GetRainmeter().RestartApp();
+			if (GetUpdater().InstallUpdate()) PostQuitMessage(0);
 			break;
 
 		case IDM_LANGUAGEOBSOLETE:
@@ -692,7 +693,7 @@ LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				}
 				else if (tray->m_Notification == TRAY_NOTIFICATION_INSTALL_UPDATE)
 				{
-					GetRainmeter().RestartApp();
+					if (GetUpdater().InstallUpdate()) PostQuitMessage(0);
 				}
 				tray->m_Notification = TRAY_NOTIFICATION_NONE;
 				break;

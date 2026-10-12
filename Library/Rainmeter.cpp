@@ -383,48 +383,9 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 	CheckSettingsFileEncoding(m_IniFile);
 	CheckSettingsFileEncoding(m_DataFile);
 
-	// Install new version
-	const std::wstring updatePath = m_SettingsPath + L"Updates\\";
-	const auto installerName = IniFile::ReadKey(m_DataFile, L"Rainmeter", L"InstallerName", L"");
-	if (!installerName.empty())
+	if (GetUpdater().InstallUpdate())
 	{
-		bool runInstaller = false;
-		bool deleteInstallerSha256 = false;
-		const std::wstring fullPath = updatePath + installerName;
-		if (PathFileExists(fullPath.c_str()))
-		{
-			const auto sha256 = IniFile::ReadKey(m_DataFile, L"Rainmeter", L"InstallerSha256", L"");
-			if (!sha256.empty())
-			{
-				runInstaller = Updater::VerifyInstaller(updatePath, installerName, sha256, false);
-				deleteInstallerSha256 = true;
-			}
-		}
-
-		IniFile::Writer ini(m_DataFile);
-		if (deleteInstallerSha256) ini.DeleteKey(L"Rainmeter", L"InstallerSha256");
-		ini.DeleteKey(L"Rainmeter", L"InstallerName");
-		ini.Save();
-
-		if (runInstaller)
-		{
-			const std::wstring isPortable = _wcsicmp(m_Path.c_str(), m_SettingsPath.c_str()) == 0 ? L"1" : L"0";
-			const std::wstring is64Bit = wcscmp(APPBITS, L"64-bit") == 0 ? L"64" : L"32";
-			const std::wstring args = L"/S /RESTART=1 /PORTABLE=" + isPortable + L" /VERSION=" + is64Bit + L" /D=" + m_Path.c_str();
-			CommandHandler::RunFile(fullPath, args);
-			return -1;
-		}
-	}
-
-	if (PathFileExists(updatePath.c_str()))
-	{
-		IniFile::Writer ini(m_DataFile);
-		ini.DeleteKey(L"Rainmeter", L"InstallerName");
-		ini.DeleteKey(L"Rainmeter", L"InstallerSha256");
-		ini.DeleteKey(L"Rainmeter", L"DeleteInstaller");
-		ini.Save();
-
-		System::RemoveFolder(updatePath);
+		return -1;
 	}
 
 	// Reset log file
