@@ -359,6 +359,13 @@ void PlayerWMP::UpdateData()
 {
 	if (m_Initialized)
 	{
+		if (!FindWindow(L"WMPlayerApp", nullptr))
+		{
+			ClearData();
+			Uninitialize();
+			return;
+		}
+
 		// Get the volume
 		long volume = 0L;
 		m_ISettings->get_volume(&volume);
@@ -470,7 +477,7 @@ void PlayerWMP::UpdateData()
 		ULONGLONG time = GetTickCount64();
 
 		// Try to find WMP window every 5 seconds
-		if (m_LastCheckTime = 0 || time - m_LastCheckTime > 5000)
+		if (m_LastCheckTime == 0 || time - m_LastCheckTime > 5000)
 		{
 			m_LastCheckTime = time;
 
@@ -568,6 +575,8 @@ void PlayerWMP::ClosePlayer()
 
 	if (wnd)
 	{
+		ClearData();
+		Uninitialize();
 		SendMessage(wnd, WM_CLOSE, 0, 0);
 	}
 }
