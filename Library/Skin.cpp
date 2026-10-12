@@ -34,6 +34,7 @@
 #include "../Common/ScopedFunction.h"
 #include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
+#include "../Common/Version.h"
 #include "../Common/Gfx/Util/EffectStream.h"
 
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
@@ -2568,19 +2569,27 @@ bool Skin::ReadSkin()
 	m_Canvas.Resize(1, 1);
 
 	// Check the version
-	UINT appVersion = reader.ReadUInt<"AppVersion">(0);
-	if (appVersion > VersionInfo::GetRainmeterVersion())
+	std::wstring appVersion = reader.ReadString<"AppVersion">(L"0");
+	if (appVersion.find(L'.') == std::wstring::npos)
 	{
-		if (appVersion % 1000 != 0)
+		const UINT packedVersion = reader.ReadUInt<"AppVersion">(0);
+		if (packedVersion % 1000 != 0)
 		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%u.%u.%u", appVersion / 1000000, (appVersion / 1000) % 1000, appVersion % 1000);
+			_snwprintf_s(buffer, _TRUNCATE, L"%u.%u.%u", packedVersion / 1000000, (packedVersion / 1000) % 1000, packedVersion % 1000);
 		}
 		else
 		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%u.%u", appVersion / 1000000, (appVersion / 1000) % 1000);
+			_snwprintf_s(buffer, _TRUNCATE, L"%u.%u", packedVersion / 1000000, (packedVersion / 1000) % 1000);
 		}
 
-		std::wstring text = GetFormattedString(IDS_NewVersionRequired, m_FolderPath.c_str(), m_FileName.c_str(), buffer);
+		appVersion = buffer;
+	}
+
+	VersionHelper::Version requiredVersion(appVersion);
+	VersionHelper::Version rainmeterVersion(fmt::format(L"{}.{}", VersionInfo::GetAppVersion(), VersionInfo::GetRevision()));
+	if (requiredVersion.IsValid() && requiredVersion > rainmeterVersion)
+	{
+		std::wstring text = GetFormattedString(IDS_NewVersionRequired, m_FolderPath.c_str(), m_FileName.c_str(), appVersion.c_str());
 		GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
