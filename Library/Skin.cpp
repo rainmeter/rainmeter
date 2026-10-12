@@ -28,6 +28,7 @@
 #include "GeneralImage.h"
 #include "../Version.h"
 #include "../Common/PathUtil.h"
+#include "../Common/Version.h"
 #include "../Common/Gfx/Util/D2DEffectStream.h"
 
 #define SNAPDISTANCE 10
@@ -2420,19 +2421,27 @@ bool Skin::ReadSkin()
 	CreateDoubleBuffer(1, 1);
 
 	// Check the version
-	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0U);
-	if (appVersion > RAINMETER_VERSION)
+	std::wstring appVersion = m_Parser.ReadString(L"Rainmeter", L"AppVersion", L"0");
+	if (appVersion.find(L'.') == std::wstring::npos)
 	{
-		if (appVersion % 1000 != 0)
+		const UINT packedVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
+		if (packedVersion % 1000 != 0)
 		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%u.%u.%u", appVersion / 1000000, (appVersion / 1000) % 1000, appVersion % 1000);
+			_snwprintf_s(buffer, _TRUNCATE, L"%u.%u.%u", packedVersion / 1000000, (packedVersion / 1000) % 1000, packedVersion % 1000);
 		}
 		else
 		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%u.%u", appVersion / 1000000, (appVersion / 1000) % 1000);
+			_snwprintf_s(buffer, _TRUNCATE, L"%u.%u", packedVersion / 1000000, (packedVersion / 1000) % 1000);
 		}
 
-		std::wstring text = GetFormattedString(ID_STR_NEWVERSIONREQUIRED, m_FolderPath.c_str(), m_FileName.c_str(), buffer);
+		appVersion = buffer;
+	}
+
+	VersionHelper::Version requiredVersion(appVersion);
+	VersionHelper::Version rainmeterVersion = { APPVERSION, std::to_wstring(revision_number) };
+	if (requiredVersion.IsValid() && requiredVersion > rainmeterVersion)
+	{
+		std::wstring text = GetFormattedString(ID_STR_NEWVERSIONREQUIRED, m_FolderPath.c_str(), m_FileName.c_str(), appVersion.c_str());
 		GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
