@@ -384,12 +384,12 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 	CheckSettingsFileEncoding(m_DataFile);
 
 	// Install new version
+	const std::wstring updatePath = m_SettingsPath + L"Updates\\";
 	const auto installerName = IniFile::ReadKey(m_DataFile, L"Rainmeter", L"InstallerName", L"");
 	if (!installerName.empty())
 	{
 		bool runInstaller = false;
 		bool deleteInstallerSha256 = false;
-		const std::wstring updatePath = m_SettingsPath + L"Updates\\";
 		const std::wstring fullPath = updatePath + installerName;
 		if (PathFileExists(fullPath.c_str()))
 		{
@@ -404,7 +404,6 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 		IniFile::Writer ini(m_DataFile);
 		if (deleteInstallerSha256) ini.DeleteKey(L"Rainmeter", L"InstallerSha256");
 		ini.DeleteKey(L"Rainmeter", L"InstallerName");
-		ini.WriteKey(L"Rainmeter", L"DeleteInstaller", installerName);
 		ini.Save();
 
 		if (runInstaller)
@@ -417,25 +416,16 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 		}
 	}
 
-	// Delete installer if necessary
-	const auto deleteInstaller = IniFile::ReadKey(m_DataFile, L"Rainmeter", L"DeleteInstaller", L"");
-	if (!deleteInstaller.empty())
+	if (PathFileExists(updatePath.c_str()))
 	{
-		const std::wstring updatePath = m_SettingsPath + L"Updates\\";
-		const std::wstring fullPath = updatePath + deleteInstaller;
-		if (PathFileExists(fullPath.c_str()))
-		{
-			System::RemoveFile(fullPath);
-		}
-		RemoveDirectory(updatePath.c_str());
-	}
+		IniFile::Writer ini(m_DataFile);
+		ini.DeleteKey(L"Rainmeter", L"InstallerName");
+		ini.DeleteKey(L"Rainmeter", L"InstallerSha256");
+		ini.DeleteKey(L"Rainmeter", L"DeleteInstaller");
+		ini.Save();
 
-	// Clean-up any installer keys
-	IniFile::Writer ini(m_DataFile);
-	ini.DeleteKey(L"Rainmeter", L"InstallerName");    // Shouldn't exist at this point
-	ini.DeleteKey(L"Rainmeter", L"InstallerSha256");  // Might exist if installer (or "Updates" folder) was deleted before installation
-	ini.DeleteKey(L"Rainmeter", L"DeleteInstaller");
-	ini.Save();
+		System::RemoveFolder(updatePath);
+	}
 
 	// Reset log file
 	System::RemoveFile(logger.GetLogFilePath());
