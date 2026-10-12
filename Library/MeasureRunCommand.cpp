@@ -494,8 +494,10 @@ void MeasureRunCommand::ReadOptions(ConfigParser::OptionReader& reader)
 	static constexpr ConfigParser::EnumOption<OutputType> s_OutputTypes[] =
 	{
 		{ L"UTF16", OUTPUTTYPE_UTF16 },
+		{ L"UTF-16", OUTPUTTYPE_UTF16 },
 		{ L"ANSI", OUTPUTTYPE_ANSI },
 		{ L"UTF8", OUTPUTTYPE_UTF8 },
+		{ L"UTF-8", OUTPUTTYPE_UTF8 },
 	};
 	m_OutputType = reader.ReadEnum<"OutputType">(OUTPUTTYPE_UTF16, s_OutputTypes);
 }
