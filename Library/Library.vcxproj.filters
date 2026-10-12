@@ -35,9 +35,6 @@
     <ClCompile Include="NowPlaying\PlayerSMTC.cpp">
       <Filter>NowPlaying</Filter>
     </ClCompile>
-    <ClCompile Include="NowPlaying\PlayerSpotify.cpp">
-      <Filter>NowPlaying</Filter>
-    </ClCompile>
     <ClCompile Include="NowPlaying\PlayerWinamp.cpp">
       <Filter>NowPlaying</Filter>
     </ClCompile>
@@ -192,9 +189,6 @@
       <Filter>NowPlaying</Filter>
     </ClInclude>
     <ClInclude Include="NowPlaying\PlayerSMTC.h">
-      <Filter>NowPlaying</Filter>
-    </ClInclude>
-    <ClInclude Include="NowPlaying\PlayerSpotify.h">
       <Filter>NowPlaying</Filter>
     </ClInclude>
     <ClInclude Include="NowPlaying\PlayerWinamp.h">

@@ -137,7 +137,6 @@
     <ClCompile Include="NowPlaying\PlayerCAD.cpp" />
     <ClCompile Include="NowPlaying\PlayerITunes.cpp" />
     <ClCompile Include="NowPlaying\PlayerSMTC.cpp" />
-    <ClCompile Include="NowPlaying\PlayerSpotify.cpp" />
     <ClCompile Include="NowPlaying\PlayerWinamp.cpp" />
     <ClCompile Include="NowPlaying\PlayerWLM.cpp" />
     <ClCompile Include="NowPlaying\PlayerWMP.cpp" />
@@ -278,7 +277,6 @@
     <ClInclude Include="NowPlaying\PlayerCAD.h" />
     <ClInclude Include="NowPlaying\PlayerITunes.h" />
     <ClInclude Include="NowPlaying\PlayerSMTC.h" />
-    <ClInclude Include="NowPlaying\PlayerSpotify.h" />
     <ClInclude Include="NowPlaying\PlayerWinamp.h" />
     <ClInclude Include="NowPlaying\PlayerWLM.h" />
     <ClInclude Include="NowPlaying\PlayerWMP.h" />

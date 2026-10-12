@@ -10,7 +10,6 @@
 #include "NowPlaying/PlayerCAD.h"
 #include "NowPlaying/PlayerITunes.h"
 #include "NowPlaying/PlayerSMTC.h"
-#include "NowPlaying/PlayerSpotify.h"
 #include "NowPlaying/PlayerWinamp.h"
 #include "NowPlaying/PlayerWLM.h"
 #include "NowPlaying/PlayerWMP.h"
@@ -170,13 +169,9 @@ void MeasureNowPlaying::ReadOptions(ConfigParser::OptionReader& reader)
 		{
 			m_Parent->player = PlayerWinamp::Create(WA_MEDIAMONKEY);
 		}
-		else if (StringUtil::EqualsIgnoreCase(playerName, L"Windows"))
+		else if (StringUtil::EqualsIgnoreCase(playerName, L"Windows") || StringUtil::EqualsIgnoreCase(playerName, L"Spotify"))
 		{
 			m_Parent->player = PlayerSMTC::Create();
-		}
-		else if (StringUtil::EqualsIgnoreCase(playerName, L"Spotify"))
-		{
-			m_Parent->player = PlayerSpotify::Create();
 		}
 		else if (StringUtil::EqualsIgnoreCase(playerName, L"WinAmp"))
 		{
