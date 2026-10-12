@@ -408,7 +408,7 @@ void Skin::UnregisterMouseInput()
 		rid.usUsagePage = 0x01;
 		rid.usUsage = 0x02;  // HID mouse
 		rid.dwFlags = RIDEV_REMOVE;
-		rid.hwndTarget = m_Window;
+		rid.hwndTarget = NULL;
 		RegisterRawInputDevices(&rid, 1, sizeof(rid));
 		m_MouseInputRegistered = false;
 	}
