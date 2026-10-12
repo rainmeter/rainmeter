@@ -204,7 +204,7 @@ void Updater::StatusFetchResultCallback(const Net::FetchTask* fetchTask, void* r
 	std::wstring::size_type pos = url.rfind(L'/');
 	if (pos == std::wstring::npos) return;
 
-	std::wstring fileName = url.substr(pos + 1);
+	std::wstring fileName = L"Update-" + url.substr(pos + 1);
 
 	const std::wstring path = GetRainmeter().GetSettingsPath() + L"Updates\\";
 	const std::wstring fullPath = path + fileName;
