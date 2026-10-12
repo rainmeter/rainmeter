@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "../Common/IniFile.h"
+#include "../Common/StringParser.h"
 #include "TrayIcon.h"
 #include "Measure.h"
 #include "resource.h"
@@ -372,8 +373,23 @@ void TrayIcon::ShowUpdateNotification(LPCWSTR newVersion)
 
 void TrayIcon::ShowInstallUpdateNotification(LPCWSTR newVersion)
 {
-	std::wstring text = GetFormattedString(IDS_ClickToInstall, newVersion);
-	ShowNotification(TRAY_NOTIFICATION_INSTALL_UPDATE, GetString(IDS_InstallNewVersion), text.c_str());
+	std::wstring version = newVersion;
+	std::vector<std::wstring> parts;
+	StringParser::Split(version, L'.', parts);
+	if (parts.size() >= 3)
+	{
+		version = parts[0] + L'.' + parts[1];
+		if (parts[2] != L"0")
+		{
+			version += L'.' + parts[2];
+		}
+
+	}
+
+	std::wstring title = GetString(IDS_UpdateAvailable);
+	title += L": Rainmeter ";
+	title += version;
+	ShowNotification(TRAY_NOTIFICATION_INSTALL_UPDATE, title.c_str(), GetString(IDS_ClickToInstall));
 }
 
 void TrayIcon::SetTrayIcon(bool enabled, bool setTemporarily)
