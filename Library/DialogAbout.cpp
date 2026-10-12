@@ -55,7 +55,7 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_SIZE:
 		if (wParam != SIZE_MINIMIZED)
 		{
-			Relayout(LOWORD(lParam), HIWORD(lParam));
+			Relayout();
 		}
 		return TRUE;
 
@@ -76,21 +76,22 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	const Control s_Controls[] =
 	{
 		Control::Icon(Id_AppIcon, 0,
-			356, 12, 64, 64,
-			WS_VISIBLE, 0),
+			10, 8, 59, 54,
+			WS_VISIBLE | SS_REALSIZECONTROL, 0,
+			Control::ANCHOR_TOP_LEFT | Control::SQUARE),
 
 		Control::Label(Id_VersionLabel, 0,
-			10, 8, 300, 11,
+			79, 8, 327, 11,
 			WS_VISIBLE, 0,
 			Control::ANCHOR_TOP_LEFT | Control::BOLD_FONT),
 		Control::LinkLabel(Id_BuildLink, 0,
-			10, 23, 300, 13,
+			79, 23, 327, 13,
 			WS_VISIBLE, 0),
 		Control::LinkLabel(Id_HomeLink, IDS_GetLatestVersion,
-			10, 36, 300, 13,
+			79, 36, 327, 13,
 			WS_VISIBLE, 0),
 		Control::LinkLabel(Id_LicenseLink, IDS_CopyrightNotice,
-			10, 49, 300, 13,
+			79, 49, 327, 13,
 			WS_VISIBLE | LWS_NOPREFIX, 0),
 
 		Control::Label(Id_WinVerLabel, 0,
@@ -238,9 +239,8 @@ void DialogAbout::Initialize()
 		return text;
 	};
 
-	HWND item = GetControl(Id_AppIcon);
-	HICON icon = GetIconBySize(IDI_RAINMETER, m_ControlTemplate.ScaleDialogUnits(64));
-	Static_SetIcon(item, icon);
+	Relayout();
+	HWND item;
 
 	WCHAR tmpSz[MAX_PATH];
 	_snwprintf_s(tmpSz, _TRUNCATE, L"Rainmeter %s.%i (%s)",
@@ -276,11 +276,15 @@ void DialogAbout::Initialize()
 	SetWindowText(item, trimLink(tmpSz));
 }
 
-void DialogAbout::Relayout(int w, int h)
+void DialogAbout::Relayout()
 {
 	Dialog::Relayout();
 
 	HWND item = GetControl(Id_AppIcon);
-	HICON icon = GetIconBySize(IDI_RAINMETER, m_ControlTemplate.ScaleDialogUnits(96));
+	if (!item) return;
+
+	RECT rect;
+	GetClientRect(item, &rect);
+	HICON icon = GetIconBySize(IDI_RAINMETER, rect.right - rect.left);
 	Static_SetIcon(item, icon);
 }

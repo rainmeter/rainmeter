@@ -24,7 +24,8 @@ struct Control
 		ANCHOR_BOTTOM_RIGHT = ANCHOR_BOTTOM | ANCHOR_RIGHT,
 		ANCHOR_ALL = ANCHOR_TOP_LEFT | ANCHOR_BOTTOM_RIGHT,
 		BOLD_FONT = 0x10,
-		ELLIPSIS = 0x20
+		ELLIPSIS = 0x20,
+		SQUARE = 0x40  // Use the mapped width for both pixel dimensions; ignore h.
 	};
 
 	static Control Item(const WCHAR* name, WORD id, WORD textId, short x, short y, short w, short h,

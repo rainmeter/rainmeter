@@ -36,7 +36,9 @@ BOOL GetNonClientMetricsForDpi(NONCLIENTMETRICS& metrics, UINT dpi)
 RECT MapControlRect(const Control& ct, UINT dpi)
 {
 	const RECT edges = DpiUtil::MapDialogUnits({ ct.x, ct.y, ct.x + ct.w, ct.y + ct.h }, dpi);
-	return { edges.left, edges.top, edges.right - edges.left, edges.bottom - edges.top };
+	const LONG width = edges.right - edges.left;
+	const LONG height = (ct.options & Control::SQUARE) ? width : edges.bottom - edges.top;
+	return { edges.left, edges.top, width, height };
 }
 
 }  // namespace

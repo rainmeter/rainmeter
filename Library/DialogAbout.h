@@ -40,7 +40,7 @@ private:
 	};
 
 	void Initialize();
-	void Relayout(int w, int h);
+	void Relayout() override;
 
 	static WINDOWPLACEMENT c_WindowPlacement;
 	static DialogAbout* c_Dialog;
