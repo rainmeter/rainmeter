@@ -48,7 +48,6 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
 typedef bool (WINAPI* AllowDarkModeForWindowProc)(HWND, bool);
 typedef int (WINAPI* SetPreferredAppModeProc)(int);
 typedef void (WINAPI* RefreshColorPolicyProc)();
-typedef HTHEME (WINAPI* OpenNcThemeDataProc)(HWND, LPCWSTR);
 
 struct ThemeState
 {
@@ -57,9 +56,6 @@ struct ThemeState
 	SetPreferredAppModeProc setPreferredAppModeFunc = nullptr;
 	RefreshColorPolicyProc refreshImmersiveColorPolicyStateFunc = nullptr;
 	RefreshColorPolicyProc flushMenuThemesFunc = nullptr;
-	OpenNcThemeDataProc openNcThemeDataFunc = nullptr;
-	ULONG_PTR* scrollbarThunk = nullptr;
-	ULONG_PTR originalScrollbarThunk = 0;
 	HBRUSH pageBackground = CreateSolidBrush(g_PageBackground);
 	HBRUSH background = CreateSolidBrush(g_Background);
 	HBRUSH controlBackground = CreateSolidBrush(g_ControlBackground);
@@ -70,16 +66,6 @@ struct ThemeState
 
 	~ThemeState()
 	{
-		if (scrollbarThunk)
-		{
-			DWORD protection;
-			if (VirtualProtect(scrollbarThunk, sizeof(*scrollbarThunk), PAGE_READWRITE, &protection))
-			{
-				*scrollbarThunk = originalScrollbarThunk;
-				VirtualProtect(scrollbarThunk, sizeof(*scrollbarThunk), protection, &protection);
-			}
-		}
-
 		DeleteObject(pageBackground);
 		DeleteObject(background);
 		DeleteObject(controlBackground);
@@ -1027,7 +1013,6 @@ BOOL CALLBACK ApplyControl(HWND window, LPARAM lParam)
 		if (GetComboBoxInfo(window, &info))
 		{
 			WindowsTheme::ApplyToControl(info.hwndList);
-			SetWindowTheme(info.hwndList, state.enabled ? L"" : L"Explorer", state.enabled ? L"" : nullptr);
 			if (!(style & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE))) SetControlSubclass(info.hwndList, ControlType::ListBox);
 		}
 	}
@@ -1038,7 +1023,6 @@ BOOL CALLBACK ApplyControl(HWND window, LPARAM lParam)
 	}
 	else if (wcscmp(className, WC_LISTBOX) == 0)
 	{
-		SetWindowTheme(window, state.enabled ? L"" : L"Explorer", state.enabled ? L"" : nullptr);
 		SetControlSubclass(window, ControlType::Edit);
 	}
 	else if (wcscmp(className, WC_LISTVIEW) == 0)
@@ -1187,55 +1171,6 @@ BOOL CALLBACK RefreshTopLevelWindow(HWND window, LPARAM lParam)
 	return TRUE;
 }
 
-HTHEME WINAPI OpenScrollbarTheme(HWND window, const WCHAR* className)
-{
-	if (WindowsTheme::IsUsingDarkMode() && wcscmp(className, L"ScrollBar") == 0)
-	{
-		window = nullptr;
-		className = L"Explorer::ScrollBar";
-	}
-
-	return GetState().openNcThemeDataFunc(window, className);
-}
-
-void HookScrollbars()
-{
-	auto& state = GetState();
-	if (!state.openNcThemeDataFunc) return;
-
-	BYTE* module = (BYTE*)GetModuleHandle(L"comctl32.dll");
-	if (!module) return;
-
-	const auto* dos = (const IMAGE_DOS_HEADER*)module;
-	const auto* nt = (const IMAGE_NT_HEADERS*)(module + dos->e_lfanew);
-	const auto& directory = nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT];
-	if (!directory.VirtualAddress) return;
-
-	const auto* imports = (const IMAGE_DELAYLOAD_DESCRIPTOR*)(module + directory.VirtualAddress);
-	for (; imports->DllNameRVA; ++imports)
-	{
-		if (!imports->Attributes.RvaBased || _stricmp((const char*)(module + imports->DllNameRVA), "uxtheme.dll") != 0) continue;
-
-		auto* names = (IMAGE_THUNK_DATA*)(module + imports->ImportNameTableRVA);
-		auto* addresses = (IMAGE_THUNK_DATA*)(module + imports->ImportAddressTableRVA);
-		for (; names->u1.Ordinal; ++names, ++addresses)
-		{
-			if (!IMAGE_SNAP_BY_ORDINAL(names->u1.Ordinal) || IMAGE_ORDINAL(names->u1.Ordinal) != 49) continue;
-
-			DWORD protection;
-			if (VirtualProtect(&addresses->u1.Function, sizeof(addresses->u1.Function), PAGE_READWRITE, &protection))
-			{
-				state.scrollbarThunk = &addresses->u1.Function;
-				state.originalScrollbarThunk = addresses->u1.Function;
-				addresses->u1.Function = (ULONG_PTR)OpenScrollbarTheme;
-				VirtualProtect(&addresses->u1.Function, sizeof(addresses->u1.Function), protection, &protection);
-			}
-
-			return;
-		}
-	}
-}
-
 bool UpdateMode()
 {
 	auto& state = GetState();
@@ -1297,8 +1232,6 @@ void Initialize()
 			state.setPreferredAppModeFunc = (SetPreferredAppModeProc)GetProcAddress(theme, MAKEINTRESOURCEA(135));
 			state.refreshImmersiveColorPolicyStateFunc = (RefreshColorPolicyProc)GetProcAddress(theme, MAKEINTRESOURCEA(104));
 			state.flushMenuThemesFunc = (RefreshColorPolicyProc)GetProcAddress(theme, MAKEINTRESOURCEA(136));
-			state.openNcThemeDataFunc = (OpenNcThemeDataProc)GetProcAddress(theme, MAKEINTRESOURCEA(49));
-			HookScrollbars();
 			UpdateMode();
 		}
 
@@ -1319,7 +1252,7 @@ void ApplyToControl(HWND window)
 	auto& state = GetState();
 	if (state.allowDarkModeForWindowFunc) state.allowDarkModeForWindowFunc(window, state.enabled);
 
-	SetWindowTheme(window, L"Explorer", nullptr);
+	SetWindowTheme(window, state.enabled ? L"DarkMode_Explorer" : L"Explorer", nullptr);
 }
 
 void ApplyToTooltip(HWND window)
