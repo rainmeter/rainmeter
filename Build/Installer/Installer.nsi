@@ -236,16 +236,13 @@ Function .onInit
 				StrCpy $InstallPortable 1
 			${EndIf}
 
+			System::Call kernel32::GetCommandLine()t.r1
+			${StrStr} $2 $1 "/D="
 			${If} $InstallPortable = 1
-				; Check for /D= defined on the command line in case a portable
-				; installation is desired after standard installation
-				System::Call kernel32::GetCommandLine()t.r1
-				${StrStr} $2 $1 "/D="
 				${If} $2 == ""
 					StrCpy $INSTDIR "$EXEDIR\Rainmeter"
 				${EndIf}
-			${Else}
-				; Standard installation (ignore /D=)
+			${ElseIf} $2 == ""
 				${If} ${FileExists} "$PROGRAMFILES64\Rainmeter\Rainmeter.exe"
 					StrCpy $INSTDIR "$PROGRAMFILES64\Rainmeter"
 				${ElseIf} ${FileExists} "$PROGRAMFILES\Rainmeter\Rainmeter.exe"
