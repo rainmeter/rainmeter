@@ -147,7 +147,7 @@ void Updater::StatusFetchResultCallback(const Net::FetchTask* fetchTask, void* r
 		return;
 	}
 
-	VersionHelper::Version rainmeterVersion(VersionInfo::GetAppVersion());
+	VersionHelper::Version rainmeterVersion(fmt::format(L"{}.{}", VersionInfo::GetAppVersion(), VersionInfo::GetRevision()));
 	if (!rainmeterVersion.IsValid() || updater->m_AvailableVersion <= rainmeterVersion)
 	{
 		return;
