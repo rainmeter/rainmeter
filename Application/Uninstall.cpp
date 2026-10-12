@@ -325,7 +325,8 @@ static bool RunUninstallDialog()
 	TASKDIALOGCONFIG config;
 	SecureZeroMemory(&config, sizeof(config));
 	config.cbSize = sizeof(config);
-	config.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | TDF_POSITION_RELATIVE_TO_WINDOW | TDF_SIZE_TO_CONTENT | TDF_USE_HICON_MAIN;
+	config.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | TDF_POSITION_RELATIVE_TO_WINDOW | TDF_USE_HICON_MAIN;
+	config.cxWidth = 300;
 	config.dwCommonButtons = TDCBF_CANCEL_BUTTON;
 	config.pszWindowTitle = uninstallRainmeter;
 	config.hMainIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_RAINMETER));
@@ -355,10 +356,16 @@ static bool RunUninstallDialog()
 	HRESULT result = TaskDialogIndirect(&config, nullptr, nullptr, &deleteAll);
 	if (data.started)
 	{
-		const WCHAR* instruction = data.succeeded ? complete : failed;
-		const WCHAR* content = data.succeeded ? nullptr : failedDescription;
-		PCWSTR icon = data.succeeded ? TD_INFORMATION_ICON : TD_ERROR_ICON;
-		TaskDialog(nullptr, nullptr, uninstallRainmeter, instruction, content, TDCBF_OK_BUTTON, icon, nullptr);
+		TASKDIALOGCONFIG resultConfig;
+		SecureZeroMemory(&resultConfig, sizeof(resultConfig));
+		resultConfig.cbSize = sizeof(resultConfig);
+		resultConfig.cxWidth = config.cxWidth;
+		resultConfig.dwCommonButtons = TDCBF_OK_BUTTON;
+		resultConfig.pszWindowTitle = uninstallRainmeter;
+		resultConfig.pszMainInstruction = data.succeeded ? complete : failed;
+		resultConfig.pszContent = data.succeeded ? nullptr : failedDescription;
+		resultConfig.pszMainIcon = data.succeeded ? TD_INFORMATION_ICON : TD_ERROR_ICON;
+		TaskDialogIndirect(&resultConfig, nullptr, nullptr, nullptr);
 	}
 
 	return SUCCEEDED(result) && data.started && data.succeeded;
