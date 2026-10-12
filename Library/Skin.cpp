@@ -2400,6 +2400,13 @@ bool Skin::ReadSkin()
 
 	m_Parser.Initialize(iniFile, this, nullptr, &resourcePath);
 
+	if (m_Parser.ReadInt(L"Rainmeter", L"SyntaxVersion", 1) >= 2)
+	{
+		std::wstring text = GetFormattedString(ID_STR_NEWVERSIONREQUIRED, m_FolderPath.c_str(), m_FileName.c_str(), L"5.0");
+		GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
+		return false;
+	}
+
 	// Read any default settings from the skin (ie. DefaultWindowX, DefaultWindowY, etc.)
 	if (m_IsFirstRun)
 	{
