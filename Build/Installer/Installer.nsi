@@ -44,7 +44,7 @@ ${Using:StrFunc} StrRep
 Name "Rainmeter"
 VIAddVersionKey "CompanyName" "Rainmeter"
 VIAddVersionKey "ProductName" "Rainmeter"
-VIAddVersionKey "FileDescription" "Rainmeter Installer"
+VIAddVersionKey "FileDescription" "Rainmeter ${VERSION_SHORT} Installer"
 VIAddVersionKey "FileVersion" "${VERSION_FULL}"
 VIAddVersionKey "ProductVersion" "${VERSION_FULL}"
 VIAddVersionKey "OriginalFilename" "${OUTFILE}"
