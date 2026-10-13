@@ -23,7 +23,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Bcrypt.lib;comctl32.lib;d2d1.lib;d3d11.lib;dcomp.lib;Dbghelp.lib;dwmapi.lib;dwrite.lib;dxguid.lib;gdiplus.lib;Iphlpapi.lib;netapi32.lib;Ntdll.lib;Pdh.lib;PowrProf.lib;psapi.lib;Rpcrt4.lib;RuntimeObject.lib;shlwapi.lib;Urlmon.lib;UxTheme.lib;Version.lib;windowscodecs.lib;Wininet.lib;Winmm.lib;Wintrust.lib;wlanapi.lib;ws2_32.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>api-ms-win-core-winrt-l1-1-0.dll;api-ms-win-core-winrt-string-l1-1-0.dll;Bcrypt.dll;dwmapi.dll;Gdiplus.dll;Iphlpapi.dll;netapi32.dll;Pdh.dll;PowrProf.dll;psapi.dll;Urlmon.dll;Version.dll;Winmm.dll;Wintrust.dll;wlanapi.dll;ws2_32.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
+      <DelayLoadDLLs>api-ms-win-core-winrt-l1-1-0.dll;api-ms-win-core-winrt-string-l1-1-0.dll;Bcrypt.dll;Comctl32.dll;dwmapi.dll;Gdiplus.dll;Iphlpapi.dll;netapi32.dll;Pdh.dll;PowrProf.dll;psapi.dll;Urlmon.dll;Version.dll;Winmm.dll;Wintrust.dll;wlanapi.dll;ws2_32.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
