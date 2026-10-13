@@ -49,6 +49,17 @@ bool IsWindowFullyOpaque(HWND hwnd)
 		return false;
 	}
 
+	if ((exStyle & WS_EX_TOOLWINDOW) != 0)
+	{
+		// Shell and capture overlays can have transparent areas inside their window bounds.
+		WCHAR className[64];
+		if (GetClassName(hwnd, className, _countof(className)) <= 0 ||
+			wcscmp(className, L"Shell_TrayWnd") != 0)
+		{
+			return false;
+		}
+	}
+
 	if ((exStyle & WS_EX_LAYERED) != 0)
 	{
 		COLORREF colorKey = 0;
@@ -70,7 +81,8 @@ bool IsWindowFullyOpaque(HWND hwnd)
 		}
 	}
 
-	return true;
+	RECT regionBox;
+	return GetWindowRgnBox(hwnd, &regionBox) != COMPLEXREGION;
 }
 
 bool WindowCanOccludeOtherWindows(HWND hwnd, RECT* rect)
