@@ -42,6 +42,8 @@ private:
 	void Initialize();
 	void Relayout() override;
 
+	HICON m_Icon = nullptr;
+
 	static WINDOWPLACEMENT c_WindowPlacement;
 	static DialogAbout* c_Dialog;
 };

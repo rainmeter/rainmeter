@@ -20,6 +20,11 @@ DialogAbout::DialogAbout() : Dialog(&c_WindowPlacement)
 
 DialogAbout::~DialogAbout()
 {
+	if (m_Icon)
+	{
+		Static_SetIcon(GetControl(Id_AppIcon), nullptr);
+		DestroyIcon(m_Icon);
+	}
 }
 
 void DialogAbout::Open()
@@ -285,6 +290,12 @@ void DialogAbout::Relayout()
 
 	RECT rect;
 	GetClientRect(item, &rect);
-	HICON icon = GetIconBySize(IDI_RAINMETER, rect.right - rect.left);
-	Static_SetIcon(item, icon);
+	const int iconSize = rect.right - rect.left;
+	HICON icon = nullptr;
+	if (SUCCEEDED(LoadIconWithScaleDown(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_RAINMETER), iconSize, iconSize, &icon)))
+	{
+		Static_SetIcon(item, icon);
+		if (m_Icon) DestroyIcon(m_Icon);
+		m_Icon = icon;
+	}
 }
