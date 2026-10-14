@@ -4788,6 +4788,12 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					if ((wp->y < g_SnapDistance + workArea->top) && (wp->y > workArea->top - g_SnapDistance)) wp->y = workArea->top;
 					if ((wp->x < g_SnapDistance + w) && (wp->x > -g_SnapDistance + w)) wp->x = w;
 					if ((wp->y < g_SnapDistance + h) && (wp->y > -g_SnapDistance + h)) wp->y = h;
+
+					const int centerX = workArea->left + (workArea->right - workArea->left - windowW) / 2;
+					if ((wp->x < g_SnapDistance + centerX) && (wp->x > centerX - g_SnapDistance)) wp->x = centerX;
+
+					const int centerY = workArea->top + (workArea->bottom - workArea->top - windowH) / 2;
+					if ((wp->y < g_SnapDistance + centerY) && (wp->y > centerY - g_SnapDistance)) wp->y = centerY;
 				}
 			}
 		}
@@ -4818,6 +4824,9 @@ void Skin::SnapToWindow(Skin* skin, LPWINDOWPOS wp)
 
 		if ((wp->x + ourW < g_SnapDistance + x) && (wp->x + ourW > x - g_SnapDistance)) wp->x = x - ourW;
 		if ((wp->x + ourW < g_SnapDistance + x + w) && (wp->x + ourW > x + w - g_SnapDistance)) wp->x = x + w - ourW;
+
+		const int centerX = x + (w - ourW) / 2;
+		if ((wp->x < g_SnapDistance + centerX) && (wp->x > centerX - g_SnapDistance)) wp->x = centerX;
 	}
 
 	if (wp->x < x + w && wp->x + ourW > x)
@@ -4827,6 +4836,9 @@ void Skin::SnapToWindow(Skin* skin, LPWINDOWPOS wp)
 
 		if ((wp->y + ourH < g_SnapDistance + y) && (wp->y + ourH > y - g_SnapDistance)) wp->y = y - ourH;
 		if ((wp->y + ourH < g_SnapDistance + y + h) && (wp->y + ourH > y + h - g_SnapDistance)) wp->y = y + h - ourH;
+
+		const int centerY = y + (h - ourH) / 2;
+		if ((wp->y < g_SnapDistance + centerY) && (wp->y > centerY - g_SnapDistance)) wp->y = centerY;
 	}
 }
 
