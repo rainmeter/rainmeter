@@ -2984,7 +2984,6 @@ bool Skin::ResizeWindow(bool reset)
 
 	if (!reset && m_WindowW == w && m_WindowH == h)
 	{
-		ComputePositionFromOptions();
 		return false;		// The window is already correct size
 	}
 
