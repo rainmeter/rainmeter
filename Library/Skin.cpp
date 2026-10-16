@@ -721,21 +721,14 @@ void Skin::UpdateWindowBounds(UINT flags)
 	if (restoreVirtualized)
 	{
 		restorePos = GetPositionAsVirtualized();
-		if (GetRainmeter().HasExeDpiOverride())
-		{
-			pos = restorePos;
-		}
-		else
-		{
-			UINT dpi = 0;
-			pos = System::ConvertVirtualizedToPhysicalPosition(restorePos, GetZoomedWindowSize(), &dpi);
+		UINT dpi = 0;
+		pos = System::ConvertVirtualizedToPhysicalPosition(restorePos, GetZoomedWindowSize(), &dpi);
 
-			// The conversion uses a DPI-unaware helper window and therefore selects the same
-			// target DPI as legacy Rainmeter. Apply it before moving the actual window so its
-			// center is evaluated using the target physical size in OnMove.
-			dpiChanged = dpi != 0 && dpi != m_WindowDpi;
-			if (dpiChanged) UpdateWindowDpi(dpi);
-		}
+		// The conversion uses a DPI-unaware helper window and therefore selects the same
+		// target DPI as legacy Rainmeter. Apply it before moving the actual window so its
+		// center is evaluated using the target physical size in OnMove.
+		dpiChanged = dpi != 0 && dpi != m_WindowDpi;
+		if (dpiChanged) UpdateWindowDpi(dpi);
 	}
 	else
 	{
@@ -2152,16 +2145,19 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 	if (m_SkinW > 0) m_WindowW = m_SkinW;
 	if (m_SkinH > 0) m_WindowH = m_SkinH;
 
-	const auto virtualizedPos = m_Position.ResolveVirtualizedPosition(m_WindowW, m_WindowH, m_ZoomScale, monitorsInfo);
+	const bool physical = SkinPosition::GetOptionSpace() == SkinPositionSpace::Physical;
+	if (inheritMonitorDpi && physical)
+	{
+		UpdateWindowDpi(System::GetSystemDpi());
+	}
+
+	const auto virtualizedPos = m_Position.ResolveVirtualizedPosition(m_WindowW, m_WindowH, physical ? m_EffectiveScale : m_ZoomScale, monitorsInfo);
 	m_Position.SetVirtualized(virtualizedPos, SkinPositionOrigin::Options);
 
-	if (inheritMonitorDpi)
+	if (inheritMonitorDpi && !physical)
 	{
-		UINT dpi = System::GetSystemDpi();
-		if (!GetRainmeter().HasExeDpiOverride())
-		{
-			System::ConvertVirtualizedToPhysicalPosition(virtualizedPos, GetZoomedWindowSize(), &dpi);
-		}
+		UINT dpi = 0;
+		System::ConvertVirtualizedToPhysicalPosition(virtualizedPos, GetZoomedWindowSize(), &dpi);
 		UpdateWindowDpi(dpi);
 	}
 }
@@ -2191,15 +2187,8 @@ void Skin::ComputeOptionValueFromPosition()
 		}
 	}
 
-	const POINT pos = GetPositionAsVirtualized();
-
-	const int monitorX = m_Position.GetX().GetMonitor().value_or(monitorsInfo.primary);
-	const auto& monitorRectX = monitorX == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorX - 1].logicalScreen;
-	m_Position.GetX().UpdateOptionValue(pos.x, monitorRectX.left, monitorRectX.right - monitorRectX.left);
-
-	const int monitorY = m_Position.GetY().GetMonitor().value_or(monitorsInfo.primary);
-	const auto& monitorRectY = monitorY == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorY - 1].logicalScreen;
-	m_Position.GetY().UpdateOptionValue(pos.y, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
+	const bool physical = SkinPosition::GetOptionSpace() == SkinPositionSpace::Physical;
+	m_Position.UpdateOptionValues(GetPositionAsVirtualized(), m_WindowW, m_WindowH, physical ? m_EffectiveScale : m_ZoomScale, monitorsInfo);
 }
 
 void Skin::ReadOptions(ConfigParser& parser, LPCWSTR section, bool isDefault)

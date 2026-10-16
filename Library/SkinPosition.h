@@ -77,7 +77,8 @@ private:
 // spaces do not have a one-to-one mapping across monitors with different DPI settings, so
 // SkinPosition::m_Pos retains whichever representation was last set instead of repeatedly
 // converting it. SkinPosition::m_ConvertedPos, when present, is only a cached representation in
-// the opposite space.
+// the opposite space. With the executable DPI override, position options use physical pixels to
+// preserve the behavior of older Rainmeter versions running with that override.
 enum class SkinPositionSpace : BYTE
 {
 	Physical,
@@ -97,6 +98,8 @@ class SkinPosition
 {
 public:
 	SkinPosition();
+
+	static SkinPositionSpace GetOptionSpace();
 
 	POINT AsPhysical(SIZE windowSize) const;
 	POINT AsVirtualized(HMONITOR monitor) const;
@@ -119,8 +122,11 @@ public:
 	const SkinPositionOption& GetY() const { return m_Y; }
 
 	POINT ResolveVirtualizedPosition(int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo);
+	void UpdateOptionValues(POINT position, int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo);
 
 private:
+	static const RECT& GetMonitorBoundsInOptionSpace(const MultiMonitorInfo& monitorsInfo, int monitor);
+
 	void ClearAuthoredWindowOptions();
 
 	SkinPositionOption m_X;

@@ -123,14 +123,43 @@ POINT SkinPosition::ResolveVirtualizedPosition(int w, int h, float zoom, const M
 	}
 
 	const int monitorX = m_X.monitor.value_or(monitorsInfo.primary);
-	const auto& monitorRectX = monitorX == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorX - 1].logicalScreen;
+	const auto& monitorRectX = GetMonitorBoundsInOptionSpace(monitorsInfo, monitorX);
 	const int logicalX = m_X.ResolveLogicalPosition(parsedX, monitorRectX.left, monitorRectX.right - monitorRectX.left);
 
 	const int monitorY = m_Y.monitor.value_or(monitorsInfo.primary);
-	const auto& monitorRectY = monitorY == 0 ? monitorsInfo.logicalVirtualScreen : monitors[monitorY - 1].logicalScreen;
+	const auto& monitorRectY = GetMonitorBoundsInOptionSpace(monitorsInfo, monitorY);
 	const int logicalY = m_Y.ResolveLogicalPosition(parsedY, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
 
 	return { logicalX, logicalY };
+}
+
+void SkinPosition::UpdateOptionValues(POINT position, int w, int h, float zoom, const MultiMonitorInfo& monitorsInfo)
+{
+	m_X.ParseAnchorOption(w, zoom);
+	m_Y.ParseAnchorOption(h, zoom);
+
+	const auto& monitorRectX = GetMonitorBoundsInOptionSpace(monitorsInfo, m_X.monitor.value_or(monitorsInfo.primary));
+	m_X.UpdateOptionValue(position.x, monitorRectX.left, monitorRectX.right - monitorRectX.left);
+
+	const auto& monitorRectY = GetMonitorBoundsInOptionSpace(monitorsInfo, m_Y.monitor.value_or(monitorsInfo.primary));
+	m_Y.UpdateOptionValue(position.y, monitorRectY.top, monitorRectY.bottom - monitorRectY.top);
+}
+
+SkinPositionSpace SkinPosition::GetOptionSpace()
+{
+	return GetRainmeter().HasExeDpiOverride() ? SkinPositionSpace::Physical : SkinPositionSpace::Virtualized;
+}
+
+const RECT& SkinPosition::GetMonitorBoundsInOptionSpace(const MultiMonitorInfo& monitorsInfo, int monitor)
+{
+	const bool physical = GetOptionSpace() == SkinPositionSpace::Physical;
+	if (monitor == 0)
+	{
+		return physical ? monitorsInfo.virtualScreen : monitorsInfo.logicalVirtualScreen;
+	}
+
+	const auto& info = monitorsInfo.monitors[monitor - 1];
+	return physical ? info.screen : info.logicalScreen;
 }
 
 SkinPosition::SkinPosition() :
@@ -141,7 +170,7 @@ SkinPosition::SkinPosition() :
 
 POINT SkinPosition::AsPhysical(SIZE windowSize) const
 {
-	if (m_Space == SkinPositionSpace::Physical || GetRainmeter().HasExeDpiOverride()) return m_Pos;
+	if (m_Space == SkinPositionSpace::Physical) return m_Pos;
 	if (!m_ConvertedPos)
 	{
 		m_ConvertedPos = System::ConvertVirtualizedToPhysicalPosition(m_Pos, windowSize);
@@ -151,7 +180,7 @@ POINT SkinPosition::AsPhysical(SIZE windowSize) const
 
 POINT SkinPosition::AsVirtualized(HMONITOR monitor) const
 {
-	if (m_Space == SkinPositionSpace::Virtualized || GetRainmeter().HasExeDpiOverride()) return m_Pos;
+	if (m_Space == GetOptionSpace()) return m_Pos;
 	if (!m_ConvertedPos)
 	{
 		m_ConvertedPos = System::ConvertPhysicalToVirtualizedPosition(m_Pos, monitor);
@@ -174,7 +203,7 @@ void SkinPosition::SetVirtualized(POINT position, SkinPositionOrigin origin)
 
 	m_Pos = position;
 	ResetCache();
-	m_Space = SkinPositionSpace::Virtualized;
+	m_Space = GetOptionSpace();
 }
 
 void SkinPosition::SetMonitor(std::optional<int> monitor, SkinPositionOrigin origin)
