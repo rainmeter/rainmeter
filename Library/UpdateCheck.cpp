@@ -81,12 +81,6 @@ bool Updater::InstallUpdate()
 	{
 		const auto sha256 = IniFile::ReadKey(dataFile, L"Rainmeter", L"InstallerSha256", L"");
 		runInstaller = !sha256.empty() && VerifyInstaller(path, fileName, sha256, false);
-
-		IniFile::Writer ini(dataFile);
-		ini.DeleteKey(L"Rainmeter", L"InstallerName");
-		ini.DeleteKey(L"Rainmeter", L"InstallerSha256");
-		ini.DeleteKey(L"Rainmeter", L"DeleteInstaller");
-		ini.Save();
 	}
 
 	if (runInstaller)
@@ -104,7 +98,15 @@ bool Updater::InstallUpdate()
 		info.lpParameters = args.c_str();
 		info.lpDirectory = path.c_str();
 		info.nShow = SW_SHOWNORMAL;
-		if (ShellExecuteEx(&info)) return true;
+		if (ShellExecuteEx(&info))
+		{
+			IniFile::Writer ini(dataFile);
+			ini.DeleteKey(L"Rainmeter", L"InstallerName");
+			ini.DeleteKey(L"Rainmeter", L"InstallerSha256");
+			ini.DeleteKey(L"Rainmeter", L"DeleteInstaller");
+			ini.Save();
+			return true;
+		}
 
 		LogErrorF(L"Installer launch failed (ErrorCode=0x%08X): %s", GetLastError(), fullPath.c_str());
 	}
@@ -205,6 +207,16 @@ void Updater::StatusFetchResultCallback(const Net::FetchTask* fetchTask, void* r
 
 	LogNoticeF(L"New Rainmeter version %s available", updater->m_AvailableVersion.Get().c_str());
 	GetRainmeter().SetNewVersion();
+
+	const std::wstring& dataFile = GetRainmeter().GetDataFile();
+	const auto lastCheck = IniFile::ReadKey(dataFile, L"Rainmeter", L"LastCheck", L"0");
+	VersionHelper::Version lastVersion(lastCheck.c_str());
+	if (lastVersion.IsValid() && updater->m_AvailableVersion <= lastVersion &&
+		IniFile::ReadKey(dataFile, L"Rainmeter", L"InstallerName", L"").empty())
+	{
+		// Do not offer the same version again after the user dismisses its installer.
+		return;
+	}
 
 	std::wstring::size_type pos = url.rfind(L'/');
 	if (pos == std::wstring::npos) return;
