@@ -65,20 +65,11 @@ std::wstring GetFormattedString(UINT id, ...)
 HICON GetIcon(UINT id, bool large)
 {
 	HINSTANCE hExe = GetModuleHandle(nullptr);
-	HINSTANCE hComctl = GetModuleHandle(L"Comctl32");
-	if (hComctl)
+	HICON icon = nullptr;
+	HRESULT hr = LoadIconMetric(hExe, MAKEINTRESOURCE(id), large ? LIM_LARGE : LIM_SMALL, &icon);
+	if (SUCCEEDED(hr))
 	{
-		// Try LoadIconMetric for better quality with high DPI
-		auto loadIconMetric = (decltype(LoadIconMetric)*)GetProcAddress(hComctl, "LoadIconMetric");
-		if (loadIconMetric)
-		{
-			HICON icon = { 0 };
-			HRESULT hr = loadIconMetric(hExe, MAKEINTRESOURCE(id), large ? LIM_LARGE : LIM_SMALL, &icon);
-			if (SUCCEEDED(hr))
-			{
-				return icon;
-			}
-		}
+		return icon;
 	}
 
 	return (HICON)LoadImage(
