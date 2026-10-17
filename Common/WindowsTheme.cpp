@@ -927,6 +927,10 @@ LRESULT HandleControlMessage(HWND window, UINT message, WPARAM wParam, LPARAM lP
 		break;
 	}
 
+	// WM_SETREDRAW can change the popup's visibility and interrupt panning feedback.
+	// Repaint hover selection immediately without disabling redraw during mouse movement.
+	if (type == ControlType::ListBox && message == WM_MOUSEMOVE) UpdateWindow(window);
+
 	return result;
 }
 
@@ -943,9 +947,6 @@ bool ShouldDeferControlPaint(HWND window, UINT message, ControlType type)
 	case BM_SETSTATE:
 	case CB_SETCURSEL:
 		return true;
-
-	case WM_MOUSEMOVE:
-		return type == ControlType::ListBox;
 	}
 
 	return false;
