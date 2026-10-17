@@ -74,7 +74,7 @@ ReserveFile ".\WizardEmpty.bmp"
 
 !define MUI_ICON ".\Installer.ico"
 !define INSTALLER_ICON_ID 103 ; NSIS embeds the installer icon at this resource ID.
-!define MUI_CUSTOMFUNCTION_GUIINIT InitWizardImage
+!define MUI_CUSTOMFUNCTION_GUIINIT InitInstallerGui
 !define MUI_WELCOMEFINISHPAGE_BITMAP ".\WizardEmpty.bmp"
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION FinishRun
@@ -356,7 +356,39 @@ Function ExchangeSettings
 	HideWindow
 FunctionEnd
 
-Function InitWizardImage
+Function ApplyTitleBarTheme
+	Exch $0
+	Push $1
+	Push $2
+
+	StrCpy $1 0
+	ClearErrors
+	ReadRegDWORD $2 HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" "AppsUseLightTheme"
+	${IfNot} ${Errors}
+	${AndIf} $2 = 0
+		System::Call '*(i 12, i 0, p 0)p.r2'
+		System::Call 'user32::SystemParametersInfoW(i 0x42, i 12, p r2, i 0)' ; SPI_GETHIGHCONTRAST
+		System::Call '*$2(i, i .r1)'
+		System::Free $2
+		IntOp $1 $1 & 1 ; HCF_HIGHCONTRASTON
+		IntOp $1 $1 ^ 1
+	${EndIf}
+
+	System::Call 'dwmapi::DwmSetWindowAttribute(p r0, i 20, *i r1, i 4)i.r2' ; DWMWA_USE_IMMERSIVE_DARK_MODE
+	${If} $2 != 0
+		; Windows 10 versions before 2004 use attribute 19.
+		System::Call 'dwmapi::DwmSetWindowAttribute(p r0, i 19, *i r1, i 4)'
+	${EndIf}
+
+	Pop $2
+	Pop $1
+	Pop $0
+FunctionEnd
+
+Function InitInstallerGui
+	Push $HWNDPARENT
+	Call ApplyTitleBarTheme
+
 	InitPluginsDir
 	File /oname=$PLUGINSDIR\Wizard.jpg ".\Wizard.jpg"
 FunctionEnd
