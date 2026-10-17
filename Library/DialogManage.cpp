@@ -2239,7 +2239,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 	const Control s_Controls[] =
 	{
 		Control::GroupBox(-0, IDS_General,
-			0, 0, 478, 165,
+			0, 0, 478, 186,
 			WS_VISIBLE, 0),
 		Control::Label(-0, IDS_LanguageColon,
 			6, 15, 107, 14,
@@ -2250,44 +2250,50 @@ void DialogManage::TabSettings::Create(HWND owner)
 		Control::LinkLabel(Id_LanguageUpdateLink, 0,
 			361, 15, 114, 14,
 			0, 0),
-		Control::Label(-0, IDS_EditorColon,
+		Control::Label(-0, IDS_ThemeColon,
 			6, 36, 107, 14,
 			WS_VISIBLE, 0),
-		Control::Edit(Id_EditorEdit, 0,
+		Control::ComboBox(Id_UIThemeDropDownList, 0,
 			107, 34, 250, 14,
-			WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_CLIENTEDGE),
-		Control::Button(Id_EditorBrowseButton, IDS_Ellipsis,
-			361, 34, 25, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Label(Id_DefaultZoomLabel, IDS_DefaultZoomColon,
+			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL, 0),
+		Control::Label(-0, IDS_EditorColon,
 			6, 57, 107, 14,
 			WS_VISIBLE, 0),
+		Control::Edit(Id_EditorEdit, 0,
+			107, 55, 250, 14,
+			WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_CLIENTEDGE),
+		Control::Button(Id_EditorBrowseButton, IDS_Ellipsis,
+			361, 55, 25, 14,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		Control::Label(Id_DefaultZoomLabel, IDS_DefaultZoomColon,
+			6, 78, 107, 14,
+			WS_VISIBLE, 0),
 		Control::Edit(Id_DefaultZoomEdit, 0,
-			107, 55, 36, 14,
+			107, 76, 36, 14,
 			WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | ES_NUMBER, WS_EX_CLIENTEDGE),
 		Control::Label(Id_DefaultZoomPercentLabel, 0,
-			148, 57, 12, 14,
+			148, 78, 12, 14,
 			WS_VISIBLE, 0),
 		Control::CheckBox(Id_ForceDefaultZoomCheckBox, IDS_Force,
-			166, 55, 60, 14,
+			166, 76, 60, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::CheckBox(Id_CheckForUpdatesCheckBox, IDS_CheckForUpdates,
-			6, 76, 200, 14,
+			6, 97, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::CheckBox(Id_AutoInstallCheckBox, IDS_AutomaticUpdate,
-			6, 89, 200, 14,
+			6, 110, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::CheckBox(Id_LockSkinsCheckBox, IDS_DisableDragging,
-			6, 102, 200, 14,
+			6, 123, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::CheckBox(Id_ShowTrayIconCheckBox, IDS_ShowNotificationAreaIcon,
-			6, 115, 200, 14,
+			6, 136, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::CheckBox(Id_UseHardwareAccelerationCheckBox, IDS_HardwareAccelerated,
-			6, 128, 200, 14,
+			6, 149, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Button(Id_ResetStatisticsButton, IDS_ResetStatistics,
-			6, 144, buttonWidth + 20, 14,
+			6, 165, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -2321,6 +2327,13 @@ void DialogManage::TabSettings::Initialize()
 			ComboBox_SetCurSel(item, index);
 		}
 	}
+
+	item = GetControl(Id_UIThemeDropDownList);
+	ComboBox_ResetContent(item);
+	ComboBox_AddString(item, GetString(IDS_Auto));
+	ComboBox_AddString(item, GetString(IDS_Light));
+	ComboBox_AddString(item, GetString(IDS_Dark));
+	ComboBox_SetCurSel(item, (int)WindowsTheme::GetMode());
 
 	item = GetControl(Id_DefaultZoomEdit);
 	WCHAR zoomBuffer[16];
@@ -2430,6 +2443,15 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 				GetRainmeter().DelayedExecuteCommand(L"!Manage Settings");
 			}
 		}
+		break;
+
+	case Id_UIThemeDropDownList:
+		if (HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			int sel = ComboBox_GetCurSel((HWND)lParam);
+			if (sel != CB_ERR) GetRainmeter().SetUITheme((WindowsTheme::Mode)sel);
+		}
+
 		break;
 
 	case Id_DefaultZoomEdit:

@@ -247,6 +247,10 @@
 #define IDS_UninstallComplete                       2243
 #define IDS_UninstallFailed                         2244
 #define IDS_UninstallFailedDescription              2245
+#define IDS_ThemeColon                              2246
+#define IDS_Auto                                    2247
+#define IDS_Light                                   2248
+#define IDS_Dark                                    2249
 #define IDS_GameMode                                2800
 #define IDS_GameModeStart                           2801
 #define IDS_GameModeStop                            2802

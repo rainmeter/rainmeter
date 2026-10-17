@@ -200,6 +200,7 @@ private:
 			Id_ResetStatisticsButton,
 			Id_LanguageDropDownList,
 			Id_LanguageUpdateLink,
+			Id_UIThemeDropDownList,
 			Id_EditorEdit,
 			Id_EditorBrowseButton,
 			Id_DefaultZoomLabel,
