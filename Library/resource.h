@@ -258,7 +258,6 @@
 #define IDS_GameModeFullScreen                      2803
 #define IDS_GameModeProcessList                     2804
 #define IDS_GameModeProcessListColon                2805
-#define IDS_GameModeSettingsDescription             2806
 #define IDS_GameModeActionsOnStart                  2807
 #define IDS_GameModeActionsOnStop                   2808
 #define IDS_GameModeActionsDescription              2809

@@ -2032,9 +2032,6 @@ void DialogManage::TabGameMode::Create(HWND owner)
 		Control::Edit(Id_ProcessListEdit, 0,
 			0, 29, 200, 90,
 			WS_VISIBLE | WS_TABSTOP | ES_MULTILINE | ES_WANTRETURN | ES_AUTOVSCROLL, WS_EX_CLIENTEDGE),
-		Control::Label(-0, IDS_GameModeSettingsDescription,
-			224, 0, 254, 125,
-			WS_VISIBLE, 0),
 
 		Control::Button(Id_OnStartButton, IDS_GameModeActionsOnStart,
 			0, 133, 200, 14,
