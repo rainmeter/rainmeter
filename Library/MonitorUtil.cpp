@@ -227,6 +227,10 @@ void MonitorUtil::UpdateWorkareaInfo()
 
 			monitor.work = info.rcWork;
 			monitor.dpi = MonitorUtil::GetDpiForMonitor(monitor.handle);
+
+			DpiUtil::DpiUnawareScope dpiUnaware;
+			GetMonitorInfo(monitor.handle, &info);
+			monitor.logicalWork = info.rcWork;
 		}
 	}
 }
