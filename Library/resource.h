@@ -251,6 +251,7 @@
 #define IDS_Auto                                    2247
 #define IDS_Light                                   2248
 #define IDS_Dark                                    2249
+#define IDS_UserInterface                           2250
 #define IDS_GameMode                                2800
 #define IDS_GameModeStart                           2801
 #define IDS_GameModeStop                            2802
