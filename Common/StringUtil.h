@@ -101,7 +101,7 @@ inline void ToSentenceCase(std::wstring& str) { ToSentenceCase(str.data(), str.l
 
 void EscapeRegExp(std::wstring& str);
 
-void EncodeUrl(std::wstring& str, bool doReserved = true);
+void EncodeUrl(std::wstring& str, bool doReserved = true, size_t start = 0, size_t length = std::wstring::npos);
 
 std::wstring TruncateWithEllipsis(std::wstring_view str, size_t maxLength);
 

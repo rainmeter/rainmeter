@@ -134,10 +134,13 @@ void EscapeRegExp(std::wstring& str)
 	}
 }
 
-void EncodeUrl(std::wstring& str, bool doReserved)
+void EncodeUrl(std::wstring& str, bool doReserved, size_t start, size_t length)
 {
+	if (start >= str.size()) return;
+
+	length = (std::min)(length, str.size() - start);
 	static const std::string unreserved = "0123456789-.ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcedefghijklmnopqrstuvwxyz~";
-	std::string utf8 = NarrowUTF8(str);
+	std::string utf8 = NarrowUTF8(str.c_str() + start, (int)length);
 	for (size_t pos = 0; pos < utf8.size(); ++pos)
 	{
 		UCHAR ch = utf8[pos];
@@ -151,7 +154,7 @@ void EncodeUrl(std::wstring& str, bool doReserved)
 			pos += 2;
 		}
 	}
-	str = WidenUTF8(utf8);
+	str.replace(start, length, WidenUTF8(utf8));
 }
 
 std::wstring TruncateWithEllipsis(std::wstring_view str, size_t maxLength)

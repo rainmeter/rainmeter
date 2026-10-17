@@ -6,6 +6,35 @@
 #include "../Common/StringUtil.h"
 #include "../Common/FileUtil.h"
 
+namespace {
+
+enum class UrlComponent
+{
+	Path,
+	ExtraInfo
+};
+
+void EncodeUrlComponent(std::wstring& url, UrlComponent component)
+{
+	URL_COMPONENTS components = { 0 };
+	components.dwStructSize = sizeof(components);
+	components.dwUrlPathLength = ULONG_MAX;
+	components.dwExtraInfoLength = ULONG_MAX;
+	if (!InternetCrackUrl(url.c_str(), (DWORD)url.size(), 0, &components)) return;
+
+	if (component == UrlComponent::Path && components.nScheme != INTERNET_SCHEME_HTTP && components.nScheme != INTERNET_SCHEME_HTTPS) return;
+
+	const WCHAR* part = component == UrlComponent::Path ? components.lpszUrlPath : components.lpszExtraInfo;
+	DWORD length = component == UrlComponent::Path ? components.dwUrlPathLength : components.dwExtraInfoLength;
+	if (part && length > 0)
+	{
+		size_t position = part - url.c_str();
+		StringUtil::EncodeUrl(url, false, position, length);
+	}
+}
+
+}
+
 namespace Net {
 
 //
@@ -36,6 +65,7 @@ void DownloadTask::StartWorkOnWorkerThread()
 {
 	if (SUCCEEDED(CoInitialize(nullptr)))
 	{
+		EncodeUrlComponent(m_Url, UrlComponent::Path);
 		m_Result = URLDownloadToFile(nullptr, m_Url.c_str(), m_Path.c_str(), 0, nullptr);
 		CoUninitialize();
 	}
@@ -128,26 +158,7 @@ BYTE* FetchTask::FetchData()
 		return buffer;
 	}
 
-	{
-		URL_COMPONENTS components = { 0 };
-		components.dwStructSize = sizeof(components);
-		components.dwExtraInfoLength = ULONG_MAX;
-		if (InternetCrackUrl(m_Url.c_str(), static_cast<DWORD>(m_Url.size()), 0, &components))
-		{
-			if (components.lpszExtraInfo && components.dwExtraInfoLength > 0)
-			{
-				size_t position = m_Url.find(components.lpszExtraInfo);  // Only percent encode characters in the query or fragment part of the URL
-				if (position != std::wstring::npos)
-				{
-					std::wstring extra = m_Url.substr(position);
-					StringUtil::EncodeUrl(extra, false);  // Only percent encode spaces, control characters, and non-ascii characters (HEX: 80-255)
-
-					m_Url.erase(position);
-					m_Url.append(extra);
-				}
-			}
-		}
-	}
+	EncodeUrlComponent(m_Url, UrlComponent::ExtraInfo);
 
 	HINTERNET hUrlDump = InternetOpenUrl(m_InternetHandle, m_Url.c_str(), m_Headers.c_str(), -1L, m_InternetFlags, 0);
 	if (!hUrlDump)
