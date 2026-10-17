@@ -234,11 +234,11 @@ Function .onInit
 
 			StrCpy $Install64Bit 1
 			${GetOptions} $R1 "/VERSION=" $0
+			; NSIS removes /D= from $CMDLINE, so read the original command line.
+			System::Call kernel32::GetCommandLine()t.r1
+			${StrStr} $2 $1 "/D="
 			${If} $InstallPortable = 1
-				; Check for /D= defined on the command line in case a portable
-				; installation is desired after standard installation
-				System::Call kernel32::GetCommandLine()t.r1
-				${StrStr} $2 $1 "/D="
+			${OrIf} $2 != ""
 				${If} $2 == ""
 					StrCpy $INSTDIR "$EXEDIR\Rainmeter"
 				${EndIf}
@@ -248,7 +248,6 @@ Function .onInit
 					StrCpy $Install64Bit 0
 				${EndIf}
 			${Else}
-				; Standard installation (ignore /D=)
 				${If} $0 != ""
 					${If} $0 = 32
 					${OrIfNot} ${RunningX64}
