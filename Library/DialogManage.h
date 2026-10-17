@@ -37,6 +37,7 @@ public:
 
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	virtual void Relayout();
 
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
 

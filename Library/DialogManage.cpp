@@ -236,7 +236,7 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
 		Control::Tab(Id_Tab, 0,
 			6, 6, 498, 293,
-			WS_VISIBLE | WS_TABSTOP, 0)  // Last for correct tab order.
+			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)  // Last for correct tab order.
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
@@ -245,6 +245,7 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	AddTab(Id_Tab, m_TabLayouts, GetString(IDS_Layouts));
 	AddTab(Id_Tab, m_TabGameMode, GetString(IDS_GameMode));
 	AddTab(Id_Tab, m_TabSettings, GetString(IDS_Settings));
+	Relayout();
 
 	HICON hIcon = GetIcon(IDI_RAINMETER, true);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);  // Titlebar icon: 16x16
@@ -258,6 +259,33 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	WindowsTheme::ApplyToControl(item);
 
 	return FALSE;
+}
+
+void DialogManage::Relayout()
+{
+	Dialog::Relayout();
+
+	HWND tab = GetControl(Id_Tab);
+	if (!tab) return;
+
+	HDC dc = GetDC(tab);
+	if (!dc) return;
+
+	HGDIOBJ oldFont = SelectObject(dc, (HFONT)SendMessage(tab, WM_GETFONT, 0, 0));
+	SIZE tabSize = {};
+	for (UINT id : { IDS_Skins, IDS_Layouts, IDS_GameMode, IDS_Settings })
+	{
+		const WCHAR* text = GetString(id);
+		SIZE textSize = {};
+		GetTextExtentPoint32(dc, text, (int)wcslen(text), &textSize);
+		tabSize.cx = std::max(tabSize.cx, textSize.cx);
+		tabSize.cy = std::max(tabSize.cy, textSize.cy);
+	}
+
+	SelectObject(dc, oldFont);
+	ReleaseDC(tab, dc);
+
+	TabCtrl_SetItemSize(tab, tabSize.cx + MulDiv(28, (int)m_Dpi, USER_DEFAULT_SCREEN_DPI), tabSize.cy + MulDiv(8, (int)m_Dpi, USER_DEFAULT_SCREEN_DPI));
 }
 
 INT_PTR DialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
