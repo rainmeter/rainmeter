@@ -720,6 +720,13 @@ void Skin::UpdateWindowBounds(UINT flags)
 	bool dpiChanged = false;
 	if (restoreVirtualized)
 	{
+		if (m_KeepOnScreen && (flags & (SWP_NOMOVE | SWP_NOSENDCHANGING)) == 0)
+		{
+			// A logical gap can select a different DPI than the monitor that physical clamping
+			// moves the skin onto. Clamp before conversion to avoid switching DPI on every move.
+			ClampPositionToScreenBounds(SkinPositionSpace::Virtualized);
+		}
+
 		restorePos = GetPositionAsVirtualized();
 		UINT dpi = 0;
 		pos = System::ConvertVirtualizedToPhysicalPosition(restorePos, GetZoomedWindowSize(), &dpi);
