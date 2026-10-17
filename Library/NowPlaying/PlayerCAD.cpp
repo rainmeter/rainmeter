@@ -63,27 +63,8 @@ void PlayerCAD::Initialize()
 		this);
 
 	// Add WM_USER/WM_COPYDATA to allowed messages from lower level processes
-	const HMODULE hUser32 = GetModuleHandle(L"user32");
-
-	// Try ChangeWindowMessageFilterEx first (Win7+)
-	auto changeWindowMessageFilterEx =
-		(decltype(ChangeWindowMessageFilterEx)*)GetProcAddress(hUser32, "ChangeWindowMessageFilterEx");
-	if (changeWindowMessageFilterEx)
-	{
-		changeWindowMessageFilterEx(m_Window, WM_USER, MSGFLT_ALLOW, nullptr);
-		changeWindowMessageFilterEx(m_Window, WM_COPYDATA, MSGFLT_ALLOW, nullptr);
-	}
-	else
-	{
-		// Try ChangeWindowMessageFilter (Vista)
-		auto changeWindowMessageFilter =
-			(decltype(ChangeWindowMessageFilter)*)GetProcAddress(hUser32, "ChangeWindowMessageFilter");
-		if (changeWindowMessageFilter)
-		{
-			changeWindowMessageFilter(WM_USER, MSGFLT_ALLOW);
-			changeWindowMessageFilter(WM_COPYDATA, MSGFLT_ALLOW);
-		}
-	}
+	ChangeWindowMessageFilterEx(m_Window, WM_USER, MSGFLT_ALLOW, nullptr);
+	ChangeWindowMessageFilterEx(m_Window, WM_COPYDATA, MSGFLT_ALLOW, nullptr);
 
 	WCHAR buffer[MAX_PATH] = { 0 };
 	LPCTSTR file = GetRainmeter().GetDataFile().c_str();
