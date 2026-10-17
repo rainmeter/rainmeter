@@ -236,7 +236,7 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
 		Control::Tab(Id_Tab, 0,
 			6, 6, 498, 293,
-			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)  // Last for correct tab order.
+			WS_VISIBLE | WS_TABSTOP, 0)  // Last for correct tab order.
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), GetString);
