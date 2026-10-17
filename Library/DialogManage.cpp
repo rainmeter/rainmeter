@@ -2288,22 +2288,6 @@ void DialogManage::TabSettings::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Button(Id_ResetStatisticsButton, IDS_ResetStatistics,
 			6, 144, buttonWidth + 20, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-
-		Control::GroupBox(-0, IDS_Logging,
-			0, 172, 478, 66,
-			WS_VISIBLE, 0),
-		Control::CheckBox(Id_VerboseLoggingCheckBox, IDS_DebugMode,
-			6, 188, 200, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::CheckBox(Id_LogToFileCheckBox, IDS_LogToFile,
-			6, 201, 200, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(Id_ShowLogFileButton, IDS_ShowLogFile,
-			6, 217, buttonWidth + 20, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(Id_DeleteLogFileButton, IDS_DeleteLogFile,
-			buttonWidth + 30, 217, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -2350,12 +2334,6 @@ void DialogManage::TabSettings::Initialize()
 	EnableWindow(GetControl(Id_AutoInstallCheckBox), check);
 
 	UpdateDraggableCheckBox();
-	Button_SetCheck(GetControl(Id_LogToFileCheckBox), GetLogger().IsLogToFile());
-	Button_SetCheck(GetControl(Id_VerboseLoggingCheckBox), GetRainmeter().GetDebug());
-
-	BOOL isLogFile = (_waccess_s(GetLogger().GetLogFilePath().c_str(), 0) == 0);
-	EnableWindow(GetControl(Id_ShowLogFileButton), isLogFile);
-	EnableWindow(GetControl(Id_DeleteLogFileButton), isLogFile);
 
 	Edit_SetText(GetControl(Id_EditorEdit), GetRainmeter().GetSkinEditor().c_str());
 
@@ -2487,40 +2465,6 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case Id_ResetStatisticsButton:
 		GetRainmeter().ResetStats();
-		break;
-
-	case Id_ShowLogFileButton:
-		GetRainmeter().ShowLogFile();
-		break;
-
-	case Id_DeleteLogFileButton:
-		GetLogger().DeleteLogFile();
-		if (_waccess_s(GetLogger().GetLogFilePath().c_str(), 0) != 0)
-		{
-			Button_SetCheck(GetControl(Id_LogToFileCheckBox), BST_UNCHECKED);
-			EnableWindow(GetControl(Id_ShowLogFileButton), FALSE);
-			EnableWindow(GetControl(Id_DeleteLogFileButton), FALSE);
-		}
-		break;
-
-	case Id_LogToFileCheckBox:
-		if (GetLogger().IsLogToFile())
-		{
-			GetLogger().StopLogFile();
-		}
-		else
-		{
-			GetLogger().StartLogFile();
-			if (_waccess_s(GetLogger().GetLogFilePath().c_str(), 0) == 0)
-			{
-				EnableWindow(GetControl(Id_ShowLogFileButton), TRUE);
-				EnableWindow(GetControl(Id_DeleteLogFileButton), TRUE);
-			}
-		}
-		break;
-
-	case Id_VerboseLoggingCheckBox:
-		GetRainmeter().SetDebug(!GetRainmeter().GetDebug());
 		break;
 
 	case Id_EditorEdit:
