@@ -2021,36 +2021,29 @@ void DialogManage::TabGameMode::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
-	// FIXME: Temporary hack.
-	short labelWidth = (short)GetLanguage().GetLabelWidth();
-
 	const Control s_Controls[] =
 	{
-		Control::GroupBox(-0, IDS_Settings,
-			0, 0, 478, 190,
-			WS_VISIBLE, 0),
-
 		Control::CheckBox(Id_FullScreenCheckBox, IDS_GameModeFullScreen,
-			6, 15, 200, 14,
+			0, 0, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::CheckBox(Id_ProcessListCheckBox, IDS_GameModeProcessListColon,
-			6, 28, 200, 14,
+			0, 13, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::Edit(Id_ProcessListEdit, 0,
-			6, 44, 200, 90,
+			0, 29, 200, 90,
 			WS_VISIBLE | WS_TABSTOP | ES_MULTILINE | ES_WANTRETURN | ES_AUTOVSCROLL, WS_EX_CLIENTEDGE),
 		Control::Label(-0, IDS_GameModeSettingsDescription,
-			230, 44, 242, 90,
+			224, 0, 254, 125,
 			WS_VISIBLE, 0),
 
 		Control::Button(Id_OnStartButton, IDS_GameModeActionsOnStart,
-			6, 148, 200, 14,
+			0, 133, 200, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		Control::Button(Id_OnStopButton, IDS_GameModeActionsOnStop,
-			6, 170, 200, 14,
+			0, 155, 200, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED, 0),
 		Control::Label(-0, IDS_GameModeActionsDescription,
-			230, 148, 242, 38,
+			224, 133, 254, 38,
 			WS_VISIBLE, 0)
 	};
 
