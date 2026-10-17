@@ -2298,7 +2298,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP, 0),
 
 		Control::GroupBox(-0, IDS_General,
-			0, 156, 478, 69,
+			0, 156, 478, 56,
 			WS_VISIBLE, 0),
 		Control::Label(-0, IDS_EditorColon,
 			6, 171, 107, 14,
