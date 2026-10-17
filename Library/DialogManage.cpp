@@ -2321,7 +2321,12 @@ void DialogManage::TabSettings::Initialize()
 
 	for (const auto& language : Language::GetAvailable(GetRainmeter().GetPath() + L"Languages\\"))
 	{
-		std::wstring text = language.englishName + L" - " + language.nativeName;
+		std::wstring text = language.nativeName;
+		if (_wcsicmp(language.nativeName.c_str(), language.englishName.c_str()) != 0)
+		{
+			text += L" - " + language.englishName;
+		}
+
 		int index = ComboBox_AddString(item, text.c_str());
 		ComboBox_SetItemData(item, index, (LPARAM)language.lcid);
 		if (language.lcid == GetLanguage().GetLCID())

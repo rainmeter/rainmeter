@@ -51,7 +51,7 @@ std::vector<Language::Info> Language::GetAvailable(const std::wstring& directory
 		if (GetLocaleInfoEx(localeName, LOCALE_SENGLISHLANGUAGENAME, name, _countof(name)) == 0) continue;
 		info.englishName = name;
 
-		if (GetLocaleInfoEx(localeName, LOCALE_SNATIVEDISPLAYNAME, name, _countof(name)) == 0) continue;
+		if (GetLocaleInfoEx(localeName, LOCALE_SNATIVELANGUAGENAME, name, _countof(name)) == 0) continue;
 		info.nativeName = name;
 
 		languages.push_back(info);
@@ -59,6 +59,24 @@ std::vector<Language::Info> Language::GetAvailable(const std::wstring& directory
 	while (FindNextFile(search, &fd));
 
 	FindClose(search);
+
+	for (auto& language : languages)
+	{
+		const bool hasVariants = std::any_of(languages.begin(), languages.end(), [&](const Info& other)
+		{
+			return other.lcid != language.lcid && PRIMARYLANGID(LANGIDFROMLCID(other.lcid)) == PRIMARYLANGID(LANGIDFROMLCID(language.lcid));
+		});
+		if (!hasVariants) continue;
+
+		WCHAR localeName[LOCALE_NAME_MAX_LENGTH];
+		WCHAR name[MAX_PATH];
+		if (LCIDToLocaleName(language.lcid, localeName, _countof(localeName), 0) &&
+			GetLocaleInfoEx(localeName, LOCALE_SENGLISHDISPLAYNAME, name, _countof(name)))
+		{
+			language.englishName = name;
+		}
+	}
+
 	return languages;
 }
 
