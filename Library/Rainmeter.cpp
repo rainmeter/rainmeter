@@ -152,7 +152,6 @@ Rainmeter::Rainmeter() :
 	m_TrayIcon(),
 	m_StatsInitialized(false),
 	m_Debug(false),
-	m_DisableVersionCheck(false),
 	m_NewVersion(false),
 	m_DisableAutoUpdate(false),
 	m_DownloadedNewVersion(false),
@@ -546,7 +545,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout, LPCWSTR startupComman
 	{
 		m_TrayIcon->ShowWelcomeNotification();
 	}
-	else if (!m_DisableVersionCheck)
+	else if (!m_DisableAutoUpdate)
 	{
 		ScheduleUpdateCheck(INTERVAL_UPDATECHECK_INITIAL);
 	}
@@ -779,9 +778,9 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 			Rainmeter& rainmeter = GetRainmeter();
 			KillTimer(rainmeter.m_Window, TIMER_UPDATECHECK);
 
-			if (!rainmeter.m_DisableVersionCheck)
+			if (!rainmeter.m_DisableAutoUpdate)
 			{
-				GetUpdater().CheckForUpdates(!rainmeter.m_DisableAutoUpdate);
+				GetUpdater().CheckForUpdates(true);
 				rainmeter.ScheduleUpdateCheck(INTERVAL_UPDATECHECK_DAILY);
 			}
 		}
@@ -1699,8 +1698,8 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	reader.ReadActionString<"TrayExecuteDR">(m_TrayExecuteDR);
 	reader.ReadActionString<"TrayExecuteDM">(m_TrayExecuteDM);
 
-	m_DisableVersionCheck = reader.ReadBool<"DisableVersionCheck">(false);
-	m_DisableAutoUpdate = reader.ReadBool<"DisableAutoUpdate">(false);
+	bool disableVersionCheck = reader.ReadBool<"DisableVersionCheck">(false);
+	m_DisableAutoUpdate = reader.ReadBool<"DisableAutoUpdate">(false) || disableVersionCheck;
 
 	m_ForceDefaultZoom = reader.ReadBool<"ForceDefaultZoom">(false);
 	m_DefaultZoom = std::clamp(reader.ReadInt<"DefaultZoom">(100), 10, 500);
@@ -2276,10 +2275,11 @@ void Rainmeter::SetForceDefaultZoom(bool force)
 	}
 }
 
-void Rainmeter::SetDisableVersionCheck(bool check)
+void Rainmeter::SetDisableAutoUpdate(bool check)
 {
-	m_DisableVersionCheck = check;
-	IniFile::WriteKey(m_IniFile, L"Rainmeter", L"DisableVersionCheck", check ? L"1" : L"0");
+	m_DisableAutoUpdate = check;
+	IniFile::WriteKey(m_IniFile, L"Rainmeter", L"DisableAutoUpdate", check ? L"1" : L"0");
+	IniFile::DeleteKey(m_IniFile, L"Rainmeter", L"DisableVersionCheck");
 
 	if (m_Window)
 	{
@@ -2292,12 +2292,6 @@ void Rainmeter::SetDisableVersionCheck(bool check)
 			ScheduleUpdateCheck(INTERVAL_UPDATECHECK_INITIAL);
 		}
 	}
-}
-
-void Rainmeter::SetDisableAutoUpdate(bool check)
-{
-	m_DisableAutoUpdate = check;
-	IniFile::WriteKey(m_IniFile, L"Rainmeter", L"DisableAutoUpdate", check ? L"1" : L"0");
 }
 
 void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)

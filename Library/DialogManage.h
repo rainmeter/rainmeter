@@ -194,8 +194,7 @@ private:
 	public:
 		enum Id
 		{
-			Id_CheckForUpdatesCheckBox = 100,
-			Id_AutoInstallCheckBox,
+			Id_DownloadUpdateCheckBox = 100,
 			Id_LockSkinsCheckBox,
 			Id_LanguageDropDownList,
 			Id_LanguageUpdateLink,

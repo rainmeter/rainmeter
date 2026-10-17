@@ -2281,11 +2281,8 @@ void DialogManage::TabSettings::Create(HWND owner)
 		Control::Button(Id_EditorBrowseButton, IDS_Ellipsis,
 			361, 169, 25, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::CheckBox(Id_CheckForUpdatesCheckBox, IDS_CheckForUpdates,
-			6, 192, 200, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::CheckBox(Id_AutoInstallCheckBox, IDS_AutomaticUpdate,
-			6, 205, 200, 14,
+		Control::CheckBox(Id_DownloadUpdateCheckBox, IDS_DownloadUpdateAuto,
+			6, 192, 300, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -2338,10 +2335,7 @@ void DialogManage::TabSettings::Initialize()
 	Edit_SetText(item, zoomBuffer);
 	Button_SetCheck(GetControl(Id_ForceDefaultZoomCheckBox), GetRainmeter().GetForceDefaultZoom() ? BST_CHECKED : BST_UNCHECKED);
 
-	BOOL check = !GetRainmeter().GetDisableVersionCheck();
-	Button_SetCheck(GetControl(Id_CheckForUpdatesCheckBox), check);
-	Button_SetCheck(GetControl(Id_AutoInstallCheckBox), !GetRainmeter().GetDisableAutoUpdate());
-	EnableWindow(GetControl(Id_AutoInstallCheckBox), check);
+	Button_SetCheck(GetControl(Id_DownloadUpdateCheckBox), !GetRainmeter().GetDisableAutoUpdate());
 
 	UpdateDraggableCheckBox();
 
@@ -2466,15 +2460,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		GetRainmeter().SetForceDefaultZoom(Button_GetCheck((HWND)lParam) == BST_CHECKED);
 		break;
 
-	case Id_CheckForUpdatesCheckBox:
-		{
-			BOOL check = GetRainmeter().GetDisableVersionCheck();
-			GetRainmeter().SetDisableVersionCheck(!check);
-			EnableWindow(GetControl(Id_AutoInstallCheckBox), check);
-		}
-		break;
-
-	case Id_AutoInstallCheckBox:
+	case Id_DownloadUpdateCheckBox:
 		GetRainmeter().SetDisableAutoUpdate(!GetRainmeter().GetDisableAutoUpdate());
 		break;
 

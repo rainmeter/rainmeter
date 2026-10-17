@@ -126,7 +126,6 @@
 #define IDS_Delete                                  2110
 #define IDS_LanguageColon                           2114
 #define IDS_General                                 2115
-#define IDS_CheckForUpdates                         2116
 #define IDS_ResetStatistics                         2117
 #define IDS_LogToFile                               2118
 #define IDS_SettingsNotWritable                     2119
@@ -166,7 +165,7 @@
 #define IDS_LanguageObsolete                        2156
 #define IDS_SafeStartTitle                          2158
 #define IDS_SafeStartMessage                        2159
-#define IDS_AutomaticUpdate                         2160
+#define IDS_DownloadUpdateAuto                      2160
 #define IDS_InstallNewVersion                       2161
 #define IDS_ClickToInstall                          2162
 #define IDS_OnHover                                 2163

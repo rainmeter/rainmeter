@@ -141,8 +141,6 @@ public:
 	bool ReadDialogWindowPlacement(LPCWSTR key, WINDOWPLACEMENT& placement);
 	void SaveDialogWindowPlacement(LPCWSTR key, const WINDOWPLACEMENT& placement);
 
-	bool GetDisableVersionCheck() { return m_DisableVersionCheck; }
-	void SetDisableVersionCheck(bool check);
 	bool GetNewVersion() { return m_NewVersion; }
 	void SetNewVersion() { m_NewVersion = true; }
 	bool GetDisableAutoUpdate() { return m_DisableAutoUpdate; }
@@ -274,7 +272,6 @@ private:
 	bool m_StatsInitialized;
 	bool m_Debug;
 
-	bool m_DisableVersionCheck;
 	bool m_NewVersion;
 	bool m_DisableAutoUpdate;
 	bool m_DownloadedNewVersion;
