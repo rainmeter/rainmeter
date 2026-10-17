@@ -11,7 +11,16 @@
 
 namespace WindowsTheme {
 
+enum class Mode
+{
+	Auto,
+	Light,
+	Dark
+};
+
 void Initialize();
+Mode GetMode();
+void SetMode(Mode mode);
 bool IsUsingDarkMode();
 
 void ApplyToWindow(HWND window);

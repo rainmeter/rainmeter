@@ -1653,6 +1653,8 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	const auto rainmeterID = IniNameRegistry::InternSection<"Rainmeter">();
 	auto reader = parser.GetOptionReader(L"Rainmeter", rainmeterID);
 
+	WindowsTheme::SetMode((WindowsTheme::Mode)std::clamp(reader.ReadInt<"UITheme">(0), 0, 2));
+
 	m_Debug = reader.ReadBool<"Debug">(false);
 
 	// Read Logging settings
@@ -1913,6 +1915,7 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 		PreserveSetting(backup, L"HardwareAcceleration");
 		PreserveSetting(backup, L"DefaultZoom");
 		PreserveSetting(backup, L"ForceDefaultZoom");
+		PreserveSetting(backup, L"UITheme");
 		PreserveSetting(backup, L"TrayExecuteM", false);
 		PreserveSetting(backup, L"TrayExecuteR", false);
 		PreserveSetting(backup, L"TrayExecuteDM", false);
@@ -2233,6 +2236,14 @@ void Rainmeter::SetDisableDragging(bool dragging)
 	DialogManage::UpdateSkinDraggableCheckBox();
 	DialogManage::UpdateGlobalDraggableCheckBox();
 	IniFile::WriteKey(m_IniFile, L"Rainmeter", L"DisableDragging", dragging ? L"1" : L"0");
+}
+
+void Rainmeter::SetUITheme(WindowsTheme::Mode mode)
+{
+	WindowsTheme::SetMode(mode);
+	WCHAR buffer[16];
+	_itow_s((int)mode, buffer, 10);
+	IniFile::WriteKey(m_IniFile, L"Rainmeter", L"UITheme", buffer);
 }
 
 void Rainmeter::SetDefaultZoom(int zoom)

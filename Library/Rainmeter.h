@@ -14,6 +14,7 @@
 #include "Logger.h"
 #include "Skin.h"
 #include "SkinRegistry.h"
+#include "../Common/WindowsTheme.h"
 
 #define MAX_LINE_LENGTH 4096
 
@@ -158,6 +159,8 @@ public:
 
 	bool GetDisableDragging() { return m_DisableDragging; }
 	void SetDisableDragging(bool dragging);
+
+	void SetUITheme(WindowsTheme::Mode mode);
 
 	int GetDefaultZoom() { return m_DefaultZoom; }
 	void SetDefaultZoom(int zoom);

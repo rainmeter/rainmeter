@@ -51,6 +51,7 @@ typedef void (WINAPI* RefreshColorPolicyProc)();
 
 struct ThemeState
 {
+	WindowsTheme::Mode mode = WindowsTheme::Mode::Auto;
 	std::atomic<bool> enabled = false;
 	AllowDarkModeForWindowProc allowDarkModeForWindowFunc = nullptr;
 	SetPreferredAppModeProc setPreferredAppModeFunc = nullptr;
@@ -1182,7 +1183,8 @@ bool UpdateMode()
 	DWORD size = sizeof(light);
 	RegGetValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", L"AppsUseLightTheme", RRF_RT_REG_DWORD, nullptr, &light, &size);
 
-	const bool enabled = state.setPreferredAppModeFunc && light == 0 && !(contrast.dwFlags & HCF_HIGHCONTRASTON);
+	const bool dark = state.mode == WindowsTheme::Mode::Dark || (state.mode == WindowsTheme::Mode::Auto && light == 0);
+	const bool enabled = state.setPreferredAppModeFunc && dark && !(contrast.dwFlags & HCF_HIGHCONTRASTON);
 	if (enabled == state.enabled) return false;
 
 	state.enabled = enabled;
@@ -1243,6 +1245,18 @@ void Initialize()
 bool IsUsingDarkMode()
 {
 	return GetState().enabled;
+}
+
+Mode GetMode()
+{
+	return GetState().mode;
+}
+
+void SetMode(Mode mode)
+{
+	Initialize();
+	GetState().mode = mode;
+	if (UpdateMode()) EnumThreadWindows(GetCurrentThreadId(), RefreshTopLevelWindow, 0);
 }
 
 void ApplyToControl(HWND window)
