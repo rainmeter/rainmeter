@@ -3,7 +3,6 @@
 #include "StdAfx.h"
 #include "GeneralImage.h"
 #include "Logger.h"
-#include "System.h"
 #include "../Common/PathUtil.h"
 #include "../Common/StringParser.h"
 #include <commoncontrols.h>
@@ -47,7 +46,7 @@ HRESULT LoadSystemImage(const SystemImage& systemImage, Gfx::Bitmap* bitmap, con
 	// always 256 pixels and must not be normalized.
 	if (SUCCEEDED(hr) && systemImage.list <= SHIL_EXTRALARGE)
 	{
-		const float dpiScale = (float)System::GetSystemDpi() / USER_DEFAULT_SCREEN_DPI;
+		const float dpiScale = (float)GetDpiForSystem() / USER_DEFAULT_SCREEN_DPI;
 		targetWidth = (int)roundf(targetWidth / dpiScale);
 		targetHeight = (int)roundf(targetHeight / dpiScale);
 	}

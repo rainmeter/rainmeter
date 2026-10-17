@@ -1,9 +1,9 @@
 // Copyright (c) Rainmeter Team. Source code licensed under GNU GPL v2 (see LICENSE file).
 
 #include "StdAfx.h"
+#include <shellscalingapi.h>
 #include "../Common/DpiUtil.h"
 #include "MonitorUtil.h"
-#include "System.h"
 #include "Logger.h"
 
 namespace MonitorUtil {
@@ -16,32 +16,20 @@ void SetMultiMonitorInfo();
 
 UINT GetDpiForMonitor(HMONITOR monitor)
 {
-	typedef HRESULT(WINAPI* GetDpiForMonitorProc)(HMONITOR, int, UINT*, UINT*);
-	static auto s_GetDpiForMonitor = []() -> GetDpiForMonitorProc
-	{
-		HMODULE module = GetModuleHandle(L"Shcore");
-		if (!module)
-		{
-			module = LoadLibrary(L"Shcore.dll");
-		}
-
-		return module ? (GetDpiForMonitorProc)GetProcAddress(module, "GetDpiForMonitor") : nullptr;
-	}();
-
 	// See the note about AppCompatFlags in Rainmeter.cpp.
 	if (g_DpiAppCompatMode) return USER_DEFAULT_SCREEN_DPI;
 
-	if (monitor && s_GetDpiForMonitor)
+	if (monitor)
 	{
 		UINT dpiX = USER_DEFAULT_SCREEN_DPI;
 		UINT dpiY = USER_DEFAULT_SCREEN_DPI;
-		if (SUCCEEDED(s_GetDpiForMonitor(monitor, 0, &dpiX, &dpiY)) && dpiX > 0)
+		if (SUCCEEDED(::GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY)) && dpiX > 0)
 		{
 			return dpiX;
 		}
 	}
 
-	return System::GetSystemDpi();
+	return GetDpiForSystem();
 }
 
 RECT GetVirtualScreenRect()

@@ -20,7 +20,6 @@ public:
 	static void StartMouseTimer();
 
 	static UINT GetDpiForWindow(HWND window);
-	static UINT GetSystemDpi();
 	static POINT ConvertVirtualizedToPhysicalPosition(POINT point, SIZE size, UINT* dpi = nullptr);
 	static POINT ConvertPhysicalToVirtualizedPosition(POINT point, HMONITOR monitorHandle);
 

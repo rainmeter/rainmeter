@@ -2155,7 +2155,7 @@ void Skin::ComputePositionFromOptions(bool inheritMonitorDpi)
 	const bool physical = SkinPosition::GetOptionSpace() == SkinPositionSpace::Physical;
 	if (inheritMonitorDpi && physical)
 	{
-		UpdateWindowDpi(System::GetSystemDpi());
+		UpdateWindowDpi(GetDpiForSystem());
 	}
 
 	const auto virtualizedPos = m_Position.ResolveVirtualizedPosition(m_WindowW, m_WindowH, physical ? m_EffectiveScale : m_ZoomScale, monitorsInfo);

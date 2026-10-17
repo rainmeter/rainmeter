@@ -154,35 +154,15 @@ void System::StartMouseTimer()
 	c_MouseTimerActive = true;
 }
 
-UINT System::GetSystemDpi()
-{
-	typedef UINT(WINAPI* GetDpiForSystemProc)();
-	static auto s_GetDpiForSystemProc = (GetDpiForSystemProc)GetProcAddress(GetModuleHandle(L"user32"), "GetDpiForSystem");
-	if (s_GetDpiForSystemProc) return s_GetDpiForSystemProc();
-
-	HDC dc = GetDC(nullptr);
-	if (dc)
-	{
-		const int dpi = GetDeviceCaps(dc, LOGPIXELSX);
-		ReleaseDC(nullptr, dc);
-		if (dpi > 0) return (UINT)dpi;
-	}
-
-	return USER_DEFAULT_SCREEN_DPI;
-}
-
 UINT System::GetDpiForWindow(HWND window)
 {
-	typedef UINT(WINAPI* GetDpiForWindowProc)(HWND);
-	static auto s_GetDpiForWindow = (GetDpiForWindowProc)GetProcAddress(GetModuleHandle(L"user32"), "GetDpiForWindow");
-
-	if (window && s_GetDpiForWindow)
+	if (window)
 	{
-		const UINT dpi = s_GetDpiForWindow(window);
+		const UINT dpi = ::GetDpiForWindow(window);
 		if (dpi > 0) return dpi;
 	}
 
-	return GetSystemDpi();
+	return GetDpiForSystem();
 }
 
 POINT System::ConvertVirtualizedToPhysicalPosition(POINT point, SIZE size, UINT* dpi)
@@ -201,7 +181,7 @@ POINT System::ConvertVirtualizedToPhysicalPosition(POINT point, SIZE size, UINT*
 		// Instead we will determine the DPI based on the monitor of the center point.
 		const POINT center = { r.left + (r.right - r.left) / 2, r.top + (r.bottom - r.top) / 2 };
 		const auto* monitor = MonitorUtil::GetMultiMonitorInfo().GetFromPoint(center);
-		*dpi = monitor ? monitor->dpi : GetSystemDpi();
+		*dpi = monitor ? monitor->dpi : GetDpiForSystem();
 	}
 
 	return { r.left, r.top };
