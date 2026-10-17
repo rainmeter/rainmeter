@@ -416,6 +416,7 @@ void DrawListBox(HWND window, HDC dc, RECT rect)
 	const int count = (int)SendMessage(window, LB_GETCOUNT, 0, 0);
 	const int selected = (int)SendMessage(window, LB_GETCURSEL, 0, 0);
 	const int top = (int)SendMessage(window, LB_GETTOPINDEX, 0, 0);
+	const bool focused = GetFocus() == window && !(SendMessage(window, WM_QUERYUISTATE, 0, 0) & UISF_HIDEFOCUS);
 
 	// Use native item bounds to preserve scrolling, including a partially visible first item.
 	for (int i = std::max(0, top); i < count; ++i)
@@ -437,6 +438,7 @@ void DrawListBox(HWND window, HDC dc, RECT rect)
 		if (length >= _countof(text)) continue;
 
 		SendMessage(window, LB_GETTEXT, i, (LPARAM)text);
+		if (highlight && focused) DrawFocusRect(dc, &item);
 		item.left += 2;
 		DrawText(dc, text, -1, &item, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
 	}
@@ -930,6 +932,7 @@ LRESULT HandleControlMessage(HWND window, UINT message, WPARAM wParam, LPARAM lP
 	// WM_SETREDRAW can change the popup's visibility and interrupt panning feedback.
 	// Repaint hover selection immediately without disabling redraw during mouse movement.
 	if (type == ControlType::ListBox && message == WM_MOUSEMOVE) UpdateWindow(window);
+	if (type == ControlType::ListBox && (message == WM_SETFOCUS || message == WM_KILLFOCUS)) PaintEditBorder(window);
 
 	return result;
 }
@@ -976,6 +979,7 @@ LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wParam, LPARAM lP
 	if (message >= WM_CTLCOLORMSGBOX && message <= WM_CTLCOLORSTATIC) return ControlColor(message, wParam, lParam);
 	if (type == ControlType::ListView) return HandleListViewMessage(window, message, wParam, lParam);
 	if (type == ControlType::Edit) return HandleEditMessage(window, message, wParam, lParam);
+	if (type == ControlType::ListBox && message == WM_NCPAINT) return HandleEditMessage(window, message, wParam, lParam);
 	return HandleControlMessage(window, message, wParam, lParam, type);
 }
 
@@ -1025,7 +1029,9 @@ BOOL CALLBACK ApplyControl(HWND window, LPARAM lParam)
 	}
 	else if (wcscmp(className, WC_LISTBOX) == 0)
 	{
-		SetControlSubclass(window, ControlType::Edit);
+		const DWORD style = (DWORD)GetWindowLongPtr(window, GWL_STYLE);
+		const DWORD nativeStyles = LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE | LBS_MULTIPLESEL | LBS_EXTENDEDSEL | LBS_MULTICOLUMN | LBS_USETABSTOPS | LBS_NODATA | LBS_NOSEL | WS_HSCROLL;
+		SetControlSubclass(window, (style & nativeStyles) ? ControlType::Edit : ControlType::ListBox);
 	}
 	else if (wcscmp(className, WC_LISTVIEW) == 0)
 	{
