@@ -2406,7 +2406,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 	switch (LOWORD(wParam))
 	{
 	case Id_LanguageDropDownList:
-		if (HIWORD(wParam) == CBN_SELCHANGE)
+		if (HIWORD(wParam) == CBN_SELENDOK)
 		{
 			int sel = ComboBox_GetCurSel((HWND)lParam);
 			LCID lcid = (LCID)ComboBox_GetItemData((HWND)lParam, sel);
