@@ -4727,7 +4727,7 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			wp->y = m_DragStartWindowPos.y + (cursor.y - m_DragStartCursor.y);
 		}
 
-		if (m_SnapEdges && !(IsCtrlKeyDown() || IsShiftKeyDown()))
+		if (m_SnapEdges && !c_IsInSelectionMode && !(IsCtrlKeyDown() || IsShiftKeyDown()))
 		{
 			// only process movement (ignore anything without winpos values)
 			if (wp->cx != 0 && wp->cy != 0)
