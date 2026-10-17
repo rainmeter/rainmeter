@@ -29,6 +29,8 @@ Unicode true
 
 ${Using:StrFunc} StrRep
 
+!define UPDATE_CHANGES_URL "https://www.rainmeter.net/changes-5.0/"
+
 !ifndef OUTFILE
  !define OUTFILE "Rainmeter-test.exe"
  !define VERSION_FULL "0.0.0.0"
@@ -71,6 +73,7 @@ ReserveFile ".\Wizard.jpg"
 ReserveFile ".\WizardEmpty.bmp"
 
 !define MUI_ICON ".\Installer.ico"
+!define INSTALLER_ICON_ID 103 ; NSIS embeds the installer icon at this resource ID.
 !define MUI_CUSTOMFUNCTION_GUIINIT InitWizardImage
 !define MUI_WELCOMEFINISHPAGE_BITMAP ".\WizardEmpty.bmp"
 !define MUI_FINISHPAGE_RUN
@@ -95,6 +98,7 @@ Var AutoStartup
 Var InstallPortable
 Var ExistingRainmeterInstallation
 Var RestartAfterInstall
+Var AutoUpdate
 
 ${StrStr}	; Must be called before any sections or functions
 
@@ -111,6 +115,9 @@ UAC_TryAgain:
 		${EndIf}
 		; Fall-through
 	${Case} 1223
+		${If} $AutoUpdate = 1
+			Call ResumeRainmeter
+		${EndIf}
 		Quit
 	${Case} 1062
 		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(LogonError)" /SD IDOK
@@ -156,6 +163,7 @@ Function .onInit
 
 	${EnableX64FSRedirection}
 
+	StrCpy $AutoUpdate 0
 	${IfNot} ${UAC_IsInnerInstance}
 		ReadRegStr $0 HKLM "SOFTWARE\Rainmeter" "Language"
 		ReadRegDWORD $NonDefaultLanguage HKLM "SOFTWARE\Rainmeter" "NonDefault"
@@ -204,6 +212,7 @@ Function .onInit
 					StrCpy $RestartAfterInstall 0
 				${ElseIf} $0 = 1
 					StrCpy $RestartAfterInstall 1
+					StrCpy $AutoUpdate 1
 				${EndIf}
 			${EndIf}
 
@@ -258,6 +267,10 @@ Function .onInit
 		${If} ${Errors}
 			StrCpy $LANGUAGE "1033"
 		${EndIf}
+
+		${If} $AutoUpdate = 1
+			Call ShowUpdateDialog
+		${EndIf}
 	${Else}
 		; Exchange settings with user instance
 		!insertmacro UAC_AsUser_Call Function ExchangeSettings ${UAC_SYNCREGISTERS}
@@ -266,6 +279,71 @@ Function .onInit
 		StrCpy $RestartAfterInstall $4
 		StrCpy $LANGUAGE $5
 		StrCpy $INSTDIR $6
+	${EndIf}
+FunctionEnd
+
+Function ShowUpdateDialog
+	StrCpy $8 0
+	${If} $InstallPortable <> 1
+		System::Call "shell32::IsUserAnAdmin()i.r0"
+		${If} $0 = 0
+			StrCpy $8 1
+		${EndIf}
+	${EndIf}
+
+	; The NSIS process is 32-bit, so TASKDIALOGCONFIG has 24 four-byte fields.
+	StrCpy $9 0x8009 ; TDF_ENABLE_HYPERLINKS | TDF_ALLOW_DIALOG_CANCELLATION | TDF_CAN_BE_MINIMIZED
+	${If} $(^RTL) = 1
+		IntOp $9 $9 | 0x2000 ; TDF_RTL_LAYOUT
+	${EndIf}
+
+	System::Call '*(&w${NSIS_MAX_STRLEN} "$(^InstallBtn)")p.R0'
+	System::Call '*(&w${NSIS_MAX_STRLEN} "Rainmeter")p.R1'
+	System::Call '*(&w${NSIS_MAX_STRLEN} "$(AutoUpdateTitle)")p.R2'
+	System::Call '*(&w${NSIS_MAX_STRLEN} `$(AutoUpdateDescription)$\n$\n<a href="${UPDATE_CHANGES_URL}">$(AutoUpdateChangesLink)</a>`)p.R3'
+	System::Call 'kernel32::GetModuleHandleW(p 0)p.R4'
+	System::Call 'comctl32::LoadIconMetric(p R4, p ${INSTALLER_ICON_ID}, i 0, *p .R5)'
+	System::Call 'comctl32::LoadIconMetric(p R4, p ${INSTALLER_ICON_ID}, i 1, *p .R6)'
+	System::Call '*(i 1, p R0)p.r7'
+	System::Get '(p .r0, i .r1, p, p, p) i 0r2'
+	Pop $5
+	System::Call '*(i 96, p 0, p R4, i r9, i 8, p R1, p ${INSTALLER_ICON_ID}, p R2, p R3, i 1, p r7, i 1, i 0, p 0, i 0, p 0, p 0, p 0, p 0, p 0, p 0, k r5, p 0, i 220)p.r6'
+
+	StrCpy $2 ""
+	StrCpy $4 2
+	System::Call 'comctl32::TaskDialogIndirect(p r6, *i .r4, p 0, p 0)i.r3'
+	${While} $2 != ""
+		${If} $1 = 0 ; TDN_CREATED
+			SendMessage $0 ${WM_SETICON} 0 $R5
+			SendMessage $0 ${WM_SETICON} 1 $R6
+			SendMessage $0 0x0473 1 $8 ; TDM_SET_BUTTON_ELEVATION_REQUIRED_STATE
+		${ElseIf} $1 = 3 ; TDN_HYPERLINK_CLICKED
+			; Open the URL in a separate process to avoid a crash inside the dialog callback.
+			Exec '"$WINDIR\explorer.exe" "${UPDATE_CHANGES_URL}"'
+		${EndIf}
+
+		StrCpy $2 ""
+		System::Call $5
+	${EndWhile}
+
+	System::Call 'user32::DestroyIcon(p R5)'
+	System::Call 'user32::DestroyIcon(p R6)'
+	System::Free $6
+	System::Free $5
+	System::Free $7
+	System::Free $R0
+	System::Free $R1
+	System::Free $R2
+	System::Free $R3
+
+	${If} $3 != 0
+		MessageBox MB_OK|MB_ICONSTOP "$(SetupError)" /SD IDOK
+	${EndIf}
+
+	${If} $3 != 0
+	${OrIf} $4 != 1
+		Call ResumeRainmeter
+		Quit
 	${EndIf}
 FunctionEnd
 
@@ -815,6 +893,15 @@ Function UpdateUserStartup
 	${Else}
 		DeleteRegValue HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "Rainmeter"
 	${EndIf}
+FunctionEnd
+
+Function ResumeRainmeter
+	Push $0
+	FindWindow $0 "DummyRainWClass" "Rainmeter control window"
+	${If} $0 = 0
+		Call FinishRun
+	${EndIf}
+	Pop $0
 FunctionEnd
 
 Function FinishRun
