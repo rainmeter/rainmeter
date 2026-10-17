@@ -69,9 +69,19 @@ std::vector<Language::Info> Language::GetAvailable(const std::wstring& directory
 		if (!hasVariants) continue;
 
 		WCHAR localeName[LOCALE_NAME_MAX_LENGTH];
+		if (LCIDToLocaleName(language.lcid, localeName, _countof(localeName), 0) == 0) continue;
+
+		WCHAR parentName[LOCALE_NAME_MAX_LENGTH];
+		const WCHAR* displayLocale = localeName;
+		if (GetLocaleInfoEx(localeName, LOCALE_SPARENT, parentName, _countof(parentName)))
+		{
+			// Script-specific parents distinguish Chinese and Serbian without country names.
+			const WCHAR* script = wcschr(parentName, L'-');
+			if (script && wcslen(script + 1) == 4) displayLocale = parentName;
+		}
+
 		WCHAR name[MAX_PATH];
-		if (LCIDToLocaleName(language.lcid, localeName, _countof(localeName), 0) &&
-			GetLocaleInfoEx(localeName, LOCALE_SENGLISHDISPLAYNAME, name, _countof(name)))
+		if (GetLocaleInfoEx(displayLocale, LOCALE_SENGLISHDISPLAYNAME, name, _countof(name)))
 		{
 			language.englishName = name;
 		}
