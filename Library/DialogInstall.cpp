@@ -1428,7 +1428,7 @@ void DialogInstall::TabInstall::Create(HWND owner)
 			50, 26, 186, 13,
 			WS_VISIBLE | SS_NOPREFIX, 0),
 		Control::Label(Id_ComponentsLabel, IDS_IncludedComponents,
-			0, 45, 80, 13,
+			0, 45, 234, 13,
 			WS_VISIBLE, 0),
 		Control::ListView(DialogInstall::TabInstall::Id_ComponentsList, 0,
 			0, 60, 234, 86,
