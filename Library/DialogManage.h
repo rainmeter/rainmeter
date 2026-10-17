@@ -197,7 +197,6 @@ private:
 			Id_CheckForUpdatesCheckBox = 100,
 			Id_AutoInstallCheckBox,
 			Id_LockSkinsCheckBox,
-			Id_ResetStatisticsButton,
 			Id_LanguageDropDownList,
 			Id_LanguageUpdateLink,
 			Id_UIThemeDropDownList,

@@ -181,7 +181,8 @@ private:
 		enum Id
 		{
 			Id_NetworkListView = 450,
-			Id_ShowVirtualInterfacesCheckBox
+			Id_ShowVirtualInterfacesCheckBox,
+			Id_ResetStatisticsButton
 		};
 
 		void Create(HWND owner);

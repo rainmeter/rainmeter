@@ -2233,9 +2233,6 @@ void DialogManage::TabSettings::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 480, 260, owner);
 
-	// FIXME: Temporary hack.
-	short buttonWidth = (short)GetLanguage().GetButtonWidth();
-
 	const Control s_Controls[] =
 	{
 		Control::GroupBox(-0, IDS_UserInterface,
@@ -2292,16 +2289,13 @@ void DialogManage::TabSettings::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP, 0),
 
 		Control::GroupBox(-0, IDS_General,
-			0, 177, 478, 66,
+			0, 177, 478, 48,
 			WS_VISIBLE, 0),
 		Control::CheckBox(Id_CheckForUpdatesCheckBox, IDS_CheckForUpdates,
 			6, 192, 200, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		Control::CheckBox(Id_AutoInstallCheckBox, IDS_AutomaticUpdate,
 			6, 205, 200, 14,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		Control::Button(Id_ResetStatisticsButton, IDS_ResetStatistics,
-			6, 221, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -2491,10 +2485,6 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case Id_LockSkinsCheckBox:
 		GetRainmeter().SetDisableDragging(!GetRainmeter().GetDisableDragging());
-		break;
-
-	case Id_ResetStatisticsButton:
-		GetRainmeter().ResetStats();
 		break;
 
 	case Id_EditorEdit:

@@ -2372,12 +2372,18 @@ void DialogDebug::TabNetwork::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 570, 338, owner);
 
-	static const Control s_Controls[] =
+	short buttonWidth = (short)GetLanguage().GetButtonWidth() + 20;
+
+	const Control s_Controls[] =
 	{
 		Control::CheckBox(Id_ShowVirtualInterfacesCheckBox, IDS_ShowVirtualInterfaces,
 			0, 0, 150, 14,
 			WS_VISIBLE | WS_TABSTOP, 0,
 			Control::ANCHOR_LEFT | Control::ANCHOR_TOP),
+		Control::Button(Id_ResetStatisticsButton, IDS_ResetStatistics,
+			570 - buttonWidth, 0, buttonWidth, 14,
+			WS_VISIBLE | WS_TABSTOP, 0,
+			Control::ANCHOR_RIGHT | Control::ANCHOR_TOP),
 		Control::ListView(Id_NetworkListView, 0,
 			0, 22, 570, 315,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_NOCOLUMNHEADER, 0,
@@ -2541,6 +2547,10 @@ INT_PTR DialogDebug::TabNetwork::OnCommand(WPARAM wParam, LPARAM lParam)
 	if (LOWORD(wParam) == Id_ShowVirtualInterfacesCheckBox && HIWORD(wParam) == BN_CLICKED)
 	{
 		UpdateInterfaceList();
+	}
+	else if (LOWORD(wParam) == Id_ResetStatisticsButton && HIWORD(wParam) == BN_CLICKED)
+	{
+		GetRainmeter().ResetStats();
 	}
 
 	return TRUE;
