@@ -2251,7 +2251,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 			6, 36, 107, 14,
 			WS_VISIBLE, 0),
 		Control::ComboBox(Id_UIThemeDropDownList, 0,
-			107, 34, 250, 14,
+			107, 34, 100, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | WS_VSCROLL, 0),
 		Control::CheckBox(Id_ShowTrayIconCheckBox, IDS_ShowNotificationAreaIcon,
 			6, 55, 200, 14,
