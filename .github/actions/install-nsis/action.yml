@@ -1,37 +1,38 @@
 name: Install NSIS
-description: Download and silently install NSIS without winget/chocolatey overhead
+description: Download and extract the NSIS workflow artifact
 
 runs:
   using: composite
   steps:
+    - name: Download NSIS
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        repository: poiru/nsis
+        run-id: '39225338263'
+        artifact-ids: '12173737379'
+        github-token: ${{ github.token }}
+        path: ${{ runner.temp }}/nsis-artifact
+
     - name: Install NSIS
       shell: pwsh
       run: |
         $ErrorActionPreference = 'Stop'
 
-        $installer = Join-Path $env:RUNNER_TEMP 'nsis-3.12-setup.exe'
-        Invoke-WebRequest `
-          -Uri 'https://github.com/rainmeter/build-tools/releases/download/v1/nsis-3.12-setup.exe' `
-          -OutFile $installer
-
-        $expectedHash = '3bc2b06253a7e4957111be152ac6a536e0c7478a706e19da814038db5d706495'
-        $actualHash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
-        if ($actualHash -ne $expectedHash) {
-          throw "SHA-256 mismatch for nsis-3.12-setup.exe: $actualHash"
+        $artifactDir = Join-Path $env:RUNNER_TEMP 'nsis-artifact'
+        $archives = @(Get-ChildItem -LiteralPath $artifactDir -Filter 'nsis-*.zip' -File)
+        if ($archives.Count -ne 1) {
+          throw 'Expected exactly one NSIS ZIP in the workflow artifact.'
         }
 
-        Start-Process -FilePath $installer -ArgumentList '/S' -Wait -NoNewWindow
-
-        $installDirs = @(
-          "${env:ProgramFiles(x86)}\NSIS",
-          "$env:ProgramFiles\NSIS"
-        )
-        $nsisDir = $installDirs |
-          Where-Object { Test-Path (Join-Path $_ 'makensis.exe') } |
-          Select-Object -First 1
-
-        if (-not $nsisDir) {
-          throw 'NSIS installation completed, but makensis.exe was not found.'
+        $extractDir = Join-Path $env:RUNNER_TEMP 'nsis-extracted'
+        Expand-Archive -LiteralPath $archives[0].FullName -DestinationPath $extractDir -Force
+        $sourceDirs = @(Get-ChildItem -LiteralPath $extractDir -Directory |
+          Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'makensis.exe') -PathType Leaf })
+        if ($sourceDirs.Count -ne 1) {
+          throw 'Expected exactly one NSIS directory containing makensis.exe.'
         }
 
+        $nsisDir = Join-Path $env:ProgramFiles 'NSIS'
+        New-Item -ItemType Directory -Path $nsisDir -Force | Out-Null
+        Copy-Item -Path (Join-Path $sourceDirs[0].FullName '*') -Destination $nsisDir -Recurse -Force
         Add-Content -Path $env:GITHUB_PATH -Value $nsisDir
