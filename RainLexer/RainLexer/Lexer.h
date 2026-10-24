@@ -151,7 +151,7 @@ private:
 		"@include", "@inherit",
 		"action", "author",
 		"background", "barimage", "bitmapimage", "blacklist", "bothimage", "bothimagepath", "bothimagepath", "buttoncommand", "buttonimage",
-		"category", "configeditor", "container", "contextaction", "contexttitle", "counter", "cpuexclude", "cpuinclude",
+		"captureoverlaycursorname", "category", "configeditor", "container", "contextaction", "contexttitle", "counter", "cpuexclude", "cpuinclude",
 		"debug2file", "defaultartwork", "defaultvalue", "description", "downloadfile", "draggroup", "drive",
 		"errorstring", "excludeextensions", "extensions",
 		"filefilter", "finishaction", "folder", "fontface", "formatlocale",
@@ -168,7 +168,7 @@ private:
 		"mouseoveraction", "mousescrolldownaction", "mousescrollleftaction", "mousescrollrightaction", "mousescrollupaction",
 
 		"name", "numberconversionformat",
-		"onchangeaction", "oncloseaction", "onconnecterroraction", "ondismissaction", "ondisplaymetricschange", "ondownloaderroraction",
+		"onaudioendaction", "onaudiostartaction", "onchangeaction", "oncloseaction", "onconnecterroraction", "ondismissaction", "ondisplaymetricschange", "ondownloaderroraction",
 		"ondropaction", "ondroppedaction", "onenteraction", "onfocusaction", "onleaveaction", "onoveraction", "onrefreshaction",
 		"onregexperroraction", "onsubmitaction", "onunfocusaction", "onupdateaction", "onvisibilitychange", "onwakeaction", "outputfile",
 
