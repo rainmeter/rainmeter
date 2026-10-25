@@ -14,3 +14,4 @@ obj
 /Language/*.nsh
 x32*
 x64*
+/RainLexer/AGENTS.md
