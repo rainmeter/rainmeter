@@ -10,7 +10,33 @@
 #include "../Common/CriticalSection.h"
 #include "../Common/StringParser.h"
 #include "../Common/StringUtil.h"
+#include <commoncontrols.h>
 #include <queue>
+
+#pragma pack(push, 2)
+typedef struct
+{
+	BYTE        bWidth;
+	BYTE        bHeight;
+	BYTE        bColorCount;
+	BYTE        bReserved;
+	WORD        wPlanes;
+	WORD        wBitCount;
+	DWORD       dwBytesInRes;
+	DWORD       dwImageOffset;
+} ICONDIRENTRY;
+
+typedef struct
+{
+	WORD           idReserved;
+	WORD           idType;
+	WORD           idCount;
+	ICONDIRENTRY   idEntries[1];
+} ICONDIR;
+#pragma pack(pop)
+
+static bool SaveIcon(HICON hIcon, FILE* fp);
+static void WriteIcon(int iconIndex, int iconSize, const std::wstring& iconPath);
 
 enum MeasureFileView::MeasureType : BYTE
 {
@@ -183,7 +209,7 @@ private:
 				if (child->m_Type == TYPE_ICON)
 				{
 					const int trueIndex = child->GetTrueIndex(parent);
-					m_IconRequests.push_back(trueIndex);
+					m_IconRequests.push_back({ trueIndex, child->m_IconSize, child->m_IconPath });
 				}
 			}
 		}
@@ -214,7 +240,14 @@ private:
 	bool m_NeedsUpdating = false;
 	bool m_NeedsIcons = false;
 
-	std::vector<int> m_IconRequests;
+	struct IconRequest
+	{
+		int index;
+		int size;
+		std::wstring path;
+	};
+
+	std::vector<IconRequest> m_IconRequests;
 
 	bool m_TaskSuccessful = false;
 };
@@ -483,11 +516,15 @@ void MeasureFileView::ReadOptions(ConfigParser::OptionReader& reader)
 	}
 	else if (m_Type == TYPE_ICON)
 	{
-		if (previousType != TYPE_ICON)
+		m_IconPath = reader.ReadString<"IconPath">(L"");
+		if (!m_IconPath.empty())
+		{
+			GetSkin()->MakePathAbsolute(m_IconPath);
+		}
+		else if (previousType != TYPE_ICON)
 		{
 			// Remove icons written by versions that predate SystemImage support.
-			const std::wstring defaultValue = fmt::format(L"icon{}.ico", m_Index + 1);
-			std::wstring iconPath = reader.ReadString<"IconPath">(defaultValue.c_str());
+			std::wstring iconPath = fmt::format(L"icon{}.ico", m_Index + 1);
 			GetSkin()->MakePathAbsolute(iconPath);
 			DeleteFile(iconPath.c_str());
 		}
@@ -656,7 +693,11 @@ std::optional<std::wstring_view> MeasureFileView::GetStringValue()
 		break;
 
 		case TYPE_ICON:
-			if (parent->files[trueIndex].iconIndex >= 0)
+			if (!m_IconPath.empty())
+			{
+				m_StrValue = m_IconPath;
+			}
+			else if (parent->files[trueIndex].iconIndex >= 0)
 			{
 				m_StrValue = fmt::format(L"SystemImage:{},{}", parent->files[trueIndex].iconIndex, m_IconSize);
 			}
@@ -1099,10 +1140,12 @@ void MeasureFileView::UpdateTask::StartWorkOnWorkerThread()
 		}
 	}
 
-	for (const int trueIndex : m_IconRequests)
+	for (const auto& request : m_IconRequests)
 	{
 		if (m_AbortRequested) break;
 
+		const int trueIndex = request.index;
+		int iconIndex = -1;
 		if (trueIndex >= 0 && trueIndex < (int)m_Files.size())
 		{
 			auto& file = m_Files[trueIndex];
@@ -1114,7 +1157,13 @@ void MeasureFileView::UpdateTask::StartWorkOnWorkerThread()
 			if (SHGetFileInfo(filePath.c_str(), 0, &fileInfo, sizeof(fileInfo), SHGFI_SYSICONINDEX))
 			{
 				file.iconIndex = fileInfo.iIcon;
+				iconIndex = fileInfo.iIcon;
 			}
+		}
+
+		if (!request.path.empty())
+		{
+			WriteIcon(iconIndex, request.size, request.path);
 		}
 	}
 
@@ -1250,4 +1299,85 @@ void MeasureFileView::UpdateTask::GetFolderInfo(std::queue<std::wstring>& folder
 		} while (FindNextFile(find, &fd) && !m_AbortRequested);
 		FindClose(find);
 	}
+}
+
+static void WriteIcon(int iconIndex, int iconSize, const std::wstring& iconPath)
+{
+	Microsoft::WRL::ComPtr<IImageList> imageList;
+	HICON icon = nullptr;
+	if (iconIndex >= 0 && SUCCEEDED(SHGetImageList(iconSize, IID_IImageList, (void**)imageList.GetAddressOf())))
+	{
+		imageList->GetIcon(iconIndex, ILD_TRANSPARENT, &icon);
+	}
+
+	const std::wstring tempPath = iconPath + L".temp";
+	FILE* fp = nullptr;
+	if (_wfopen_s(&fp, tempPath.c_str(), L"wb") == 0)
+	{
+		const bool saved = iconIndex < 0 || (icon && SaveIcon(icon, fp));
+		const bool closed = fclose(fp) == 0;
+		if (!saved || !closed || !MoveFileEx(tempPath.c_str(), iconPath.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+		{
+			DeleteFile(tempPath.c_str());
+		}
+	}
+
+	DestroyIcon(icon);
+}
+
+static bool SaveIcon(HICON hIcon, FILE* fp)
+{
+	ICONINFO iconInfo = {};
+	if (!GetIconInfo(hIcon, &iconInfo)) return false;
+
+	BITMAP bitmap = {};
+	HDC dc = GetDC(nullptr);
+	bool saved = false;
+	if (dc && GetObject(iconInfo.hbmColor, sizeof(bitmap), &bitmap))
+	{
+		BITMAPINFO colorInfo = {};
+		colorInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		colorInfo.bmiHeader.biWidth = bitmap.bmWidth;
+		colorInfo.bmiHeader.biHeight = bitmap.bmHeight;
+		colorInfo.bmiHeader.biPlanes = 1;
+		colorInfo.bmiHeader.biBitCount = 32;
+		std::vector<BYTE> colorBits(bitmap.bmWidth * bitmap.bmHeight * 4);
+
+		struct
+		{
+			BITMAPINFOHEADER header;
+			RGBQUAD colors[2];
+		} maskInfo = {};
+		maskInfo.header = colorInfo.bmiHeader;
+		maskInfo.header.biBitCount = 1;
+		std::vector<BYTE> maskBits(((bitmap.bmWidth + 31) / 32) * 4 * bitmap.bmHeight);
+
+		if (GetDIBits(dc, iconInfo.hbmColor, 0, bitmap.bmHeight, colorBits.data(), &colorInfo, DIB_RGB_COLORS) == bitmap.bmHeight &&
+			GetDIBits(dc, iconInfo.hbmMask, 0, bitmap.bmHeight, maskBits.data(), (BITMAPINFO*)&maskInfo, DIB_RGB_COLORS) == bitmap.bmHeight)
+		{
+			BITMAPINFOHEADER header = colorInfo.bmiHeader;
+			header.biHeight *= 2;
+			header.biSizeImage = (DWORD)(colorBits.size() + maskBits.size());
+
+			ICONDIR dir = {};
+			dir.idType = 1;
+			dir.idCount = 1;
+			dir.idEntries[0].bWidth = (BYTE)bitmap.bmWidth;
+			dir.idEntries[0].bHeight = (BYTE)bitmap.bmHeight;
+			dir.idEntries[0].wPlanes = 1;
+			dir.idEntries[0].wBitCount = 32;
+			dir.idEntries[0].dwBytesInRes = sizeof(header) + header.biSizeImage;
+			dir.idEntries[0].dwImageOffset = sizeof(dir);
+
+			saved = fwrite(&dir, sizeof(dir), 1, fp) == 1 &&
+				fwrite(&header, sizeof(header), 1, fp) == 1 &&
+				fwrite(colorBits.data(), colorBits.size(), 1, fp) == 1 &&
+				fwrite(maskBits.data(), maskBits.size(), 1, fp) == 1;
+		}
+	}
+
+	if (dc) ReleaseDC(nullptr, dc);
+	DeleteObject(iconInfo.hbmColor);
+	DeleteObject(iconInfo.hbmMask);
+	return saved;
 }

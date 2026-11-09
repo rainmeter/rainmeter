@@ -38,6 +38,7 @@ private:
 	MeasureType m_Type;
 	DateType m_DateType;
 	int m_IconSize;
+	std::wstring m_IconPath;
 	int m_Index;
 	bool m_IgnoreCount;
 
