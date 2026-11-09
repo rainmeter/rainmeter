@@ -1,12 +1,9 @@
-#define IDC_STATIC                                   -1
 #define IDI_RAINMETER                                100
-//#define IDI_TRAY                                     101
 #define IDI_ADDFOLDER                                102
 #define IDI_FOLDER                                   103
 #define IDI_INI                                      104
 
 #define IDI_SKININSTALLER                            200
-#define IDB_INSTALLHEADER                            201
 #define IDR_INSTALL_MENU                             204
 #define IDR_DIALOG_ACCELERATORS                      205
 
@@ -26,7 +23,6 @@
 #define IDS_NoLayouts                               2010
 #define IDS_EditSettings                            2011
 #define IDS_RefreshAll                              2012
-#define IDS_Logging                                 2013
 #define IDS_ShowLogFile                             2014
 #define IDS_StartLogging                            2015
 #define IDS_StopLogging                             2016
@@ -65,7 +61,6 @@
 #define IDS_Approx100Percent                        2047
 #define IDS_FadeIn                                  2048
 #define IDS_FadeOut                                 2049
-#define IDS_HideOnMouseOver                         2050
 #define IDS_Draggable                               2051
 #define IDS_SavePosition                            2052
 #define IDS_SnapToEdges                             2053
@@ -110,7 +105,6 @@
 #define IDS_AddMetadata                             2094
 #define IDS_CoordinatesColon                        2095
 #define IDS_PositionColon                           2096
-#define IDS_LoadOrderColon                          2097
 #define IDS_TransparencyColon                       2098
 #define IDS_OnHoverColon                            2099
 #define IDS_DoNothing                               2100
@@ -127,7 +121,6 @@
 #define IDS_LanguageColon                           2114
 #define IDS_General                                 2115
 #define IDS_ResetStatistics                         2117
-#define IDS_LogToFile                               2118
 #define IDS_SettingsNotWritable                     2119
 #define IDS_SettingsMoveFile                        2120
 #define IDS_SettingsReadOnly                        2121
@@ -157,8 +150,6 @@
 #define IDS_CustomSkinActions                       2146
 #define IDS_Number                                  2147
 #define IDS_String                                  2148
-#define IDS_ExternalPlugins                         2149
-#define IDS_BuiltInPlugins                          2150
 #define IDS_HardwareAccelerated                     2153
 #define IDS_RestartConfirm                          2154
 #define IDS_Measure                                 2155
@@ -252,10 +243,7 @@
 #define IDS_Dark                                    2249
 #define IDS_UserInterface                           2250
 #define IDS_GameMode                                2800
-#define IDS_GameModeStart                           2801
-#define IDS_GameModeStop                            2802
 #define IDS_GameModeFullScreen                      2803
-#define IDS_GameModeProcessList                     2804
 #define IDS_GameModeProcessListColon                2805
 #define IDS_GameModeActionsOnStart                  2807
 #define IDS_GameModeActionsOnStop                   2808
@@ -281,7 +269,6 @@
 #define IDS_FolderDelete                            3016
 #define IDS_FileDelete                              3017
 #define IDS_FolderDeleteFail                        3018
-#define IDS_FileDeleteFail                          3019
 #define IDS_TemplateDoesNotExist                    3020
 #define IDS_TemplateExists                          3021
 #define IDS_TemplateFolderFail                      3022
@@ -456,7 +443,6 @@
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9024
 
-#define ID_CONFIG_EDIT                               30000
 #define ID_CONFIG_FIRST                              30001
 #define ID_CONFIG_LAST                               40000
 #define ID_THEME_FIRST                               40001
