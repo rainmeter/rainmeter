@@ -2609,19 +2609,6 @@ void DialogDebug::TabPlugins::Initialize()
 	HWND item = GetControl(Id_PluginsListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_INFOTIP | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
-	LVGROUP lvg = { 0 };
-	lvg.cbSize = sizeof(LVGROUP);
-	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
-	lvg.state = lvg.stateMask = LVGS_NORMAL | LVGS_COLLAPSIBLE;
-	lvg.iGroupId = 0;
-	lvg.pszHeader = (WCHAR*)GetString(IDS_ExternalPlugins);
-	ListView_InsertGroup(item, 0, &lvg);
-	lvg.iGroupId = 1;
-	lvg.pszHeader = (WCHAR*)GetString(IDS_BuiltInPlugins);
-	ListView_InsertGroup(item, 1, &lvg);
-
-	ListView_EnableGroupView(item, TRUE);
-
 	LVCOLUMN lvc = { 0 };
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
@@ -2639,11 +2626,17 @@ void DialogDebug::TabPlugins::Initialize()
 	ListView_InsertColumn(item, 2, &lvc);
 
 	LVITEM vitem = { 0 };
-	vitem.mask = LVIF_TEXT | LVIF_GROUPID;
+	vitem.mask = LVIF_TEXT;
 	vitem.iItem = 0;
 	vitem.iSubItem = 0;
 
 	StringSet listedPlugins;
+	for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
+	{
+		std::wstring name(oldDefaultPlugin);
+		StringUtil::ToLowerCase(name);
+		listedPlugins.insert(std::move(name));
+	}
 
 	auto findPlugins = [&](const std::wstring& pluginPath) -> void
 	{
@@ -2658,6 +2651,11 @@ void DialogDebug::TabPlugins::Initialize()
 
 		do
 		{
+			// Built-in measures override DLLs in both plugin folders.
+			std::wstring name(fd.cFileName, PathFindExtension(fd.cFileName));
+			StringUtil::ToLowerCase(name);
+			if (listedPlugins.contains(name)) continue;
+
 			// Try to get the version and author
 			std::wstring tmpSz = pluginPath + fd.cFileName;
 			const WCHAR* path = tmpSz.c_str();
@@ -2680,13 +2678,6 @@ void DialogDebug::TabPlugins::Initialize()
 				LogErrorF(L"Debug Dialog - Incorrect bitness of plugin: %s", fd.cFileName);
 				continue;
 			}
-
-			// A plugin in the user path is never loaded when one with the same name exists in the
-			// program path or is built into Rainmeter, so listing it again would suggest that it
-			// is in use.
-			std::wstring name(fd.cFileName, PathFindExtension(fd.cFileName));
-			StringUtil::ToLowerCase(name);
-			if (listedPlugins.contains(name)) continue;
 
 			vitem.iItem = ListView_GetItemCount(item);
 			vitem.pszText = fd.cFileName;
@@ -2781,23 +2772,9 @@ void DialogDebug::TabPlugins::Initialize()
 	const bool hasUserPluginPath = GetRainmeter().HasUserPluginPath();
 	if (hasUserPluginPath)
 	{
-		vitem.iGroupId = 1;
 		findPlugins(GetRainmeter().GetPluginPath());
 	}
 
-	// Add old plugins
-	for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
-	{
-		vitem.iItem = ListView_GetItemCount(item);
-		vitem.pszText = (LPWSTR)oldDefaultPlugin.data();
-		ListView_InsertItem(item, &vitem);
-
-		std::wstring name(oldDefaultPlugin);
-		StringUtil::ToLowerCase(name);
-		listedPlugins.insert(std::move(name));
-	}
-
-	vitem.iGroupId = 0;
 	findPlugins(hasUserPluginPath ? GetRainmeter().GetUserPluginPath() : GetRainmeter().GetPluginPath());
 
 	// Force first column to fit contents
@@ -2838,77 +2815,3 @@ void DialogDebug::TabPlugins::HandleDpiChange()
 	Relayout(rect.right, rect.bottom);
 }
 
-INT_PTR DialogDebug::TabPlugins::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	switch (uMsg)
-	{
-	case WM_NOTIFY:
-		return OnNotify(wParam, lParam);
-	}
-
-	return FALSE;
-}
-
-INT_PTR DialogDebug::TabPlugins::OnNotify(WPARAM wParam, LPARAM lParam)
-{
-	LPNMHDR nm = (LPNMHDR)lParam;
-	switch (nm->code)
-	{
-	case NM_CUSTOMDRAW:
-		return OnCustomDraw(wParam, lParam);
-
-	default:
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-INT_PTR DialogDebug::TabPlugins::OnCustomDraw(WPARAM wParam, LPARAM lParam)
-{
-	const COLORREF disabled = WindowsTheme::GetDisabledTextColor();
-
-	NMLVCUSTOMDRAW* lvcd = (NMLVCUSTOMDRAW*)lParam;
-	HWND hwnd = lvcd->nmcd.hdr.hwndFrom;
-
-	switch (lvcd->nmcd.dwDrawStage)
-	{
-	case CDDS_PREPAINT:
-		SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NOTIFYITEMDRAW);
-		return TRUE;
-
-	case CDDS_ITEMPREPAINT:
-		SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NOTIFYSUBITEMDRAW);
-		return TRUE;
-
-	case CDDS_SUBITEM | CDDS_ITEMPREPAINT:
-		{
-			// Only process 1st column
-			if (lvcd->iSubItem != 0) return FALSE;
-
-			// Only process items in 2nd group
-			WCHAR buffer[512] = { 0 };
-			LVITEM lvi = { 0 };
-			lvi.mask = LVIF_GROUPID | LVIF_TEXT;
-			lvi.iSubItem = 0;
-			lvi.iItem = (int)lvcd->nmcd.dwItemSpec;
-			lvi.pszText = buffer;
-			lvi.cchTextMax = _countof(buffer);
-			ListView_GetItem(hwnd, &lvi);
-			if (lvi.iGroupId != 1) return FALSE;
-
-			for (const auto oldDefaultPlugin : GetRainmeter().GetOldDefaultPlugins())
-			{
-				if (_wcsicmp(buffer, oldDefaultPlugin.data()) == 0)
-				{
-					lvcd->clrText = disabled;
-					SetWindowLongPtr(m_Window, DWLP_MSGRESULT, CDRF_NEWFONT);
-					return TRUE;
-				}
-			}
-		}
-		break;
-	}
-
-	return FALSE;
-}
