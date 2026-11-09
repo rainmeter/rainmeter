@@ -525,7 +525,7 @@ std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(std::wstring_
 {
 	const auto& monitorsInfo = MonitorUtil::GetMultiMonitorInfo();
 	const auto& monitors = monitorsInfo.monitors;
-	if (!m_Skin || monitors.empty()) return std::nullopt;
+	if (monitors.empty()) return std::nullopt;
 
 	auto strParser = StringParser(variableStr);
 	if (!strParser.Consume(L"Display")) return std::nullopt;
@@ -549,7 +549,7 @@ std::optional<std::wstring> ConfigParser::GetDollarDisplayVariable(std::wstring_
 	static MonitorInfo s_EmptyMonitor = {};
 	const auto* monitor =
 		index ? (device ? monitorsInfo.GetByDeviceNumber(*index) : monitorsInfo.GetByDisplayNumber(*index)) :
-		monitorsInfo.GetForWindow(m_Skin->GetWindow());
+		m_Skin ? monitorsInfo.GetForWindow(m_Skin->GetWindow()) : monitorsInfo.GetByDeviceNumber(monitorsInfo.primary);
 	if (!monitor) monitor = &s_EmptyMonitor;
 
 	if (strParser.ConsumeRest(L"Name")) return device ? monitor->deviceName : monitor->monitorName;
