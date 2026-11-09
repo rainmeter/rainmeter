@@ -4776,13 +4776,14 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				// Snap to work area if window is on the appropriate screen
 				if (workArea)
 				{
+					const int snapDistance = MulDiv(g_SnapDistance, m_WindowDpi, USER_DEFAULT_SCREEN_DPI);
 					int w = workArea->right - windowW;
 					int h = workArea->bottom - windowH;
 
-					if ((wp->x < g_SnapDistance + workArea->left) && (wp->x > workArea->left - g_SnapDistance)) wp->x = workArea->left;
-					if ((wp->y < g_SnapDistance + workArea->top) && (wp->y > workArea->top - g_SnapDistance)) wp->y = workArea->top;
-					if ((wp->x < g_SnapDistance + w) && (wp->x > -g_SnapDistance + w)) wp->x = w;
-					if ((wp->y < g_SnapDistance + h) && (wp->y > -g_SnapDistance + h)) wp->y = h;
+					if ((wp->x < snapDistance + workArea->left) && (wp->x > workArea->left - snapDistance)) wp->x = workArea->left;
+					if ((wp->y < snapDistance + workArea->top) && (wp->y > workArea->top - snapDistance)) wp->y = workArea->top;
+					if ((wp->x < snapDistance + w) && (wp->x > -snapDistance + w)) wp->x = w;
+					if ((wp->y < snapDistance + h) && (wp->y > -snapDistance + h)) wp->y = h;
 				}
 			}
 		}
@@ -4798,6 +4799,7 @@ LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void Skin::SnapToWindow(Skin* skin, LPWINDOWPOS wp)
 {
+	const int snapDistance = MulDiv(g_SnapDistance, m_WindowDpi, USER_DEFAULT_SCREEN_DPI);
 	const POINT pos = skin->GetPositionAsPhysical();
 	const int x = pos.x;
 	const int y = pos.y;
@@ -4808,20 +4810,20 @@ void Skin::SnapToWindow(Skin* skin, LPWINDOWPOS wp)
 
 	if (wp->y < y + h && wp->y + ourH > y)
 	{
-		if ((wp->x < g_SnapDistance + x) && (wp->x > x - g_SnapDistance)) wp->x = x;
-		if ((wp->x < g_SnapDistance + x + w) && (wp->x > x + w - g_SnapDistance)) wp->x = x + w;
+		if ((wp->x < snapDistance + x) && (wp->x > x - snapDistance)) wp->x = x;
+		if ((wp->x < snapDistance + x + w) && (wp->x > x + w - snapDistance)) wp->x = x + w;
 
-		if ((wp->x + ourW < g_SnapDistance + x) && (wp->x + ourW > x - g_SnapDistance)) wp->x = x - ourW;
-		if ((wp->x + ourW < g_SnapDistance + x + w) && (wp->x + ourW > x + w - g_SnapDistance)) wp->x = x + w - ourW;
+		if ((wp->x + ourW < snapDistance + x) && (wp->x + ourW > x - snapDistance)) wp->x = x - ourW;
+		if ((wp->x + ourW < snapDistance + x + w) && (wp->x + ourW > x + w - snapDistance)) wp->x = x + w - ourW;
 	}
 
 	if (wp->x < x + w && wp->x + ourW > x)
 	{
-		if ((wp->y < g_SnapDistance + y) && (wp->y > y - g_SnapDistance)) wp->y = y;
-		if ((wp->y < g_SnapDistance + y + h) && (wp->y > y + h - g_SnapDistance)) wp->y = y + h;
+		if ((wp->y < snapDistance + y) && (wp->y > y - snapDistance)) wp->y = y;
+		if ((wp->y < snapDistance + y + h) && (wp->y > y + h - snapDistance)) wp->y = y + h;
 
-		if ((wp->y + ourH < g_SnapDistance + y) && (wp->y + ourH > y - g_SnapDistance)) wp->y = y - ourH;
-		if ((wp->y + ourH < g_SnapDistance + y + h) && (wp->y + ourH > y + h - g_SnapDistance)) wp->y = y + h - ourH;
+		if ((wp->y + ourH < snapDistance + y) && (wp->y + ourH > y - snapDistance)) wp->y = y - ourH;
+		if ((wp->y + ourH < snapDistance + y + h) && (wp->y + ourH > y + h - snapDistance)) wp->y = y + h - ourH;
 	}
 }
 
