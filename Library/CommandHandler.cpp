@@ -1031,7 +1031,23 @@ void DoWriteKeyValueBang(const BangInfo& bangInfo, std::vector<std::wstring>& ar
 
 	if (!formula)
 	{
-		write = IniFile::WriteKey(strIniFile, section, key, strValue);
+		size_t pos = strValue.find_first_of(L"\r\n");
+		if (pos != std::wstring::npos)
+		{
+			std::wstring escapedValue = strValue;
+			do
+			{
+				size_t length = (escapedValue[pos] == L'\r' && pos + 1 < escapedValue.size() && escapedValue[pos + 1] == L'\n') ? 2 : 1;
+				escapedValue.replace(pos, length, L"#CRLF#");
+				pos = escapedValue.find_first_of(L"\r\n", pos + 6);
+			} while (pos != std::wstring::npos);
+
+			write = IniFile::WriteKey(strIniFile, section, key, escapedValue);
+		}
+		else
+		{
+			write = IniFile::WriteKey(strIniFile, section, key, strValue);
+		}
 	}
 
 	if (!write)
