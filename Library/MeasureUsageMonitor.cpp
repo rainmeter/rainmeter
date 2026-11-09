@@ -155,9 +155,7 @@ private:
 	void Collect();
 	bool BuildCounterInfo(const CounterQuery& counter, CounterInfo& info);
 
-	static void BuildByName(const CounterOptions& options, const PDH_RAW_COUNTER_ITEM* items, DWORD count,
-		const std::vector<double>& values,
-		ankerl::unordered_dense::map<std::wstring, CounterInstance>& byName);
+	static void BuildByName(const CounterOptions& options, const PDH_RAW_COUNTER_ITEM* items, DWORD count, const std::vector<double>& values, ankerl::unordered_dense::map<std::wstring, CounterInstance>& byName);
 	static void BuildByUsage(const CounterOptions& options,
 		const ankerl::unordered_dense::map<std::wstring, CounterInstance>& byName, CounterInfo& info);
 
@@ -348,24 +346,32 @@ bool Collector::BuildCounterInfo(const CounterQuery& counter, CounterInfo& info)
 	return true;
 }
 
-void Collector::BuildByName(const CounterOptions& options, const PDH_RAW_COUNTER_ITEM* items, DWORD count,
-	const std::vector<double>& values,
-	ankerl::unordered_dense::map<std::wstring, CounterInstance>& byName)
+void Collector::BuildByName(const CounterOptions& options, const PDH_RAW_COUNTER_ITEM* items, DWORD count, const std::vector<double>& values, ankerl::unordered_dense::map<std::wstring, CounterInstance>& byName)
 {
 	byName.reserve(count);
 
 	// The names are only reused within this one build, so a process ID that has been handed to a
 	// new process since the last one is never named after the process that used to own it
 	ankerl::unordered_dense::map<DWORD, std::wstring> pidNames;
+	ankerl::unordered_dense::map<std::wstring, DWORD> instanceCounts;
 
-	// Instances of the same name are told apart by a "#1" suffix in every category but "Process V2",
-	// which names them "exename:pid" instead. Colons are common in the names of other categories
-	// (e.g. LogicalDisk and PhysicalDisk), so only "Process V2" is rolled up at one.
+	// Process V2 names instances "exename:pid". Colons are common in other categories
+	// (e.g. LogicalDisk and PhysicalDisk), so only Process V2 is rolled up at one.
 	const WCHAR rollupSeparator = _wcsicmp(options.category.c_str(), L"Process V2") == 0 ? L':' : L'#';
 
 	for (DWORD i = 0; i < count; ++i)
 	{
 		std::wstring name = items[i].szName;
+
+		// PDH arrays leave duplicate instance names unsuffixed, unlike counter paths.
+		if (!options.rollup)
+		{
+			const DWORD instanceIndex = instanceCounts[name]++;
+			if (instanceIndex > 0)
+			{
+				name += L'#' + std::to_wstring(instanceIndex);
+			}
+		}
 
 		if (options.pidToName && !TranslatePid(name, pidNames)) continue;
 
