@@ -235,6 +235,9 @@ if ($BuildTypes -contains 'rainmeter') {
 	if ($env:GITHUB_SHA) {
 		$versionHeaderLines += "#define COMMIT_HASH L`"$env:GITHUB_SHA`""
 	}
+	if ($env:CI -eq 'true' -and -not $OfficialBuild) {
+		$versionHeaderLines += '#define UNOFFICIAL_BUILD'
+	}
 
 	Write-Utf8File (Join-Path $PSScriptRoot '..\Version.h') $versionHeaderLines
 }

@@ -4,6 +4,7 @@
 #include "DpiUtil.h"
 #include "Dialog.h"
 #include "WindowsTheme.h"
+#include "../Version.h"
 
 namespace {
 
@@ -202,6 +203,11 @@ Dialog::~Dialog()
 void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
 {
 	const bool existingWindow = m_Window != nullptr;
+
+#ifdef UNOFFICIAL_BUILD
+	const std::wstring unofficialTitle = std::wstring(title) + L" - UNOFFICIAL BUILD";
+	title = unofficialTitle.c_str();
+#endif
 
 	Show(title, x, y, w, h, style, exStyle, parent, modeless);
 
