@@ -70,8 +70,7 @@ bool GetFormattedArray(PDH_HCOUNTER counter, std::vector<BYTE>& buffer, DWORD& c
 		(PPDH_FMT_COUNTERVALUE_ITEM)buffer.data()) == ERROR_SUCCESS;
 }
 
-void MatchValues(const PDH_RAW_COUNTER_ITEM* rawItems, DWORD rawCount,
-	const PDH_FMT_COUNTERVALUE_ITEM* items, DWORD count, std::vector<double>& values)
+void MatchValues(const PDH_RAW_COUNTER_ITEM* rawItems, DWORD rawCount, const PDH_FMT_COUNTERVALUE_ITEM* items, DWORD count, std::vector<double>& values)
 {
 	values.assign(rawCount, 0.0);
 
@@ -89,23 +88,25 @@ void MatchValues(const PDH_RAW_COUNTER_ITEM* rawItems, DWORD rawCount,
 	if (i == rawCount) return;
 
 	// The names point into the buffer the caller still owns, so nothing is copied here either
-	ankerl::unordered_dense::map<std::wstring_view, double> byName;
+	ankerl::unordered_dense::map<std::wstring_view, std::vector<double>> byName;
 	byName.reserve(count);
 
-	for (DWORD j = 0; j < count; ++j)
+	// PDH can return several instances with the same name. Keep each occurrence, including
+	// invalid values, so that matching one does not reuse another process's reading.
+	for (DWORD j = count; j > i; --j)
 	{
-		if (IsValidStatus(items[j].FmtValue.CStatus))
-		{
-			byName.insert_or_assign(std::wstring_view(items[j].szName), items[j].FmtValue.doubleValue);
-		}
+		const auto& item = items[j - 1];
+		byName[std::wstring_view(item.szName)].push_back(
+			IsValidStatus(item.FmtValue.CStatus) ? item.FmtValue.doubleValue : 0.0);
 	}
 
 	for ( ; i < rawCount; ++i)
 	{
 		const auto found = byName.find(std::wstring_view(rawItems[i].szName));
-		if (found != byName.end())
+		if (found != byName.end() && !found->second.empty())
 		{
-			values[i] = found->second;
+			values[i] = found->second.back();
+			found->second.pop_back();
 		}
 	}
 }
