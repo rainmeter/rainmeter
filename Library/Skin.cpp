@@ -2647,8 +2647,8 @@ bool Skin::ReadSkin()
 	reader.ReadActionString<"OnUnfocusAction">(m_OnUnfocusAction);
 	reader.ReadActionString<"OnUpdateAction">(m_OnUpdateAction);
 	reader.ReadActionString<"OnWakeAction">(m_OnWakeAction);
-	reader.ReadActionString<"OnDisplayMetricsChange">(m_OnDisplayMetricsChangeAction);
-	reader.ReadActionString<"OnVisibilityChange">(m_OnVisibilityChangeAction);
+	reader.ReadActionString<"OnDisplayMetricsChangeAction">(m_OnDisplayMetricsChangeAction);
+	reader.ReadActionString<"OnVisibilityChangeAction">(m_OnVisibilityChangeAction);
 
 	ReadUpdateOption(reader);
 
