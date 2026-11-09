@@ -4,6 +4,7 @@
 #include "PlayerSMTC.h"
 #include "../Logger.h"
 #include "../../Common/CriticalSection.h"
+#include "../../Common/Platform.h"
 #include "../../Common/ScopedFunction.h"
 #include "../../Common/StringUtil.h"
 
@@ -621,7 +622,8 @@ private:
 
 		CloseHandle(file);
 		file = INVALID_HANDLE_VALUE;
-		if (StringUtil::CaseInsensitiveFind(source, L"Spotify") == 0)
+		// Spotify thumbnails on Windows 11 (build 22000 and later) do not include the branding or padding.
+		if (GetPlatform().GetBuildNumber() < 22000 && StringUtil::CaseInsensitiveFind(source, L"Spotify") == 0)
 		{
 			return CropSpotifyCover(cover);
 		}
