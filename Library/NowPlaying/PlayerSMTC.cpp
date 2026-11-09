@@ -5,7 +5,9 @@
 #include "../Logger.h"
 #include "../../Common/CriticalSection.h"
 #include "../../Common/ScopedFunction.h"
+#include "../../Common/StringUtil.h"
 
+#include <wincodec.h>
 #include <roapi.h>
 #include <robuffer.h>
 #include <windows.media.control.h>
@@ -33,6 +35,97 @@ struct CoverFile
 	~CoverFile() { DeleteFile(path.c_str()); }
 	std::wstring path;
 };
+
+std::shared_ptr<CoverFile> CropSpotifyCover(const std::shared_ptr<CoverFile>& original)
+{
+	ComPtr<IWICImagingFactory> factory;
+	if (FAILED(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory)))) return original;
+
+	ComPtr<IWICBitmapDecoder> decoder;
+	ComPtr<IWICBitmapFrameDecode> frame;
+	ComPtr<IWICFormatConverter> pixels;
+	UINT width = 0, height = 0;
+	if (FAILED(factory->CreateDecoderFromFilename(original->path.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder)) ||
+		FAILED(decoder->GetFrame(0, &frame)) || FAILED(frame->GetSize(&width, &height)) ||
+		width < 32 || height < 32 || width > 2048 || height > 2048 ||
+		FAILED(factory->CreateFormatConverter(&pixels)) ||
+		FAILED(pixels->Initialize(frame.Get(), GUID_WICPixelFormat32bppBGRA, WICBitmapDitherTypeNone, nullptr, 0.0, WICBitmapPaletteTypeCustom))) return original;
+
+	const UINT stride = width * 4;
+	std::vector<BYTE> buffer(stride * height);
+	if (FAILED(pixels->CopyPixels(nullptr, stride, (UINT)buffer.size(), buffer.data()))) return original;
+
+	UINT top = 0, left = width, right = 0;
+	for (; top < height; ++top)
+	{
+		for (UINT x = 0; x < width; ++x)
+		{
+			if (buffer[top * stride + x * 4 + 3])
+			{
+				left = (std::min)(left, x);
+				right = x + 1;
+			}
+		}
+
+		if (right) break;
+	}
+
+	if (!right) return original;
+
+	const UINT size = right - left;
+	if (!left || right >= width || size < width / 2 || top + size >= height ||
+		left != width - right || height - top - size > size / 2) return original;
+
+	// Only recognize the padded square and separate footer supplied by Spotify.
+	// Requiring transparency outside the square avoids cutting ordinary artwork.
+	for (UINT y = top; y < top + size; ++y)
+	{
+		for (UINT x = 0; x < width; ++x)
+		{
+			const BYTE alpha = buffer[y * stride + x * 4 + 3];
+			if (x >= left && x < right)
+			{
+				if (alpha != 255) return original;
+			}
+			else
+			{
+				if (alpha) return original;
+			}
+		}
+	}
+
+	bool footer = false;
+	for (UINT y = top + size; y < height; ++y)
+	{
+		for (UINT x = 0; x < width; ++x)
+		{
+			if (buffer[y * stride + x * 4 + 3]) footer = true;
+		}
+	}
+
+	if (!footer) return original;
+
+	WCHAR folder[MAX_PATH];
+	WCHAR path[MAX_PATH];
+	const DWORD length = GetTempPath(_countof(folder), folder);
+	if (!length || length >= _countof(folder) || !GetTempFileName(folder, L"smt", 0, path)) return original;
+
+	auto cropped = std::make_shared<CoverFile>();
+	cropped->path = path;
+	ComPtr<IWICStream> output;
+	ComPtr<IWICBitmapEncoder> encoder;
+	ComPtr<IWICBitmapFrameEncode> encodedFrame;
+	ComPtr<IWICBitmapClipper> clipper;
+	WICRect rect = { (INT)left, (INT)top, (INT)size, (INT)size };
+	if (FAILED(factory->CreateStream(&output)) || FAILED(output->InitializeFromFilename(path, GENERIC_WRITE)) ||
+		FAILED(factory->CreateEncoder(GUID_ContainerFormatPng, nullptr, &encoder)) ||
+		FAILED(encoder->Initialize(output.Get(), WICBitmapEncoderNoCache)) ||
+		FAILED(encoder->CreateNewFrame(&encodedFrame, nullptr)) || FAILED(encodedFrame->Initialize(nullptr)) ||
+		FAILED(factory->CreateBitmapClipper(&clipper)) || FAILED(clipper->Initialize(pixels.Get(), &rect)) ||
+		FAILED(encodedFrame->WriteSource(clipper.Get(), nullptr)) || FAILED(encodedFrame->Commit()) || FAILED(encoder->Commit())) return original;
+
+	return cropped;
+}
 
 struct Snapshot
 {
@@ -455,14 +548,14 @@ private:
 			if (!data.cover && (!sameTrack || !m_LastCoverAttempt || now - m_LastCoverAttempt >= 5000))
 			{
 				m_LastCoverAttempt = now;
-				data.cover = SaveCover(properties.Get());
+				data.cover = SaveCover(properties.Get(), data.source);
 			}
 		}
 
 		return S_OK;
 	}
 
-	std::shared_ptr<CoverFile> SaveCover(Properties* properties)
+	std::shared_ptr<CoverFile> SaveCover(Properties* properties, const std::wstring& source)
 	{
 		ComPtr<Streams::IRandomAccessStreamReference> thumbnail;
 		if (FAILED(properties->get_Thumbnail(&thumbnail)) || !thumbnail) return {};
@@ -500,7 +593,7 @@ private:
 		HANDLE file = CreateFile(path, GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (file == INVALID_HANDLE_VALUE) return {};
 
-		auto closeFile = Scoped([&] { CloseHandle(file); });
+		auto closeFile = Scoped([&] { if (file != INVALID_HANDLE_VALUE) CloseHandle(file); });
 
 		while (size)
 		{
@@ -522,6 +615,13 @@ private:
 			if (FAILED(result.As(&access)) || FAILED(access->Buffer(&data)) || !WriteFile(file, data, bytes, &written, nullptr) || written != bytes) return {};
 
 			size -= bytes;
+		}
+
+		CloseHandle(file);
+		file = INVALID_HANDLE_VALUE;
+		if (StringUtil::CaseInsensitiveFind(source, L"Spotify") == 0)
+		{
+			return CropSpotifyCover(cover);
 		}
 
 		return cover;
