@@ -355,7 +355,9 @@ DialogManage::TabSkins::TabSkins() : Tab(),
 	m_SkinWindow(),
 	m_HandleCommands(false),
 	m_IgnoreUpdate(false),
-	m_ImageListHandle(nullptr)
+	m_ImageListHandle(nullptr),
+	m_TreeIndent(0),
+	m_TreeIndentDpi(USER_DEFAULT_SCREEN_DPI)
 {
 }
 
@@ -548,6 +550,8 @@ void DialogManage::TabSkins::Create(HWND owner)
 	SetWindowSubclass(m_Window, NewSkinButtonColorSubclass, 0, (DWORD_PTR)item);
 
 	item = GetControl(Id_SkinsTreeView);
+	m_TreeIndent = TreeView_GetIndent(item);
+	m_TreeIndentDpi = System::GetDpiForWindow(item);
 	SetWindowSubclass(item, &SkinsTreeViewSubclass, 1, (DWORD_PTR)this);
 
 	item = GetControl(Id_DescriptionLabel);
@@ -629,9 +633,10 @@ void DialogManage::TabSkins::CreateImageList()
 	icon = GetIconBySize(IDI_INI, iconSize);
 	ImageList_AddIcon(imageList, icon);
 
-	DestroyImageList();
+	HIMAGELIST oldImageList = TreeView_SetImageList(tree, imageList, TVSIL_NORMAL);
 	m_ImageListHandle = imageList;
-	TreeView_SetImageList(tree, m_ImageListHandle, TVSIL_NORMAL);
+	TreeView_SetIndent(tree, MulDiv(m_TreeIndent, (int)m_Dpi, (int)m_TreeIndentDpi));
+	if (oldImageList) ImageList_Destroy(oldImageList);
 }
 
 void DialogManage::TabSkins::DestroyImageList()

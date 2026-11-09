@@ -126,6 +126,8 @@ private:
 		bool m_IgnoreUpdate;
 
 		HIMAGELIST m_ImageListHandle;
+		int m_TreeIndent;
+		UINT m_TreeIndentDpi;
 
 		static HBRUSH s_NewSkinBkBrush;
 		static COLORREF s_NewSkinBkColor;
