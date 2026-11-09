@@ -23,6 +23,7 @@
 #define IDS_NoLayouts                               2010
 #define IDS_EditSettings                            2011
 #define IDS_RefreshAll                              2012
+#define IDS_Logging                                 2013
 #define IDS_ShowLogFile                             2014
 #define IDS_StartLogging                            2015
 #define IDS_StopLogging                             2016
@@ -61,6 +62,7 @@
 #define IDS_Approx100Percent                        2047
 #define IDS_FadeIn                                  2048
 #define IDS_FadeOut                                 2049
+#define IDS_HideOnMouseOver                         2050
 #define IDS_Draggable                               2051
 #define IDS_SavePosition                            2052
 #define IDS_SnapToEdges                             2053
@@ -105,6 +107,7 @@
 #define IDS_AddMetadata                             2094
 #define IDS_CoordinatesColon                        2095
 #define IDS_PositionColon                           2096
+#define IDS_LoadOrderColon                          2097
 #define IDS_TransparencyColon                       2098
 #define IDS_OnHoverColon                            2099
 #define IDS_DoNothing                               2100
@@ -121,6 +124,7 @@
 #define IDS_LanguageColon                           2114
 #define IDS_General                                 2115
 #define IDS_ResetStatistics                         2117
+#define IDS_LogToFile                               2118
 #define IDS_SettingsNotWritable                     2119
 #define IDS_SettingsMoveFile                        2120
 #define IDS_SettingsReadOnly                        2121
@@ -243,7 +247,10 @@
 #define IDS_Dark                                    2249
 #define IDS_UserInterface                           2250
 #define IDS_GameMode                                2800
+#define IDS_GameModeStart                           2801
+#define IDS_GameModeStop                            2802
 #define IDS_GameModeFullScreen                      2803
+#define IDS_GameModeProcessList                     2804
 #define IDS_GameModeProcessListColon                2805
 #define IDS_GameModeActionsOnStart                  2807
 #define IDS_GameModeActionsOnStop                   2808
@@ -269,6 +276,7 @@
 #define IDS_FolderDelete                            3016
 #define IDS_FileDelete                              3017
 #define IDS_FolderDeleteFail                        3018
+#define IDS_FileDeleteFail                          3019
 #define IDS_TemplateDoesNotExist                    3020
 #define IDS_TemplateExists                          3021
 #define IDS_TemplateFolderFail                      3022
