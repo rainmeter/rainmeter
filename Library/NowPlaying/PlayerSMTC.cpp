@@ -85,7 +85,9 @@ std::shared_ptr<CoverFile> CropSpotifyCover(const std::shared_ptr<CoverFile>& or
 			const BYTE alpha = buffer[y * stride + x * 4 + 3];
 			if (x >= left && x < right)
 			{
-				if (alpha != 255) return original;
+				// Spotify's resized cover can have partially transparent border pixels.
+				const bool border = x == left || x == right - 1 || y == top || y == top + size - 1;
+				if (!alpha || (!border && alpha != 255)) return original;
 			}
 			else
 			{
