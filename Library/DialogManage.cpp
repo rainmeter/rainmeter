@@ -471,8 +471,11 @@ void DialogManage::TabSkins::Create(HWND owner)
 			175, 204, labelWidth, 14,
 			WS_VISIBLE, 0),
 		Control::Edit(Id_ZoomEdit, 0,
-			175 + labelWidth, 202, 38, 14,
+			175 + labelWidth, 202, 28, 14,
 			WS_VISIBLE | WS_TABSTOP | WS_DISABLED | ES_AUTOHSCROLL | ES_NUMBER, WS_EX_CLIENTEDGE),
+		Control::Item(UPDOWN_CLASS, Id_ZoomSpinner, 0,
+			175 + labelWidth + 28, 202, 10, 14,
+			WS_VISIBLE | WS_DISABLED | UDS_ARROWKEYS | UDS_SETBUDDYINT | UDS_NOTHOUSANDS, 0),
 		Control::Label(Id_ZoomPercentLabel, 0,
 			175 + labelWidth + 42, 204, 12, 14,
 			WS_VISIBLE, 0),
@@ -519,9 +522,7 @@ void DialogManage::TabSkins::Create(HWND owner)
 	SetWindowText(GetControl(Id_ZoomPercentLabel), L"%");
 
 	HWND zoomEdit = GetControl(Id_ZoomEdit);
-	HWND zoomSpinner = CreateWindowEx(0, UPDOWN_CLASS, nullptr,
-		WS_CHILD | WS_VISIBLE | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_SETBUDDYINT | UDS_NOTHOUSANDS,
-		0, 0, 0, 0, m_Window, (HMENU)Id_ZoomSpinner, GetRainmeter().GetModuleInstance(), nullptr);
+	HWND zoomSpinner = GetControl(Id_ZoomSpinner);
 	SendMessage(zoomSpinner, UDM_SETRANGE32, 10, 500);
 	SendMessage(zoomSpinner, UDM_SETBUDDY, (WPARAM)zoomEdit, 0);
 
@@ -2287,8 +2288,11 @@ void DialogManage::TabSettings::Create(HWND owner)
 			6, 97, 107, 14,
 			WS_VISIBLE, 0),
 		Control::Edit(Id_DefaultZoomEdit, 0,
-			107, 95, 36, 14,
+			107, 95, 26, 14,
 			WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | ES_NUMBER, WS_EX_CLIENTEDGE),
+		Control::Item(UPDOWN_CLASS, Id_DefaultZoomSpinner, 0,
+			133, 95, 10, 14,
+			WS_VISIBLE | UDS_ARROWKEYS | UDS_SETBUDDYINT | UDS_NOTHOUSANDS, 0),
 		Control::Label(Id_DefaultZoomPercentLabel, 0,
 			148, 97, 12, 14,
 			WS_VISIBLE, 0),
@@ -2323,9 +2327,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 	SetWindowText(GetControl(Id_DefaultZoomPercentLabel), L"%");
 
 	HWND edit = GetControl(Id_DefaultZoomEdit);
-	HWND spinner = CreateWindowEx(0, UPDOWN_CLASS, nullptr,
-		WS_CHILD | WS_VISIBLE | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_SETBUDDYINT | UDS_NOTHOUSANDS,
-		0, 0, 0, 0, m_Window, (HMENU)Id_DefaultZoomSpinner, GetRainmeter().GetModuleInstance(), nullptr);
+	HWND spinner = GetControl(Id_DefaultZoomSpinner);
 	SendMessage(spinner, UDM_SETRANGE32, 10, 500);
 	SendMessage(spinner, UDM_SETBUDDY, (WPARAM)edit, 0);
 }
