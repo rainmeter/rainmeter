@@ -17,7 +17,7 @@ struct ImageOptions : Gfx::FileInfo
 		m_Rotate(0.0f),
 		m_Flip(Gfx::Util::FlipType::None),
 		m_CropMode(CROPMODE_TL),
-		m_GreyScale(false),
+		m_Saturation(100),
 		m_UseExifOrientation(false),
 		m_CreateAlphaMask(false)
 	{}
@@ -45,7 +45,7 @@ struct ImageOptions : Gfx::FileInfo
 			m_FileSize == other.m_FileSize &&
 			m_FileTime == other.m_FileTime &&
 			m_Rotate == other.m_Rotate &&
-			m_GreyScale == other.m_GreyScale &&
+			m_Saturation == other.m_Saturation &&
 			m_UseExifOrientation == other.m_UseExifOrientation &&
 			m_CreateAlphaMask == other.m_CreateAlphaMask &&
 			m_Flip == other.m_Flip &&
@@ -61,7 +61,7 @@ struct ImageOptions : Gfx::FileInfo
 	FLOAT m_Rotate;
 	Gfx::Util::FlipType m_Flip;
 	CROPMODE m_CropMode;
-	bool m_GreyScale;
+	uint8_t m_Saturation;
 	bool m_UseExifOrientation;
 	bool m_CreateAlphaMask;
 };
