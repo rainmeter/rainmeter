@@ -14,7 +14,7 @@
 	const WCHAR* (name)[GeneralImage::OptionCount] = { \
 		prefix  L"ImageCrop", \
 		prefix  L"Greyscale", \
-		prefix  L"Saturation", \
+		prefix  L"ImageSaturation", \
 		prefix  L"ImageTint", \
 		prefix  L"ImageAlpha", \
 		prefix  L"ColorMatrix1", \
@@ -35,7 +35,7 @@ public:
 	{
 		OptionIndexImageCrop = 0,
 		OptionIndexGreyscale,
-		OptionIndexSaturation,
+		OptionIndexImageSaturation,
 		OptionIndexImageTint,
 		OptionIndexImageAlpha,
 		OptionIndexColorMatrix1,

@@ -225,7 +225,7 @@ void GeneralImage::ReadOptions(ConfigParser& parser, ConfigParser::OptionReader&
 	}
 
 	m_Options.m_Saturation = reader.ReadBool(m_OptionArray[OptionIndexGreyscale], false) ? 0 :
-		(uint8_t)std::clamp(reader.ReadInt(m_OptionArray[OptionIndexSaturation], 100), 0, 100);
+		(uint8_t)std::clamp(reader.ReadInt(m_OptionArray[OptionIndexImageSaturation], 100), 0, 100);
 
 	D2D1_COLOR_F tint = reader.ReadColor(m_OptionArray[OptionIndexImageTint], D2D1::ColorF(D2D1::ColorF::White));
 	int alpha = reader.ReadInt(m_OptionArray[OptionIndexImageAlpha], (INT)(tint.a * 255));  // for backwards compatibility
