@@ -15,6 +15,7 @@ struct ImageOptions : Gfx::FileInfo
 			-1.0f, -1.0f, -1.0f, -1.0f, -1.0f)),
 		m_Crop(D2D1::RectF(-1.0f, -1.0f, -1.0f, -1.0f)),
 		m_Rotate(0.0f),
+		m_Blur(0.0f),
 		m_Flip(Gfx::Util::FlipType::None),
 		m_CropMode(CROPMODE_TL),
 		m_Saturation(100),
@@ -45,6 +46,7 @@ struct ImageOptions : Gfx::FileInfo
 			m_FileSize == other.m_FileSize &&
 			m_FileTime == other.m_FileTime &&
 			m_Rotate == other.m_Rotate &&
+			m_Blur == other.m_Blur &&
 			m_Saturation == other.m_Saturation &&
 			m_UseExifOrientation == other.m_UseExifOrientation &&
 			m_CreateAlphaMask == other.m_CreateAlphaMask &&
@@ -59,6 +61,7 @@ struct ImageOptions : Gfx::FileInfo
 	D2D1_MATRIX_5X4_F m_ColorMatrix;
 	D2D1_RECT_F m_Crop;
 	FLOAT m_Rotate;
+	FLOAT m_Blur;
 	Gfx::Util::FlipType m_Flip;
 	CROPMODE m_CropMode;
 	uint8_t m_Saturation;

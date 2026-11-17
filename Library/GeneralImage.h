@@ -15,6 +15,7 @@
 		prefix  L"ImageCrop", \
 		prefix  L"Greyscale", \
 		prefix  L"ImageSaturation", \
+		prefix  L"ImageBlur", \
 		prefix  L"ImageTint", \
 		prefix  L"ImageAlpha", \
 		prefix  L"ColorMatrix1", \
@@ -36,6 +37,7 @@ public:
 		OptionIndexImageCrop = 0,
 		OptionIndexGreyscale,
 		OptionIndexImageSaturation,
+		OptionIndexImageBlur,
 		OptionIndexImageTint,
 		OptionIndexImageAlpha,
 		OptionIndexColorMatrix1,
