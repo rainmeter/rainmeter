@@ -224,7 +224,10 @@ void GeneralImage::ReadOptions(ConfigParser& parser, ConfigParser::OptionReader&
 		}
 	}
 
-	m_Options.m_GreyScale = reader.ReadBool(m_OptionArray[OptionIndexGreyscale], false);
+	m_Options.m_Saturation = reader.ReadBool(m_OptionArray[OptionIndexGreyscale], false) ? 0 :
+		(uint8_t)std::clamp(reader.ReadInt(m_OptionArray[OptionIndexImageSaturation], 100), 0, 100);
+	const double blur = reader.ReadFloat(m_OptionArray[OptionIndexImageBlur], 0.0);
+	m_Options.m_Blur = std::isfinite(blur) ? (FLOAT)std::clamp(blur, 0.0, 250.0) : 0.0f;
 
 	D2D1_COLOR_F tint = reader.ReadColor(m_OptionArray[OptionIndexImageTint], D2D1::ColorF(D2D1::ColorF::White));
 	int alpha = reader.ReadInt(m_OptionArray[OptionIndexImageAlpha], (INT)(tint.a * 255));  // for backwards compatibility
@@ -465,8 +468,9 @@ void GeneralImage::ApplyTransforms()
 		// To preserve backwards compatibility, apply transforms in the following order:
 		// 1. Exif orientation
 		// 2. Crop
-		// 3. Tinting (greyscale first, then color matrix)
-		// 4. Transforms (GDI+ flips, then rotates)
+		// 3. Tinting (saturation first, then color matrix)
+		// 4. Gaussian blur (preserving the cropped dimensions)
+		// 5. Transforms (GDI+ flips, then rotates)
 
 		if (m_Options.m_UseExifOrientation) stream->ApplyExifOrientation(canvas);
 
@@ -485,9 +489,24 @@ void GeneralImage::ApplyTransforms()
 			stream = croppedBitmap->CreateEffectStream();
 		}
 
-		if (m_Options.m_GreyScale) stream->Tint(canvas, c_GreyScaleMatrix);
+		if (m_Options.m_Saturation < 100)
+		{
+			const FLOAT saturation = m_Options.m_Saturation / 100.0f;
+			D2D1_MATRIX_5X4_F matrix = c_IdentityMatrix;
+			for (int row = 0; row < 3; ++row)
+			{
+				for (int column = 0; column < 3; ++column)
+				{
+					matrix.m[row][column] = std::lerp(c_GreyScaleMatrix.m[row][column],
+						c_IdentityMatrix.m[row][column], saturation);
+				}
+			}
+			stream->Tint(canvas, matrix);
+		}
 
 		if (!CompareColorMatrix(m_Options.m_ColorMatrix, c_IdentityMatrix)) stream->Tint(canvas, m_Options.m_ColorMatrix);
+
+		if (m_Options.m_Blur > 0.0f) stream->Blur(canvas, m_Options.m_Blur);
 
 		stream->Flip(canvas, m_Options.m_Flip);
 
@@ -536,7 +555,8 @@ bool GeneralImage::HasActiveTransforms(Gfx::Bitmap* bitmap) const
 		return true;
 	}
 
-	return m_Options.m_GreyScale ||
+	return m_Options.m_Saturation < 100 ||
+		m_Options.m_Blur > 0.0f ||
 		!CompareColorMatrix(m_Options.m_ColorMatrix, c_IdentityMatrix) ||
 		m_Options.m_Flip != Gfx::Util::FlipType::None ||
 		m_Options.m_Rotate != 0.0f;

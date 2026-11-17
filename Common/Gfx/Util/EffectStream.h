@@ -20,6 +20,7 @@ class EffectStream
 public:
 	void Crop(const Canvas& canvas, const D2D1_RECT_F& crop);
 	void Tint(const Canvas& canvas, const D2D1_MATRIX_5X4_F& matrix);
+	void Blur(const Canvas& canvas, FLOAT standardDeviation);
 	void Rotate(const Canvas& canvas, const FLOAT& angle);
 	void Flip(const Canvas& canvas, const FlipType& flipType);
 	void ApplyExifOrientation(const Canvas& canvas);

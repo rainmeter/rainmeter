@@ -34,6 +34,16 @@ void EffectStream::Tint(const Canvas& canvas, const D2D1_MATRIX_5X4_F& matrix)
 	}
 }
 
+void EffectStream::Blur(const Canvas& canvas, FLOAT standardDeviation)
+{
+	AddEffect(canvas, CLSID_D2D1GaussianBlur);
+	for (auto& effect : m_Effects)
+	{
+		effect->SetValue(D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, standardDeviation);
+		effect->SetValue(D2D1_GAUSSIANBLUR_PROP_BORDER_MODE, D2D1_BORDER_MODE_HARD);
+	}
+}
+
 void EffectStream::Rotate(const Canvas& canvas, const FLOAT& angle)
 {
 	AddEffect(canvas, CLSID_D2D12DAffineTransform);

@@ -32,14 +32,14 @@ struct ankerl::unordered_dense::hash<ImageOptions>
 			return mix64(state, static_cast<uint64_t>(normalizeFloatBits(first)) | (static_cast<uint64_t>(normalizeFloatBits(second)) << 32));
 		};
 
-		const auto packSmallFields = [](uint32_t rotate, uint8_t cropMode, uint8_t flip, bool greyScale, bool useExifOrientation, bool createAlphaMask) -> uint64_t
+		const auto packSmallFields = [](uint32_t rotate, uint8_t cropMode, uint8_t flip, uint8_t saturation, bool useExifOrientation, bool createAlphaMask) -> uint64_t
 		{
 			return (static_cast<uint64_t>(rotate) << 32) |
 				static_cast<uint64_t>(cropMode) |
 				(static_cast<uint64_t>(flip) << 8) |
-				(static_cast<uint64_t>(greyScale) << 16) |
-				(static_cast<uint64_t>(useExifOrientation) << 17) |
-				(static_cast<uint64_t>(createAlphaMask) << 18);
+				(static_cast<uint64_t>(saturation) << 16) |
+				(static_cast<uint64_t>(useExifOrientation) << 24) |
+				(static_cast<uint64_t>(createAlphaMask) << 25);
 		};
 
 		uint64_t hash = ankerl::unordered_dense::detail::wyhash::hash(opt.m_Path.data(), opt.m_Path.size() * sizeof(WCHAR));
@@ -47,7 +47,7 @@ struct ankerl::unordered_dense::hash<ImageOptions>
 		hash = mix64(hash, opt.m_FileTime);
 		hash = mixFloatPair(hash, opt.m_Crop.left, opt.m_Crop.top);
 		hash = mixFloatPair(hash, opt.m_Crop.right, opt.m_Crop.bottom);
-		hash = mix64(hash, packSmallFields(normalizeFloatBits(opt.m_Rotate), opt.m_CropMode, (uint8_t)opt.m_Flip, opt.m_GreyScale, opt.m_UseExifOrientation, opt.m_CreateAlphaMask));
+		hash = mix64(hash, packSmallFields(normalizeFloatBits(opt.m_Rotate), opt.m_CropMode, (uint8_t)opt.m_Flip, opt.m_Saturation, opt.m_UseExifOrientation, opt.m_CreateAlphaMask));
 
 		for (int i = 0; i < 5; ++i)
 		{
